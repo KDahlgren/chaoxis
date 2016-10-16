@@ -1,8 +1,3 @@
 Populate with example pyLDFI programs.
 
-pyLDFI outputs results to stdout and saves to report.txt
-prov.txt records the provenance of the last-tested fault injection sample.
-
-test1/
- - report.txt
- - prov.txt
+The files in dedFileExamples/ are copied here directly from the molly project for convenience.
