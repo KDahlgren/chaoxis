@@ -20,7 +20,7 @@ packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
 from datalogCompiler import dedalusParser
-from utils import messages, sanityChecks, parseCommandLineInput
+from utils import parseCommandLineInput
 from utils.Table import Table
 # ------------------------------------------------------ #
 
@@ -33,7 +33,6 @@ from utils.Table import Table
 def parseArgs( argList ) :
   argDict = {}   # empty dict
 
-  sanityChecks.checkCommandLineInputs( argList )                    # program exits here if inputs fail.
   argDict = parseCommandLineInput.parseCommandLineInput( argList )  # get dictionary of arguments.
 
   return argDict
@@ -71,7 +70,7 @@ def driver() :
   # print help if no args provided
   if( len(argList) < 1 ) :
     thisFilename = os.path.basename(__file__)     # name of this file
-    messages.printHelp( thisFilename ) # pass name of this file
+    print "No arguments provided. Please run 'python " + sys.argv[0] + " -h' for assistance."
     sys.exit()
 
   # pass list to parse args, get dict of args

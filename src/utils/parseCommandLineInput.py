@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
+import argparse
+import sys
+
 ##############################
 #  PARSE COMMAND LINE INPUT  #
 ##############################
 def parseCommandLineInput( argList ) :
-  argDict = {} # empty dict
+  argDict = {}  # empty dict
 
+  # check for and parse ded files
   numDedFiles = 0
   for i in range( 0, len(argList) ) :
     currArg = argList[i]            # current argument
@@ -22,62 +26,42 @@ def parseCommandLineInput( argList ) :
       val = currArg
       numDedFiles = numDedFiles + 1  # increment ded file counter
 
-    # check for solver
-    elif '--solver' == prevArg :
-      key = 'solver'
-      val = currArg
+      # add file to dictionary
+      argDict[ key ] = val
 
-    # check for strategy
-    elif '--strategy' == prevArg :
-      key = 'strategy'
-      val = currArg
+  # check if help menu requested
+  if ("-h" in argList)  or ("--help" in argList) :
+    example = """\nExample usage :
+       python """ + sys.argv[0] + " --file ./simplog.ded --file ./deliv_assert.ded" + """ \\
+       --EOT 4 \\
+       --EFF 2 \\
+       --nodes a,b,c \\
+       --crashes 0 \\
+       --prov-diagrams\n"""
 
-    # check for use symmetry
-    elif '--use-symmetry' == prevArg :
-      key = 'use-symmetry'
-      val = currArg
+    print example
 
-    # check for prov diagrams
-    elif '--prov-diagrams' == prevArg :
-      key = 'prov-diagrams'
-      val = currArg
+  # parse all args except ded files
+  parser = argparse.ArgumentParser()
 
-    # check for disable dot rendering
-    elif '--disable-dot-rendering' == prevArg :
-      key = 'disable-dot-rendering'
-      val = currArg
+  parser.add_argument("-t", "--EOT", type=int, help="end of time (default 3)", default = 3)
+  parser.add_argument("-ff", "--EFF", type=int, help="end of finite failures (default 2)", default = 2)
+  parser.add_argument("-f", "--file", help="input dedalus file (1 minimum required)", required=True) 
+  parser.add_argument("-c", "--crashes", type=int, help="number of crash failures (default 0)", default = 0)
+  parser.add_argument("-n", "--nodes", type=str, help="a comma-separated set of nodes (required)", required=True)
+  parser.add_argument("--solver", type=str,  choices=['z3', 'sat4j', 'ilp'], help="the solver to use")
+  parser.add_argument("--strategy", choices=['sat', 'random', 'pcausal'], help="the search strategy")
+  parser.add_argument("--use-symmetry", help="use symmetry to skip equivalent failure scenarios", action="store_true")
+  parser.add_argument("--prov-diagrams", help="generate provenance diagrams for each execution", action="store_true")
+  parser.add_argument("--disable-dot-rendering", help="disable automatic rendering of `dot` diagrams", action="store_true")
+  parser.add_argument("--find-all-counterexamples", help="continue after finding the first counterexample", action="store_true")
+  parser.add_argument("--negative-support", help="Negative support.  Slow, but necessary for completeness", action="store_true")
 
-    # check for find all counterexamples
-    elif '--find-all-counterexamples' == prevArg :
-      key = 'find-all-counterexamples'
-      val = currArg
-
-    # check for negative support
-    elif '--negative-support' == prevArg :
-      key = 'negative-support'
-      val = currArg
-
-    else :
-      # check for EOT
-      if ('-t' == prevArg) or ('--EOT' == prevArg) :
-        key = 'EOT'
-
-      # check for EFF
-      elif ('-f' == prevArg) or ('--EFF' == prevArg) :
-        key = 'EFF'
-
-      # check for crash info
-      elif ('-c' == prevArg) or ('--crashes' == prevArg) :
-        key = 'crashes'
-
-      # check for node info
-      elif ('-n' == prevArg) or ('-N' == prevArg) or ('--nodes' == prevArg) :
-        key = 'nodes'
-
-      # get value for key
-      val = currArg
-
-    if not (key == '') :    
-      argDict[ key ] = val            # save to dict
+  args = parser.parse_args()
+  print args
 
   return argDict
+
+#################
+#  END OF FILE  #
+#################
