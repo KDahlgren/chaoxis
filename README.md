@@ -13,6 +13,6 @@ pyLDIF is a Python implementation of the Lineage-Driven Fault Injection approach
 
 [Disorderly Labs](https://disorderlylabs.github.io)
 
-Molly is described in a [SIGMOD paper](http://people.ucsc.edu/~palvaro/molly.pdf).
+pyLDFI is an alternative to Molly, an implementation of LDFI written primarily in Scala. Molly is described in a [SIGMOD paper](http://people.ucsc.edu/~palvaro/molly.pdf).
 
 Dedalus is described [here](http://www.eecs.berkeley.edu/Pubs/TechRpts/2009/EECS-2009-173.html).
