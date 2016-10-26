@@ -87,13 +87,11 @@ def parseDedalus( dedFile ) :
   parsedLines = []
 
   # "always check if files exist" -- Olde SE proverb
-  goodFileFlag = False
   if os.path.isfile( dedFile ) :
-    goodFileFlag = True
-
-  if goodFileFlag :
     f = open( dedFile, "r" )
     for line in f :
+      if "/" == line[0] : # skip lines beginning with a comment
+        continue
       result = parse( line )
       if not result == None :
         parsedLines.append( result )

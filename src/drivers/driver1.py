@@ -19,7 +19,7 @@ import os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from datalogCompiler import datalogCompiler, dedalusParser
+from dedc import dedc, dedalusParser
 from utils import parseCommandLineInput
 from utils.Table import Table
 # ------------------------------------------------------ #
@@ -42,7 +42,7 @@ def parseArgs( argList ) :
 ##########################
 # parse dedalus programs
 def runDatalogCompiler( filename ) :
-  return datalogCompiler.runCompiler( filename )
+  return dedc.runCompiler( filename )
 
 ####################
 #  PASS TO SOLVER  #
