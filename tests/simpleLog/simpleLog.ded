@@ -22,4 +22,4 @@ log(Node, Pload)@next :- log(Node, Pload) ;
 log(Node2, Pload)@async :- bcast(Node1, Pload), node(Node1, Node2) ;
 
 // if a node sends a message, the event will be recorded in the node's personal log.
-log(Node, Pload) :- bcast(Node, Pload);
+log(Node, Pload) :- bcast(Node, Pload); //asdkjahsdf lkj

@@ -19,7 +19,7 @@ import os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from datalogCompiler import dedalusParser
+from datalogCompiler import datalogCompiler, dedalusParser
 from utils import parseCommandLineInput
 from utils.Table import Table
 # ------------------------------------------------------ #
@@ -37,12 +37,12 @@ def parseArgs( argList ) :
 
   return argDict
 
-#####################
-#  PARSE DED PROGS  #
-#####################
+##########################
+#  RUN DATALOG COMPILER  #
+##########################
 # parse dedalus programs
-def parseDedProg( filename ) :
-  return dedalusParser.parseDedalus( filename ) # program exits here if file cannot be opened.
+def runDatalogCompiler( filename ) :
+  return datalogCompiler.runCompiler( filename )
 
 ####################
 #  PASS TO SOLVER  #
@@ -85,11 +85,11 @@ def driver() :
   for key in argDict :
     if "file" in key : # key to a ded file
       dedfilename = argDict[ key ]
-      tables = parseDedProg( dedfilename )
-      factTable = tables[ "factTable" ] # fact table derived from this file
-      ruleTable = tables[ "ruleTable" ] # rule table derived from this file
-      fullFactTable.mergeTable( factTable ) # save to collective fact table
-      fullRuleTable.mergeTable( ruleTable ) # save to collective rule table
+      tables = runDatalogCompiler( dedfilename )
+      #factTable = tables[ "factTable" ] # fact table derived from this file
+      #ruleTable = tables[ "ruleTable" ] # rule table derived from this file
+      #fullFactTable.mergeTable( factTable ) # save to collective fact table
+      #fullRuleTable.mergeTable( ruleTable ) # save to collective rule table
     else : # this is not the ded file you're looking for. move along.
       continue # do nothing
 

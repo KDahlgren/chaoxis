@@ -9,41 +9,9 @@ import sys
 def parseCommandLineInput( argList ) :
   argDict = {}  # empty dict
 
-  # check for and parse ded files
-  numDedFiles = 0
-  for i in range( 0, len(argList) ) :
-    currArg = argList[i]            # current argument
-    prevArg = ""                    # initialize empty
-    key     = ""
-    val     = ""
-
-    if i > 0 :
-      prevArg = argList[i-1]        # previous argument
-
-    # check for ded files
-    if ".ded" in currArg :
-      key = "file" + str(numDedFiles)     # create unique key
-      val = currArg
-      numDedFiles = numDedFiles + 1  # increment ded file counter
-
-      # add file to dictionary
-      argDict[ key ] = val
-
-  # check if help menu requested
-  if ("-h" in argList)  or ("--help" in argList) :
-    example = """\nExample usage :
-       python """ + sys.argv[0] + " --file ./simplog.ded --file ./deliv_assert.ded" + """ \\
-       --EOT 4 \\
-       --EFF 2 \\
-       --nodes a,b,c \\
-       --crashes 0 \\
-       --prov-diagrams\n"""
-
-    print example
-
-  # parse all args except ded files
   parser = argparse.ArgumentParser()
 
+  # define all possible arguments here
   parser.add_argument("-t", "--EOT", type=int, help="end of time (default 3)", default = 3)
   parser.add_argument("-ff", "--EFF", type=int, help="end of finite failures (default 2)", default = 2)
   parser.add_argument("-f", "--file", help="input dedalus file (1 minimum required)", required=True) 
@@ -58,7 +26,13 @@ def parseCommandLineInput( argList ) :
   parser.add_argument("--negative-support", help="Negative support.  Slow, but necessary for completeness", action="store_true")
 
   args = parser.parse_args()
-  print args
+
+  # collect arguments and values in a dictionary
+  for a in vars(args) :
+    if a == 'nodes' :
+      argDict[a] = getattr(args, a).split(',')
+    else :
+      argDict[a] = getattr(args, a)
 
   return argDict
 
