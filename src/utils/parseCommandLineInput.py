@@ -16,7 +16,7 @@ def parseCommandLineInput( argList ) :
   parser.add_argument("-ff", "--EFF", type=int, help="end of finite failures (default 2)", default = 2)
   parser.add_argument("-f", "--file", help="input dedalus file (1 minimum required)", required=True) 
   parser.add_argument("-c", "--crashes", type=int, help="number of crash failures (default 0)", default = 0)
-  parser.add_argument("-n", "--nodes", type=str, help="a comma-separated set of nodes (required)", required=True)
+  parser.add_argument("-n", "--nodes", type=str, help="a comma-separated set of nodes indicating an all-to-all topology (optionally specify topology facts in input file(s))")
   parser.add_argument("--solver", type=str,  choices=['z3', 'sat4j', 'ilp'], help="the solver to use")
   parser.add_argument("--strategy", choices=['sat', 'random', 'pcausal'], help="the search strategy")
   parser.add_argument("--use-symmetry", help="use symmetry to skip equivalent failure scenarios", action="store_true")
@@ -30,7 +30,10 @@ def parseCommandLineInput( argList ) :
   # collect arguments and values in a dictionary
   for a in vars(args) :
     if a == 'nodes' :
-      argDict[a] = getattr(args, a).split(',')
+      try :
+        argDict[a] = getattr(args, a).split(',')
+      except :
+        argDict[a] = []
     else :
       argDict[a] = getattr(args, a)
 

@@ -37,13 +37,6 @@ def parseArgs( argList ) :
 
   return argDict
 
-##########################
-#  RUN DATALOG COMPILER  #
-##########################
-# parse dedalus programs
-def runDatalogCompiler( filename ) :
-  return dedc.runCompiler( filename )
-
 ####################
 #  PASS TO SOLVER  #
 ####################
@@ -77,23 +70,9 @@ def driver() :
   argDict = parseArgs( argList )
   print argDict
 
-  # parse ded files into tabular intermediate representation
-  fullFactTable = Table( "FACT" )
-  fullRuleTable = Table( "RULE" )
+  # compile all input dedalus files into a single datalog program
+  datalogProgPath = dedc.compileDedalus( argDict )
 
-  
-  for key in argDict :
-    if "file" in key : # key to a ded file
-      dedfilename = argDict[ key ]
-      tables = runDatalogCompiler( dedfilename )
-      #factTable = tables[ "factTable" ] # fact table derived from this file
-      #ruleTable = tables[ "ruleTable" ] # rule table derived from this file
-      #fullFactTable.mergeTable( factTable ) # save to collective fact table
-      #fullRuleTable.mergeTable( ruleTable ) # save to collective rule table
-    else : # this is not the ded file you're looking for. move along.
-      continue # do nothing
-
-  # convert into datalog
   # run through pydatalog, collect bindings ~ provenance
   # if buggy => output results
   # else => ...

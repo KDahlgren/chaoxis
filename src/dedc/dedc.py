@@ -8,6 +8,7 @@ packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
 from utils import extractors, sanityChecks, parseCommandLineInput
+import clockRelation
 import dedalusParser
 # ------------------------------------------------------ #
 
@@ -122,31 +123,54 @@ def dedToIR( filename, cursor ) :
 #################
 #  IR TO CLOCK  #
 #################
-# input nothing, assume IR successful
-# create clock relation in SQL database
+# input cursor and cmdline args, assume IR successful
+# create the initial clock relation in SQL database
 # output nothing
-def IRToClock( cursor ) :
+def IRToClock( cursor, argDict ) :
+  clockRelation.initClockRelation( cursor, argDict )
   return None
 
 ######################
 #  CLOCK TO DATALOG  #
 ######################
-# input nothing, assume IR successful
+# input db cursor and path to save file
 # read clock relation and generate datalog program
 # save datalog program to a file
-# output name of save file
-def clockToDatalog( cursor ) :
-  filename = ""
-  return filename
+# output nothing
+def clockToDatalog( cursor, datalogProgPath ) :
+  return None
 
 ##################
 #  RUN COMPILER  #
 ##################
-# input name of raw dedalus file
-# output contents in the tabular intermediate representations of rules and facts
+# input db cursor, name of raw dedalus file, cmdline args, and path to datalog savefile
+# convert ded files to IR
+# use IR or cmdline args to create clock relation
+# use IR and clock relation to create equivalent datalog program
+# output nothing
 
 # WARNING: CANNOT write rules or facts on multiple lines.
-def runCompiler( dedFile ) :
+def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
+  # ded to IR
+  dedToIR( dedFile, cursor )
+
+  # IR to clock
+  IRToClock( cursor, argDict )
+
+  # clock to datalog (write to file)
+  #clockToDatalog( cursor, datalogProgPath )
+
+  return None
+
+#####################
+#  COMPILE DEDALUS  #
+#####################
+# input command line arguments
+# output abs path to datalog program
+def compileDedalus( argDict ) :
+  datalogProgPath = os.getcwd() + "/run.datalog"
+
+  # instantiate IR database
   saveDB = os.getcwd() + "/IR.db"
   IRDB    = sqlite3.connect( saveDB ) # database for storing IR, stored in running script dir
   cursor  = IRDB.cursor()
@@ -159,36 +183,35 @@ def runCompiler( dedFile ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalTimeArg text, subgoalAdditionalArgs text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID text, attName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime text)''')
+  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime)''') # make all clock row unique
 
-  # ded to IR
-  dedToIR( dedFile, cursor )
+  # ----------------------------------------------------------------- #
 
-  # check for bugs
-  #facts = cursor.execute('''SELECT * FROM Fact''')
-  #for f in facts :
-  #  print f
-  #factatts = cursor.execute('''SELECT * FROM FactAtt''')
-  #for f in factatts :
-  #  print f
+  # compile all input dedalus files into a single datalog program
+  for key in argDict :
+    if "file" in key : # key to a ded file
+      dedfilename = argDict[ key ]
+      runCompiler( cursor, dedfilename, argDict, datalogProgPath )
+    else : # this is not the ded file you're looking for. move along.
+      continue # do nothing
 
-  # IR to clock
-  IRToClock( cursor )
+  # ----------------------------------------------------------------- #
 
-  # clock to datalog (write to file)
-  filename = clockToDatalog( cursor )
-
-  # drop all tables to clean up
+  # clear db  and clean up
   cursor.execute("DROP TABLE IF EXISTS Fact")
   cursor.execute("DROP TABLE IF EXISTS FactAtt")
   cursor.execute("DROP TABLE IF EXISTS Rule")
   cursor.execute("DROP TABLE IF EXISTS Subgoals")
   cursor.execute("DROP TABLE IF EXISTS SubgoalAtt")
   cursor.execute("DROP TABLE IF EXISTS GoalAtt")
+  cursor.execute("DROP TABLE IF EXISTS Clock")
+  cursor.execute("DROP INDEX IF EXISTS IDX_Clock")
 
   IRDB.close()        # close db
   os.remove( saveDB ) # delete the IR file to clean up
 
-  return filename
+  return datalogProgPath
 
 #########
 #  EOF  #
