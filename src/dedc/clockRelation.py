@@ -25,12 +25,13 @@ def initClockRelation( cursor, argDict) :
   if argDict[ "nodes" ] :
     print "Using node topology from command line: " + str(argDict[ "nodes" ]) 
 
-    nodeSet         = argDict[ "nodes" ]
-    defaultSendTime = '1'
+    nodeSet          = argDict[ "nodes" ]
+    defaultSendTime  = '1'
+    defaultDelivTime = 'NULL'
 
     for n1 in nodeSet :
       for n2 in nodeSet :
-        cursor.execute("INSERT INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + defaultSendTime + "')")
+        cursor.execute("INSERT INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + defaultSendTime + "','" + defaultDelivTime + "')")
 
     # double check success
     #clock = cursor.execute('''SELECT * FROM Clock''')

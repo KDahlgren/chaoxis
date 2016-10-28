@@ -183,8 +183,8 @@ def compileDedalus( argDict ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalTimeArg text, subgoalAdditionalArgs text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID text, attName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime text)''')
-  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime)''') # make all clock row unique
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime text, delivTime text)''')
+  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique
 
   # ----------------------------------------------------------------- #
 
