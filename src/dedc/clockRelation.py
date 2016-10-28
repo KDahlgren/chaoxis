@@ -123,3 +123,7 @@ def initClockRelation( cursor, argDict) :
 # output nothing
 def buildClockRelation( cursor ) :
   return None
+
+#########
+#  EOF  #
+#########

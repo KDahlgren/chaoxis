@@ -39,6 +39,6 @@ def parseCommandLineInput( argList ) :
 
   return argDict
 
-#################
-#  END OF FILE  #
-#################
+#########
+#  EOF  #
+#########

@@ -21,7 +21,6 @@ sys.path.append( packagePath )
 
 from dedc import dedc, dedalusParser
 from utils import parseCommandLineInput
-from utils.Table import Table
 # ------------------------------------------------------ #
 
 # **************************************** #
