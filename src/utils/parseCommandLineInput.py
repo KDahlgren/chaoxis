@@ -12,7 +12,7 @@ import sys
 ##############################
 #  PARSE COMMAND LINE INPUT  #
 ##############################
-def parseCommandLineInput( argList ) :
+def parseCommandLineInput( ) :
   argDict = {}  # empty dict
 
   parser = argparse.ArgumentParser()

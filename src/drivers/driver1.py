@@ -29,10 +29,10 @@ from utils import parseCommandLineInput
 #  PARSE ARGS  #
 ################
 # parse arguments from the command line
-def parseArgs( argList ) :
+def parseArgs( ) :
   argDict = {}   # empty dict
 
-  argDict = parseCommandLineInput.parseCommandLineInput( argList )  # get dictionary of arguments.
+  argDict = parseCommandLineInput.parseCommandLineInput( )  # get dictionary of arguments.
 
   return argDict
 
@@ -66,7 +66,7 @@ def driver() :
     sys.exit()
 
   # pass list to parse args, get dict of args
-  argDict = parseArgs( argList )
+  argDict = parseArgs( )
   print argDict
 
   # compile all input dedalus files into a single datalog program
