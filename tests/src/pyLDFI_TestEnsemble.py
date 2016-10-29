@@ -19,10 +19,10 @@ import os, sys, unittest
 
 from Utils_Tests import Utils_Tests
 from Dedc_Tests  import Dedc_Tests
-#from DerivTools_Tests import DerivTools_Tests
-#from Evaluators_Tests import Evaluators_Tests
-#from Solvers_Tests import Solvers_Tests
-#from VizTools_Tests import VizTools_Tests
+from DerivTools_Tests import DerivTools_Tests
+from Evaluators_Tests import Evaluators_Tests
+from Solvers_Tests import Solvers_Tests
+from VizTools_Tests import VizTools_Tests
 # ------------------------------------------------------ #
 
 #########################
@@ -46,12 +46,23 @@ if __name__ == "__main__" :
 
   print "\n\n******************"
   print ">> DerivTools_Tests"
+  suite = unittest.TestLoader().loadTestsFromTestCase( DerivTools_Tests )
+  unittest.TextTestRunner( verbosity=2 ).run( suite )
+
   print "\n\n******************"
   print ">> Evaluators_Tests"
+  suite = unittest.TestLoader().loadTestsFromTestCase( Evaluators_Tests )
+  unittest.TextTestRunner( verbosity=2 ).run( suite )
+
   print "\n\n******************"
   print ">> Solvers_Tests"
+  suite = unittest.TestLoader().loadTestsFromTestCase( Solvers_Tests )
+  unittest.TextTestRunner( verbosity=2 ).run( suite )
+
   print "\n\n******************"
   print ">> VizTools_Tests"
+  suite = unittest.TestLoader().loadTestsFromTestCase( VizTools_Tests )
+  unittest.TextTestRunner( verbosity=2 ).run( suite )
 
   print "*****************************************************"
 
