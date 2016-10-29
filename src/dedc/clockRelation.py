@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+'''
+clockRelation.py
+   Define the functionality for creating clock relations.
+'''
+
 import os, sys
 
 # ------------------------------------------------------ #

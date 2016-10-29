@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+'''
+dedc.py
+   Define the functionality for converting parsed Dedalus into 
+   SQL relations (the intermediate representation).
+'''
+
 import os, random, sqlite3, sys
 
 # ------------------------------------------------------ #
@@ -56,6 +62,7 @@ def dedToIR( filename, cursor ) :
 
       subgoalList = extractors.extractSubgoalList( line[1] )
 
+      # check for bugs
       print "goal        = " + str(goal)
       print "goalName    = " + str(goalName)
       print "goalAttList = " + str(goalAttList)

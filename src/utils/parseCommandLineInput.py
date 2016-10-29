@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+'''
+parseCommandLineInput.py
+   Use argparse to cleanly extract arguments provided
+   at the commandline.
+'''
+
 import argparse
 import sys
 

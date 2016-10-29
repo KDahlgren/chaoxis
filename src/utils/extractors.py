@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+'''
+extractors.py
+  Define the functionality for extracting fact, goal, 
+  and subgoal information from Dedalus facts and rules.
+'''
+
 import os, random, sqlite3, sys
 
 # ------------------------------------------------------ #
@@ -18,24 +24,27 @@ specialOps = ["notin"]
 ############################
 # input parsed subgoal
 # output list of additional args
+
 def extractAdditionalArgs( parsedSubgoal ) :
   addList    = []
 
-  for t in parsedSubgoal :
+  for t in parsedSubgoal : # additional args are special ops
     if t in specialOps :
       addList.append( t )
 
   return addList
+
 
 ##################
 #  EXTRACT GOAL  #
 ##################
 # input rule
 # output goal array
+
 def extractGoal( parsedLine ) :
   goal = []
 
-  for c in parsedLine :
+  for c in parsedLine : # goal is anything appearing to the left of a ':-'
     if not c == ":-" :
       goal.append( c )
     else :
@@ -43,11 +52,13 @@ def extractGoal( parsedLine ) :
 
   return goal
 
+
 ##########################
 #  EXTRACT SUBGOAL LIST  #
 ##########################
 # input rule
 # ouput list of subgoal arrays
+
 def extractSubgoalList( parsedLine ) :
   subgoalList = []
 
@@ -84,15 +95,17 @@ def extractSubgoalList( parsedLine ) :
 
   return subgoalList
 
+
 ######################
 #  EXTRACT TIME ARG  #
 ######################
 # input fact or goal or subgoal
 # output time arg
+
 def extractTimeArg( parsedLine ) :
   timeArg = ""
 
-  for i in range(0, len(parsedLine)) :
+  for i in range(0, len(parsedLine)) : # time arg immediately succeeds an ampersand
     if parsedLine[i] == "@" :
       try :
         timeArg = parsedLine[i+1]
@@ -101,17 +114,19 @@ def extractTimeArg( parsedLine ) :
 
   return timeArg
 
+
 ######################
 #  EXTRACT ATT LIST  #
 ######################
 # input fact or goal or subgoal
 # output attribute list
+
 def extractAttList( parsedLine ) :
   saveFlag  = False
   skipChars = [ ",", "'", '"', " ", ";" ]
   attList   = []
  
-  for item in parsedLine : 
+  for item in parsedLine : # save everything except the skip chars
     if item == '(' :
       saveFlag = True
       continue
@@ -125,23 +140,28 @@ def extractAttList( parsedLine ) :
 
   return attList
 
+
 ##########################
 #  EXTRACT SUBGOAL NAME  #
 ##########################
 # input parsed subgoal
 # output name of subgoal
+
 def extractSubgoalName( parsedSubgoal ) :
   for t in parsedSubgoal :
-    if not t in specialOps :
+    if not t in specialOps : # assume special operations only precede subgoal names
       return t
+
 
 ##################
 #  EXTRACT NAME  #
 ##################
 # input fact or goal
 # output name of fact or goal
+
 def extractName( parsedLine ) :
-  return parsedLine[0]
+  return parsedLine[0] # assume name is the zeroth item in the parsed array
+
 
 #########
 #  EOF  #

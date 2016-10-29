@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 '''
-*********************
-*  Example driver  **
-*********************
+driver1.py
+  A driver exemplifying the orchestration of the
+  implemented LDFI workflow.
 '''
 
 # **************************************** #

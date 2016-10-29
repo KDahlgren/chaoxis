@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+'''
+sanityChecks.py
+   A storage location for generally applicable methods used to
+   sanity-check particular properties.
+'''
+
 import os, sys
 
 #######################

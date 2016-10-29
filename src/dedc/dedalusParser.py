@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+'''
+dedalusParser.py
+   Define the functionality for parsing Dedalus files.
+'''
+
 import os, sys
 from pyparsing import alphanums, nums, Word, Literal, ZeroOrMore, Optional, White
 
@@ -86,7 +91,7 @@ def parse( dedLine ) :
 def parseDedalus( dedFile ) :
   parsedLines = []
 
-  # "always check if files exist" -- Olde SE proverb
+  # "always check if files exist" -- Ye Olde SE proverb
   if os.path.isfile( dedFile ) :
     f = open( dedFile, "r" )
     for line in f :
