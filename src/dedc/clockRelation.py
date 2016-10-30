@@ -25,23 +25,26 @@ def initClockRelation( cursor, argDict) :
   # check if node topology defined in Fact relation
   nodeFacts = cursor.execute('''SELECT name FROM Fact WHERE Fact.name == "node"''')
 
+  defaultStartSendTime  = '1'
+  maxSendTime           = argDict[ "EOT" ]
+  defaultDelivTime      = 'NULL'
+
   # --------------------------------------------------------------------- #
   # prefer cmdline topology
   if argDict[ "nodes" ] :
     print "Using node topology from command line: " + str(argDict[ "nodes" ]) 
 
     nodeSet          = argDict[ "nodes" ]
-    defaultSendTime  = '1'
-    defaultDelivTime = 'NULL'
 
-    for n1 in nodeSet :
-      for n2 in nodeSet :
-        cursor.execute("INSERT INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + defaultSendTime + "','" + defaultDelivTime + "')")
+    for i in range( int(defaultStartSendTime), int(maxSendTime)+1 ) :
+      for n1 in nodeSet :
+        for n2 in nodeSet :
+          cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + defaultDelivTime + "')")
 
     # double check success
-    #clock = cursor.execute('''SELECT * FROM Clock''')
-    #for c in clock :
-    #  print c
+    clock = cursor.execute('''SELECT * FROM Clock''')
+    for c in clock :
+      print c
 
   # --------------------------------------------------------------------- #
   # otherwise use topology from input files
@@ -81,11 +84,15 @@ def initClockRelation( cursor, argDict) :
         topology.append( connection )
 
     # save connections as clock entries
-    for conn in topology :
-      src     = conn[0]
-      dest    = conn[1]
-      sndTime = conn[2]
-      cursor.execute("INSERT INTO Clock VALUES ('" + src + "','" + dest + "','" + sndTime + "')")
+    for i in range( int(defaultStartSendTime), int(maxSendTime)+1 ) :
+      for conn in topology :
+        src        = conn[0]
+        dest       = conn[1]
+        sndTime    = conn[2] # unicode raw
+        newSndTime = sndTime.encode('utf-8')
+
+        if i >= int( newSndTime ) :
+          cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + str(i) + "','" + defaultDelivTime + "')") # ignore duplicates
 
     # collect total node set
     nodeSet = []
@@ -95,19 +102,12 @@ def initClockRelation( cursor, argDict) :
       elif not conn[1] in nodeSet :
         nodeSet.append( conn[1] )
 
-    # assume all nodes have self connection at time 1
+    # assume all nodes have self connection at time 1 (may not be specified in input file)
     for n in nodeSet :
       src     = n
       dest    = n
       sndTime = "1"
-      cursor.execute("INSERT OR REPLACE INTO Clock VALUES ('" + src + "','" + dest + "','" + sndTime + "')")
-
-    # assume all nodes have self connection at time 1
-    for n in nodeSet :
-      src     = n
-      dest    = n
-      sndTime = "1"
-      cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + sndTime + "')") # ignore duplicates
+      cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + sndTime + "','" + defaultDelivTime + "')") # ignore duplicates
 
     # double check success
     print "Clock relation :"

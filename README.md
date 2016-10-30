@@ -8,6 +8,8 @@ pyLDIF is a Python implementation of the Lineage-Driven Fault Injection approach
 2. cd pyLDFI/tests/simpleLog/
 3. bash run.sh
 4. If the string "TEST PASSED" appears, then your computer has all the necessary packages to run the current version of the program. Otherwise, please consult the output for more information.
+5. Next, cd into pyLDFI/tests/pyLDFI\_UnitTests/
+6. Run "python pyLDFI\_TestEnsemble.py". If all the tests pass, then the current functionality supported by the testing framework works on your computer.
 
 ## Dependencies
 Python Packages :
