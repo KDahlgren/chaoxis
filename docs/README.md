@@ -1,3 +1,3 @@
-## Docs file info
+## Docs/
 
 Populate with documentation resources.
