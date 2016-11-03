@@ -6,25 +6,38 @@ dedc.py
    SQL relations (the intermediate representation).
 '''
 
-import os, random, sqlite3, sys
+'''
+IR SCHEMA:
+
+Fact           (fid text, name text, timeArg text)
+FactAtt        (fid text, attID int, attName text)
+Rule           (rid text, goalName text, goalTimeArg text)
+GoalAtt        (rid text, attID int, attName text)
+Subgoals       (rid text, sid text, subgoalName text, subgoalTimeArg text)
+SubgoalAtt     (rid text, sid text, attID int, attName text)
+SubgoalAddArgs (rid text, sid text, argName text)
+Clock          (src text, dest text, sndTime text, delivTime text)
+
+'''
+
+import os, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from utils import extractors, sanityChecks, parseCommandLineInput
+from utils import extractors, tools, parseCommandLineInput
 import clockRelation
 import dedalusParser
+import dedalusRewriter
+import provenanceRewriter
 # ------------------------------------------------------ #
 
-###################
-#  GET RANDOM ID  #
-###################
-# input nothing
-# output random 16 char alphanumeric id
-def getID() :
-  return "".join( random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ') for i in range(16) )
+#############
+#  GLOBALS  #
+#############
+DEDC_DEBUG = 0
 
 ###############
 #  DED TO IR  #
@@ -43,7 +56,7 @@ def dedToIR( filename, cursor ) :
       timeArg = extractors.extractTimeArg( line[1] )
 
       # generate random ID for fact
-      fid = getID()
+      fid = tools.getID()
 
       # save fact name and time arg
       cursor.execute("INSERT INTO Fact VALUES ('" + fid + "','" + name + "','" + timeArg + "')")
@@ -63,13 +76,14 @@ def dedToIR( filename, cursor ) :
       subgoalList = extractors.extractSubgoalList( line[1] )
 
       # check for bugs
-      print "goal        = " + str(goal)
-      print "goalName    = " + str(goalName)
-      print "goalAttList = " + str(goalAttList)
-      print "goalTimeArg = " +  str(goalTimeArg)
+      if DEDC_DEBUG :
+        print "goal        = " + str(goal)
+        print "goalName    = " + str(goalName)
+        print "goalAttList = " + str(goalAttList)
+        print "goalTimeArg = " +  str(goalTimeArg)
 
       # generate random ID for goal
-      rid = getID()
+      rid = tools.getID()
 
       # save rule goal name and goal time arg
       cursor.execute("INSERT INTO Rule VALUES ('" + rid + "','" + goalName + "','" + goalTimeArg + "')")
@@ -88,14 +102,14 @@ def dedToIR( filename, cursor ) :
         subgoalAddArgs = extractors.extractAdditionalArgs( sub ) # returns list
 
         # generate random ID for subgoal
-        sid = getID()
+        sid = tools.getID()
 
-        # save name, time arg, and additional args
+        # save name and time arg
         cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')")
 
         # save subgoal attributes
         attID = 0 # allows duplicate attributes in list
-        for attName in goalAttList :
+        for attName in subgoalAttList :
           cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(attID) + "','" + attName + "')")
           attID += 1
 
@@ -104,26 +118,27 @@ def dedToIR( filename, cursor ) :
           cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + addArg + "')")
 
       # check for bugs
-      print "Rule :"
-      Rule = cursor.execute('''SELECT * FROM Rule''')
-      for r in Rule :
-        print r
-      print "GoalAtt :"
-      GoalAtt = cursor.execute('''SELECT * FROM GoalAtt''')
-      for g in GoalAtt :
-        print g
-      print "Subgoals :"
-      Subgoals = cursor.execute('''SELECT * FROM Subgoals''')
-      for s in Subgoals :
-        print s
-      print "SubgoalsAtt :"
-      SubgoalAtt = cursor.execute('''SELECT * FROM SubgoalAtt''')
-      for s in SubgoalAtt :
-        print s
-      print "SubgoalAdd :"
-      SubgoalAdd = cursor.execute('''SELECT * FROM SubgoalAddArgs''')
-      for s in SubgoalAdd :
-        print s
+      if DEDC_DEBUG :
+        print "Rule :"
+        Rule = cursor.execute('''SELECT * FROM Rule''')
+        for r in Rule :
+          print r
+        print "GoalAtt :"
+        GoalAtt = cursor.execute('''SELECT * FROM GoalAtt''')
+        for g in GoalAtt :
+          print g
+        print "Subgoals :"
+        Subgoals = cursor.execute('''SELECT * FROM Subgoals''')
+        for s in Subgoals :
+          print s
+        print "SubgoalsAtt :"
+        SubgoalAtt = cursor.execute('''SELECT * FROM SubgoalAtt''')
+        for s in SubgoalAtt :
+          print s
+        print "SubgoalAdd :"
+        SubgoalAdd = cursor.execute('''SELECT * FROM SubgoalAddArgs''')
+        for s in SubgoalAdd :
+          print s
 
   return None
 
@@ -137,14 +152,14 @@ def IRToClock( cursor, argDict ) :
   clockRelation.initClockRelation( cursor, argDict )
   return None
 
-######################
-#  CLOCK TO DATALOG  #
-######################
-# input db cursor and path to save file
-# read clock relation and generate datalog program
-# save datalog program to a file
+########################
+#  REWRITE TO DATALOG  #
+########################
+# input cursor, assume IR successful
 # output nothing
-def clockToDatalog( cursor, datalogProgPath ) :
+def RewriteToDatalog( cursor ) :
+  dedalusRewriter.rewriteDedalus( cursor )
+  provenanceRewriter.rewriteProvenance( cursor )
   return None
 
 ##################
@@ -164,8 +179,8 @@ def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
   # IR to clock
   IRToClock( cursor, argDict )
 
-  # clock to datalog (write to file)
-  #clockToDatalog( cursor, datalogProgPath )
+  # dedalus and provenance rewrite to datalog
+  RewriteToDatalog( cursor )
 
   return None
 
@@ -184,11 +199,11 @@ def compileDedalus( argDict ) :
 
   # create tables
   cursor.execute('''CREATE TABLE IF NOT EXISTS Fact       (fid text, name text, timeArg text)''')    # fact names
-  cursor.execute('''CREATE TABLE IF NOT EXISTS FactAtt    (fid text, attID text, attName text)''')   # fact attributes list
+  cursor.execute('''CREATE TABLE IF NOT EXISTS FactAtt    (fid text, attID int, attName text)''')   # fact attributes list
   cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID text, attName text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalTimeArg text, subgoalAdditionalArgs text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID text, attName text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalName text, subgoalTimeArg text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime text, delivTime text)''')
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique

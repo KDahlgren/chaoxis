@@ -25,10 +25,6 @@ from dedc import dedc, dedalusParser, clockRelation
 ################
 class Dedc_Tests( unittest.TestCase ) :
 
-  def test_getID_dedc( self ) :
-    outputResult = 16
-    self.assertEqual( len( dedc.getID( ) ), outputResult )
-
   def test_dedToIR_dedc( self ) :
     return None
 

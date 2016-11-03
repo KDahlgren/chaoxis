@@ -12,8 +12,13 @@ import os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from utils import sanityChecks, parseCommandLineInput
+#from utils import parseCommandLineInput
 # ------------------------------------------------------ #
+
+#############
+#  GLOBALS  #
+#############
+CLOCKRELATION_DEBUG = 0
 
 #########################
 #  INIT CLOCK RELATION  #
@@ -21,7 +26,7 @@ from utils import sanityChecks, parseCommandLineInput
 # input IR database cursor and cmdline input
 # create initial clock relation
 # output nothing
-def initClockRelation( cursor, argDict) :
+def initClockRelation( cursor, argDict ) :
   # check if node topology defined in Fact relation
   nodeFacts = cursor.execute('''SELECT name FROM Fact WHERE Fact.name == "node"''')
 
@@ -41,10 +46,11 @@ def initClockRelation( cursor, argDict) :
         for n2 in nodeSet :
           cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + defaultDelivTime + "')")
 
-    # double check success
-    clock = cursor.execute('''SELECT * FROM Clock''')
-    for c in clock :
-      print c
+    # check for bugs
+    if CLOCKRELATION_DEBUG :
+      clock = cursor.execute('''SELECT * FROM Clock''')
+      for c in clock :
+        print c
 
   # --------------------------------------------------------------------- #
   # otherwise use topology from input files
@@ -52,6 +58,7 @@ def initClockRelation( cursor, argDict) :
     print "Using node topology from input file(s)."
 
     # collect all connection info
+    # assumes topology facts characterized by name == "node"
     cursor.execute('''SELECT Fact.fid, FactAtt.attID, FactAtt.attName, Fact.timeArg FROM Fact, FactAtt WHERE Fact.fid == FactAtt.fid AND Fact.name == "node"''')
 
     # collect connections

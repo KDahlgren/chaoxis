@@ -13,7 +13,7 @@ from pyparsing import alphanums, nums, Word, Literal, ZeroOrMore, Optional, Whit
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from utils import sanityChecks, parseCommandLineInput
+#from utils import tools, parseCommandLineInput
 # ------------------------------------------------------ #
 
 ##################
@@ -38,31 +38,37 @@ def cleanResult( result ) :
 def parse( dedLine ) :
   # basic grammar
   paren    = Word( "()", exact=1 )
-  name     = Word( alphanums )
+  name     = Word( alphanums + "_" )
   amp      = Literal( "@" )
-  
+  dquote   = Literal( '"' )
+  squote   = Literal( "'" )
+ 
   prepend  = Literal( "notin" )
 
   numArg   = Word( nums )
   nextArg  = Literal( "next" )
   asyncArg = Literal( "async" )
   timeArg  = numArg | nextArg | asyncArg
-  
-  baseAtt  = Word( alphanums )
-  att1     = Optional('"') + baseAtt + Optional('"')
-  att2     = Optional("'") + baseAtt + Optional("'")
-  att      = att1 | att2
+
+  empty    = Word( "_" )
+  baseAtt  = Word( alphanums ) | empty
+  fatt1    = dquote + baseAtt + dquote #fact attribute version 1
+  fatt2    = squote + baseAtt + squote #fact attribute version 2
+  fatt     = fatt1 | fatt2
+  ratt     = baseAtt                   # rule attribute
   semi     = Literal( ";" )
-  attList  = att + ZeroOrMore( Optional(",") + Optional( White() ) + att )
+
+  fattList  = fatt + ZeroOrMore( Optional(",") + Optional( White() ) + fatt )
+  rattList  = ratt + ZeroOrMore( Optional(",") + Optional( White() ) + ratt )
   
   comment  = Literal( "//" )
-  commentLine  = ZeroOrMore( comment + alphanums )
+  commentLine  = ZeroOrMore( comment + alphanums + "_" )
   
   # define a fact
-  fact = (name + paren + attList + paren + semi + commentLine) | (name + paren + attList + paren + amp + timeArg + semi + commentLine) | (prepend + name + paren + attList + paren + semi + commentLine) | (prepend + name + paren + attList + paren + amp + timeArg + semi + commentLine)
+  fact = (name + paren + fattList + paren + semi + commentLine) | (name + paren + fattList + paren + amp + timeArg + semi + commentLine) | (prepend + name + paren + fattList + paren + semi + commentLine) | (prepend + name + paren + fattList + paren + amp + timeArg + semi + commentLine)
   
   # define a rule
-  goal        = name + paren + attList + paren + ZeroOrMore(amp + timeArg) 
+  goal        = name + paren + rattList + paren + ZeroOrMore(amp + timeArg) 
   subgoal     = (goal + Optional( Optional( White() ) + semi + Optional(commentLine) )) | (prepend + goal + Optional( Optional( White() ) + semi ) + Optional(commentLine))
   subgoalList = subgoal + ZeroOrMore( Optional(",") + Optional( White() ) + subgoal )
   ruleOp      = Literal( ":-" )
@@ -71,13 +77,19 @@ def parse( dedLine ) :
   # return tuples
   if ";" in dedLine :
     if ":-" in dedLine :
-      result = rule.parseString( dedLine )
-      ret    = cleanResult( result )
-      return ("rule", ret)
+      try :
+        result = rule.parseString( dedLine )
+        ret    = cleanResult( result )
+        return ("rule", ret)
+      except :
+        sys.exit( "\nERROR: Invalid syntax in rule line : " + dedLine + "Note rule attributes cannot have quotes.\n")
     else :
-      result = fact.parseString( dedLine )
-      ret    = cleanResult( result )
-      return ("fact", ret)
+      try :
+        result = fact.parseString( dedLine )
+        ret    = cleanResult( result )
+        return ("fact", ret)
+      except :
+        sys.exit( "\nERROR: Invalid syntax in fact line : " + dedLine + "Note fact attributes must be surrounded by quotes.\n" )
   else :
     return None
 
