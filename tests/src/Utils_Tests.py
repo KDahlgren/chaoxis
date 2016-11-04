@@ -16,7 +16,7 @@ import os, sys, unittest
 packagePath  = os.path.abspath( __file__ + "/../../../src" )
 sys.path.append( packagePath )
 
-from utils import sanityChecks, extractors
+from utils import tools, extractors
 # ------------------------------------------------------ #
 
 
@@ -25,10 +25,14 @@ from utils import sanityChecks, extractors
 ################
 class Utils_Tests( unittest.TestCase ) :
 
-  def test_checkParentheses_sanityChecks( self ) :
+  def test_getID_tools( self ) :
+    outputResult = 16
+    self.assertEqual( len( tools.getID( ) ), outputResult )
+
+  def test_checkParentheses_tools( self ) :
     inputArg  = "node(Node, Neighbor)@next :- node(Node, Neighbor) ;"
     outputResult = True
-    self.assertEqual( sanityChecks.checkParentheses( inputArg ), outputResult )
+    self.assertEqual( tools.checkParentheses( inputArg ), outputResult )
 
   def test_extractAdditionalArgs_extractors( self ) :
     inputArg  = [ 'notin', 'node', '(', 'Node', ',', 'Neighbor', ')' ]

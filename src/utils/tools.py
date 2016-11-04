@@ -1,12 +1,20 @@
 #!/usr/bin/env python
 
 '''
-sanityChecks.py
+tools.py
    A storage location for generally applicable methods used to
    sanity-check particular properties.
 '''
 
-import os, sys
+import os, random, sys
+
+############
+#  GET ID  #
+############
+# input nothing
+# output random 16 char alphanumeric id
+def getID() :
+  return "".join( random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ') for i in range(16) )
 
 #######################
 #  CHECK PARENTHESES  #
