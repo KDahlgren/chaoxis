@@ -91,7 +91,64 @@ class Dedc_Tests( unittest.TestCase ) :
       dedalusParser.parseDedalus(inputArg)
     self.assertIn("ERROR",cm.exception.code)
 
- 
+########################
+#  CLOCKRELATION TESTS  #
+#########################
+  def test_initClockRelation_clockRelation(self):
+    return None
+    
+  def test_buildClockRelation_clockRelation(self):
+    return None
+    
+########################
+#  DEDALUSREWRITER TESTS  #
+#########################
+  def test_clean_dedalusRewriter(self):
+    return None 
+    
+  def test_ruleDump_dedalusRewriter(self):
+    return None  
+    
+ def test_getDeductiveRuleIDs_dedalusRewriter(self):
+    return None 
+    
+ def test_getInductiveRuleIDs_dedalusRewriter(self):
+    return None     
+
+ def test_getAsynchronousRuleIDs_dedalusRewriter(self):
+    return None  
+    
+ def test_getSubgoalsIDs_dedalusRewriter(self):
+    return None   
+
+def test_getSubgoalAtts_dedalusRewriter(self):
+    return None
+    
+def test_rewriteDeductive_dedalusRewriter(self):
+    return None 
+   
+def test_rewriteInductive_dedalusRewriter(self):
+    return None
+
+def test_rewriteAsynchronous_dedalusRewriter(self):
+    return None
+    
+def test_rewriteDedalus_dedalusRewriter(self):
+    return None
+    
+##############################
+#  PROVENANCEREWRITER TESTS  #
+##############################
+ def test_aggRuleProv_provenanceRewriter(self):
+    return None 
+    
+ def test_getProv_provenanceRewriter(self):
+    return None  
+    
+ def test_rewriteProvenance_provenanceRewriter(self):
+    return None  
+    
+    
 #########################
 #  THREAD OF EXECUTION  #
 #########################
