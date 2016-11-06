@@ -15,8 +15,11 @@ import os, sys, unittest
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../../../src" )
 sys.path.append( packagePath )
+testPath = os.path.abspath(__file__+"/../../../tests")
+
 
 from dedc import dedc, dedalusParser, clockRelation
+
 # ------------------------------------------------------ #
 
 
@@ -39,6 +42,54 @@ class Dedc_Tests( unittest.TestCase ) :
 
   def test_compileDedalus_dedc( self ) :
     return None
+    
+########################
+#  DEDALUSPARSER TESTS  #
+#########################
+  def test_cleanResult_dedalusParser(self):
+    return None 
+
+  def test_parse_dedalusParser(self):
+    #test detecting facts
+    inputArg  = "watch('test', 'test')@1;"
+    outputResult = "fact"
+    self.assertEqual(dedalusParser.parse(inputArg)[0],outputResult)
+    
+    #test detecting rules
+    inputArg  = "node(Node, Neighbor)@next :- node(Node, Neighbor);"
+    outputResult = "rule"
+    self.assertEqual(dedalusParser.parse(inputArg)[0],outputResult)
+    
+    #test detecting improper dedalus
+    inputArg  = "improper dedalus"
+    outputResult = None
+    self.assertEqual(dedalusParser.parse(inputArg),outputResult)
+        
+    inputArg  = "improper ; dedalus"
+    with self.assertRaises(SystemExit) as cm:
+        dedalusParser.parse(inputArg)
+    self.assertIn("ERROR",cm.exception.code)
+        
+    inputArg  = "'improper' :- 'dedalus' :- ;"
+    with self.assertRaises(SystemExit) as cm:
+      dedalusParser.parse(inputArg)
+    self.assertIn("ERROR",cm.exception.code)
+
+  def test_parseDedalus_dedalusParser(self): 
+    #testing file parsing
+    inputArg  = testPath+"\_testfiles\_testSingleLine.ded"
+    outputResult = [('fact', ['node', '(', '"', 'a', '"', ',', ' ',\
+    '"', 'b', '"', ')', '@', '1', ';'])]
+    self.assertEqual(dedalusParser.parseDedalus(inputArg),outputResult)
+    
+    inputArg  = testPath+"\_testfiles\_testComments.ded"
+    outputResult = []
+    self.assertEqual(dedalusParser.parseDedalus(inputArg),outputResult)
+     
+    inputArg  = "nonexistentfile.ded"
+    with self.assertRaises(SystemExit) as cm:
+      dedalusParser.parseDedalus(inputArg)
+    self.assertIn("ERROR",cm.exception.code)
 
  
 #########################
@@ -46,7 +97,8 @@ class Dedc_Tests( unittest.TestCase ) :
 #########################
 # use this main if running this script exclusively.
 if __name__ == "__main__" :
-  unittest.main( verbosity=2 )
+    dedalusParser.parse("pipeline(H, I, F, N)@async :- pipeline(M, I, F, N), datanode(M, H, _);")
+    unittest.main( verbosity=2 )
 
 
 #########
