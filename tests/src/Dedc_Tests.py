@@ -41,6 +41,8 @@ class Dedc_Tests( unittest.TestCase ) :
     return None
 
   def test_compileDedalus_dedc( self ) :
+    
+  
     return None
     
 ########################
@@ -109,43 +111,43 @@ class Dedc_Tests( unittest.TestCase ) :
   def test_ruleDump_dedalusRewriter(self):
     return None  
     
- def test_getDeductiveRuleIDs_dedalusRewriter(self):
+  def test_getDeductiveRuleIDs_dedalusRewriter(self):
     return None 
     
- def test_getInductiveRuleIDs_dedalusRewriter(self):
+  def test_getInductiveRuleIDs_dedalusRewriter(self):
     return None     
 
- def test_getAsynchronousRuleIDs_dedalusRewriter(self):
+  def test_getAsynchronousRuleIDs_dedalusRewriter(self):
     return None  
     
- def test_getSubgoalsIDs_dedalusRewriter(self):
+  def test_getSubgoalsIDs_dedalusRewriter(self):
     return None   
 
-def test_getSubgoalAtts_dedalusRewriter(self):
+  def test_getSubgoalAtts_dedalusRewriter(self):
     return None
     
-def test_rewriteDeductive_dedalusRewriter(self):
+  def test_rewriteDeductive_dedalusRewriter(self):
     return None 
    
-def test_rewriteInductive_dedalusRewriter(self):
+  def test_rewriteInductive_dedalusRewriter(self):
     return None
 
-def test_rewriteAsynchronous_dedalusRewriter(self):
+  def test_rewriteAsynchronous_dedalusRewriter(self):
     return None
     
-def test_rewriteDedalus_dedalusRewriter(self):
+  def test_rewriteDedalus_dedalusRewriter(self):
     return None
     
 ##############################
 #  PROVENANCEREWRITER TESTS  #
 ##############################
- def test_aggRuleProv_provenanceRewriter(self):
+  def test_aggRuleProv_provenanceRewriter(self):
     return None 
     
- def test_getProv_provenanceRewriter(self):
+  def test_getProv_provenanceRewriter(self):
     return None  
     
- def test_rewriteProvenance_provenanceRewriter(self):
+  def test_rewriteProvenance_provenanceRewriter(self):
     return None  
     
     
@@ -154,7 +156,6 @@ def test_rewriteDedalus_dedalusRewriter(self):
 #########################
 # use this main if running this script exclusively.
 if __name__ == "__main__" :
-    dedalusParser.parse("pipeline(H, I, F, N)@async :- pipeline(M, I, F, N), datanode(M, H, _);")
     unittest.main( verbosity=2 )
 
 
