@@ -49,7 +49,9 @@ class Dedc_Tests( unittest.TestCase ) :
 #  DEDALUSPARSER TESTS  #
 #########################
   def test_cleanResult_dedalusParser(self):
-    return None 
+    inputArg  = ('node', '(', 'Node', ',', ' ', 'Neighbor', ')', ';')
+    outputResult = ['node', '(', 'Node', ',', ' ', 'Neighbor', ')', ';']
+    self.assertEqual(dedalusParser.cleanResult(inputArg),outputResult)
 
   def test_parse_dedalusParser(self):
     #test detecting facts
@@ -156,6 +158,7 @@ class Dedc_Tests( unittest.TestCase ) :
 #########################
 # use this main if running this script exclusively.
 if __name__ == "__main__" :
+    dedalusParser.parse("node(Node, Neighbor)@next :- node(Node, Neighbor);")
     unittest.main( verbosity=2 )
 
 
