@@ -12,79 +12,14 @@ import os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from utils import tools
+from utils import tools, dumpers
 # ------------------------------------------------------ #
 
 #############
 #  GLOBALS  #
 #############
 DEDALUSREWRITER_DEBUG = True
-
-###########
-#  CLEAN  #
-###########
-def clean( sqlresults ) :
-  cleanResults = []
-  for r in sqlresults :
-    asciiResult = r[0].encode('utf-8')
-    cleanResults.append( asciiResult )
-
-  return cleanResults
-
-###############
-#  RULE DUMP  #
-###############
-def ruleDump( cursor ) :
-  rules = []
-
-  # get all rule ids
-  cursor.execute( "SELECT rid FROM Rule" )
-  ruleIDs = cursor.fetchall()
-  ruleIDs = clean( ruleIDs )
-
-  # iterate over rule ids
-  newRule = []
-  for i in ruleIDs :
-    cursor.execute( "SELECT goalName    FROM Rule WHERE rid == '" + i + "'" ) # get goal name
-    goalName    = cursor.fetchone()
-    goalName    = goalName[0].encode('utf-8')
-    goalList    = cursor.execute( "SELECT attName     FROM GoalAtt WHERE rid == '" + i + "'" )# list of goal atts
-    goalList    = clean( goalList )
-    cursor.execute( "SELECT goalTimeArg FROM Rule WHERE rid == '" + i + "'" )
-    goalTimeArg = cursor.fetchone()
-    goalTimeArg = goalTimeArg[0].encode('utf-8')
-
-    newRule.append( goalName + "(" )
-    for g in goalList :
-      newRule.append( g + "," )
-    newRule.append( ")@" + goalTimeArg + " :- " )
-
-    cursor.execute( "SELECT sid FROM Subgoals" ) # get list of sids for this rule
-    subIDs = cursor.fetchall()
-    subIDs = clean( subIDs )
-
-    for s in subIDs :
-      cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid == '" + i + "' AND sid == '" + s + "'" )
-      subgoalName = cursor.fetchone()
-
-      if not subgoalName == None :
-        subgoalName = subgoalName[0].encode('utf-8')
-        subAtts = cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid == '" + i + "' AND sid == '" + s + "'" )
-        subAtts = clean( subAtts )
-        cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE sid == '" + s + "'" ) # get list of sids for this rule
-        subTimeArg = cursor.fetchone()
-        subTimeArg = subTimeArg[0].encode('utf-8')
-
-        newRule.append( subgoalName + "(" )
-        for g in subAtts :
-          newRule.append( g + "," )
-        newRule.append( ")@" + subTimeArg + ", " )
-
-    rules.append( newRule )
-    newRule = []
-
-  for r in rules :
-    print ''.join(r)
+DEDALUSREWRITER_DUMPS_DEBUG = True
 
 ############################
 #  GET DEDUCTIVE RULE IDS  #
@@ -125,25 +60,31 @@ def getSubgoalAtts( cursor, rid, sid ) :
 #  REWRITE DEDUCTIVE  #
 #######################
 def rewriteDeductive( cursor ) :
+
+  print " ... running deductive rewrite ..."
+
   timeAtt = "Time"
 
   # grab all existing non-next and non-async rule ids
   deductiveRuleIDs = getDeductiveRuleIDs( cursor )
 
   # clean ids
-  cleanRIDs = clean( deductiveRuleIDs )
+  cleanRIDs = tools.toAscii_list( deductiveRuleIDs )
 
   # add attribute 'Time' to head
   for rid in cleanRIDs :
     cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
     rawMaxID = cursor.fetchone()
-    newAttID = int(rawMaxID[0] + 1)
-    cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt + "')")
+    print "deductive: rawMaxID    = " + str(rawMaxID)
+    print "deductive: rawMaxID[0] = " + str(rawMaxID[0])
+    if not rawMaxID[0] == None :
+      newAttID = int(rawMaxID[0] + 1)
+      cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt + "')")
 
   # add attribute 'Time' to all subgoals
   for rid in cleanRIDs :
     sids = getSubgoalIDs( cursor, rid ) # get all subgoal ids
-    sids = clean(sids)
+    sids = tools.toAscii_list(sids)
 
     for s in sids :
       cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
@@ -179,25 +120,31 @@ def rewriteDeductive( cursor ) :
 #  REWRITE INDUCTIVE  #
 #######################
 def rewriteInductive( cursor ) :
+
+  print " ... running inductive rewrite ..."
+
   timeAtt = "SndTime"
 
   # grab all existing next rule ids
   inductiveRuleIDs = getInductiveRuleIDs( cursor )
 
   # clean ids
-  cleanRIDs = clean( inductiveRuleIDs )
+  cleanRIDs = tools.toAscii_list( inductiveRuleIDs )
 
   # add attribute 'SndTime+1' to head
   for rid in cleanRIDs :
     cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
     rawMaxID = cursor.fetchone()
-    newAttID = int(rawMaxID[0] + 1)
-    cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt + "+1" + "')")
+    print "inductive: rawMaxID    = " + str(rawMaxID)
+    print "inductive: rawMaxID[0] = " + str(rawMaxID[0])
+    if not rawMaxID[0] == None :
+      newAttID = int(rawMaxID[0] + 1)
+      cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt + "+1" + "')")
 
   # add attribute 'SndTime' to all subgoals
   for rid in cleanRIDs :
     sids = getSubgoalIDs( cursor, rid ) # get all subgoal ids
-    sids = clean(sids)
+    sids = tools.toAscii_list(sids)
   
     for s in sids :
       cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
@@ -205,48 +152,10 @@ def rewriteInductive( cursor ) :
       newAttID = int(rawMaxID[0] + 1)
       cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "','" + str(newAttID) + "','" + timeAtt + "')")
 
-      # get current subgoal att list
-      subAtts = getSubgoalAtts( cursor, rid, s )
-
-      # get first subgoal att, assume specifies 'sender' node
-      firstAtt = subAtts[0]
-      firstAtt = firstAtt[0].encode('utf-8')
-      #print firstAtt
-
-      # --------------------------------------------------------------------- #
-
-      # add clock subgoal
-      # clock(Node, Node, SndTime)
-      subgoalName    = "clock"
-      subgoalAttList = [ firstAtt, firstAtt, timeAtt ]
-      subgoalTimeArg = ""
-      subgoalAddArgs = [ "" ]
-
-      # generate random ID for subgoal
-      sid = tools.getID()
-
-      # save name and time arg
-      cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')")
-
-      # save subgoal attributes
-      cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
-      rawMaxID = cursor.fetchone()
-      newAttID = int(rawMaxID[0]) + 1
-      for attName in subgoalAttList :
-        print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
-        cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "')")
-        newAttID += 1
-
-      # save subgoal additional args
-      for addArg in subgoalAddArgs :
-        cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + addArg + "')")
-
-      # --------------------------------------------------------------------- #
-
   # check for bugs
-  if DEDALUSREWRITER_DEBUG :
-    print "Dump all rules : "
-    ruleDump( cursor )
+  if DEDALUSREWRITER_DUMPS_DEBUG :
+    print "Dump all rules inductive : "
+    dumpers.ruleDump( cursor )
 
   return None
 
@@ -256,11 +165,14 @@ def rewriteInductive( cursor ) :
 def rewriteAsynchronous( cursor ) :
   timeAtt = "SndTime"
 
+  firstSubgoalAtts = []
+  firstGoalAtt     = ""
+
   # grab all existing next rule ids
   asynchronousRuleIDs = getAsynchronousRuleIDs( cursor )
 
   # clean ids
-  cleanRIDs = clean( asynchronousRuleIDs )
+  cleanRIDs = tools.toAscii_list( asynchronousRuleIDs )
 
   # add attribute 'SndTime+1' to head
   for rid in cleanRIDs :
@@ -272,7 +184,7 @@ def rewriteAsynchronous( cursor ) :
   # add attribute 'SndTime' to all subgoals
   for rid in cleanRIDs :
     sids = getSubgoalIDs( cursor, rid ) # get all subgoal ids
-    sids = clean(sids)
+    sids = tools.toAscii_list(sids)
   
     for s in sids :
       cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
@@ -280,59 +192,78 @@ def rewriteAsynchronous( cursor ) :
       newAttID = int(rawMaxID[0] + 1)
       cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "','" + str(newAttID) + "','" + timeAtt + "')")
 
-      # get current subgoal att list
-      subAtts = getSubgoalAtts( cursor, rid, s )
+      # while we're here, collect the first attribute of this subgoal
+      cursor.execute("SELECT attName FROM SubgoalAtt WHERE SubgoalAtt.sid == '" + s + "' AND SubgoalAtt.attID == '" + str(0) + "'")
+      firstAtt = cursor.fetchone()
+      firstAtt = tools.toAscii_str( firstAtt )
+      firstSubgoalAtts.append( firstAtt )
 
-      # get first subgoal att, assume specifies 'sender' node
-      firstAtt = subAtts[0]
-      firstAtt = firstAtt[0].encode('utf-8')
-      secondAtt = subAtts[1]
-      secondAtt = secondAtt[0].encode('utf-8')
-      #print firstAtt
+    # --------------------------------------------------------------------- #
+    #                       ADD CLOCK RELATION                              #
 
-      goalAtts = cursor.execute( "SELECT attName FROM GoalAtt WHERE rid == '" + rid + "'" )
-      goalAtts = clean(goalAtts)
+    # sanity check
 
-      # stop adding a clock relation for every premise
-      #if not secondAtt == goalAtts[0] :
-      #  break
+    print "firstSubgoalAtts = " + firstSubgoalAtts
+    baseAtt = firstSubgoalAtts[0]
 
-      # --------------------------------------------------------------------- #
+    for c in firstSubgoalAtts :
+      if not c == baseAtt :
+        sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all subgoals in async rules must be identical. Semantically, the first attribute is expected to represent the message sender." )
 
-      # add clock subgoal
-      # clock(Node, Node, SndTime)
-      subgoalName    = "clock"
-      subgoalAttList = [ firstAtt, secondAtt, timeAtt ]
-      subgoalTimeArg = ""
-      subgoalAddArgs = [ "" ]
+    # get first att in first subgoal, assume specifies 'sender' node
+    firstAtt = baseAtt
 
-      # generate random ID for subgoal
-      sid = tools.getID()
+    # get first att of goal, assume specifies 'reciever' node
+    # while we're here, collect the first attribute of this goal
+    cursor.execute("SELECT attName FROM GoalAtt WHERE GoalAtt.rid == '" + rid + "' AND GoalAtt.attID == '" + str(0) + "'")
+    firstGoalAtt = cursor.fetchone()
+    firstGoalAtt = tools.toAscii_str( firstGoalAtt )
 
-      # save name and time arg
-      cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')")
+    # define second clock attribute
+    secondAtt = firstGoalAtt
+    #print secondAtt
 
-      # save subgoal attributes
-      cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
-      rawMaxID = cursor.fetchone()
-      newAttID = int(rawMaxID[0]) + 1
-      for attName in subgoalAttList :
+    # add clock subgoal
+    # clock(Node1, Node2, SndTime)
+    subgoalName    = "clock"
+    subgoalAttList = [ firstAtt, secondAtt, timeAtt ]
+    subgoalTimeArg = ""
+    subgoalAddArgs = [ "" ]
+
+    # generate random ID for subgoal
+    sid = tools.getID()
+
+    # save name and time arg
+    cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')")
+
+    # save subgoal attributes
+    cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
+    rawMaxID = cursor.fetchone()
+    newAttID = int(rawMaxID[0]) + 1
+    for attName in subgoalAttList :
+      if DEDALUSREWRITER_DEBUG :
         print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
-        cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "')")
-        newAttID += 1
+      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "')")
+      newAttID += 1
 
-      # save subgoal additional args
-      for addArg in subgoalAddArgs :
-        cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + addArg + "')")
+    # save subgoal additional args
+    for addArg in subgoalAddArgs :
+      cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + addArg + "')")
 
-      # --------------------------------------------------------------------- #
+    # reset variables for next async rule
+    firstSubgoalAtts = []
+    firstGoalAtt     = ""
+
+    # --------------------------------------------------------------------- #
 
   # check for bugs
-  if DEDALUSREWRITER_DEBUG :
-    print "Dump all rules : "
-    ruleDump( cursor )
+  if DEDALUSREWRITER_DUMPS_DEBUG :
+    print "Dump all rules from async : "
+    dumpers.ruleDump( cursor )
+    #dumpers.factDump( cursor )
 
   return None
+
 
 #####################
 #  DEDALUS REWRITE  #

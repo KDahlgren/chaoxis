@@ -8,6 +8,7 @@ tools.py
 
 import os, random, sys
 
+
 ############
 #  GET ID  #
 ############
@@ -15,6 +16,7 @@ import os, random, sys
 # output random 16 char alphanumeric id
 def getID() :
   return "".join( random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ') for i in range(16) )
+
 
 #######################
 #  CHECK PARENTHESES  #
@@ -33,6 +35,30 @@ def checkParentheses( line ) :
     sys.exit( "ERROR: Incorrect number of parentheses in line: " + line )
 
   return True
+
+
+###################
+#  TO ASCII LIST  #
+###################
+# input list of unicoded sql results
+# output list of ascii results
+def toAscii_list( sqlresults ) :
+  cleanResults = []
+  for r in sqlresults :
+    asciiResult = r[0].encode('utf-8')
+    cleanResults.append( asciiResult )
+
+  return cleanResults
+
+
+##################
+#  TO ASCII STR  #
+##################
+# input one sql output string
+# output ascii version
+def toAscii_str( unicodeStr ) :
+  return unicodeStr[0].encode( 'utf-8' )
+
 
 #########
 #  EOF  #

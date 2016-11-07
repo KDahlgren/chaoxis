@@ -18,7 +18,7 @@ sys.path.append( packagePath )
 #############
 #  GLOBALS  #
 #############
-CLOCKRELATION_DEBUG = 0
+CLOCKRELATION_DEBUG = False
 
 #########################
 #  INIT CLOCK RELATION  #
