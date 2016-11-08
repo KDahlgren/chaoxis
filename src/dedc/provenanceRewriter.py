@@ -31,7 +31,7 @@ def getProv( cursor ) :
 ########################
 #  REWRITE PROVENANCE  #
 ########################
-def rewriteProvenance( cursor ) :
+def rewriteProvenance( ruleMeta, cursor ) :
   return None
 
 #########

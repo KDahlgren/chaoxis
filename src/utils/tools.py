@@ -43,13 +43,17 @@ def checkParentheses( line ) :
 # input list of unicoded sql results
 # output list of ascii results
 def toAscii_list( sqlresults ) :
+
   cleanResults = []
   for r in sqlresults :
-    asciiResult = r[0].encode('utf-8')
-    cleanResults.append( asciiResult )
+    if not r[0] == None :
+      asciiResult = r[0].encode('utf-8')
+      cleanResults.append( asciiResult )
 
-  return cleanResults
-
+  if not cleanResults == None :
+    return cleanResults
+  else :
+    return None
 
 ##################
 #  TO ASCII STR  #

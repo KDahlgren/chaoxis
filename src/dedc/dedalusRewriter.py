@@ -203,7 +203,7 @@ def rewriteAsynchronous( cursor ) :
 
     # sanity check
 
-    print "firstSubgoalAtts = " + firstSubgoalAtts
+    print "firstSubgoalAtts = " + str(firstSubgoalAtts)
     baseAtt = firstSubgoalAtts[0]
 
     for c in firstSubgoalAtts :

@@ -19,7 +19,7 @@ sys.path.append( packagePath )
 #############
 #  GLOBALS  #
 #############
-DEDALUSPARSER_DEBUG = True
+DEDALUSPARSER_DEBUG = False
 
 keywords = [ "notin" ] # TODO: make this configurable
 
@@ -109,12 +109,20 @@ def parse( dedLine ) :
         parsed = []
         # parse any stubborn subgoals and fmlas
         for substr in ret :
-          print "pass2: substr = " + substr
+
+          # check for bugs
+          if DEDALUSPARSER_DEBUG :
+            print "pass2: substr = " + substr
+
           if ("(" in substr) and (")" in substr) :
             ret2 = secondParse.parseString( substr )
             ret2 = cleanResult( ret2 )
             parsed.extend( ret2 )
-            print "ret2 = " + str(ret2)
+
+            # check for bugs
+            if DEDALUSPARSER_DEBUG :
+              print "ret2 = " + str(ret2)
+
           else :
             parsed.append( substr )
 

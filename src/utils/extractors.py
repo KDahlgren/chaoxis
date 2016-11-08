@@ -19,7 +19,7 @@ sys.path.append( packagePath )
 #############
 #  GLOBALS  #
 #############
-EXTRACTORS_DEBUG = True
+EXTRACTORS_DEBUG = False
 
 specialOps = ["notin"] # TODO: make this configurable
 
@@ -44,8 +44,9 @@ def extractAdditionalArgs( parsedSubgoal ) :
   addList    = []
 
   for t in parsedSubgoal : # additional args are special ops
-    if t in specialOps :
-      addList.append( t )
+    for op in specialOps :
+      if op in t :
+        addList.append( op )
 
   return addList
 
@@ -187,8 +188,9 @@ def extractSubgoalList( parsedLine ) :
   for i in range(0,len(body)) :
     currItem = body[i]
 
-    print "currItem   = " + str(currItem)
-    print "oneSubgoal = " + str(oneSubgoal)
+    if EXTRACTORS_DEBUG :
+      print "currItem   = " + str(currItem)
+      print "oneSubgoal = " + str(oneSubgoal)
 
     if not checkIfEqn( currItem ) :
       print "here!"
