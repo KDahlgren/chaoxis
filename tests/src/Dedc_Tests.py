@@ -9,7 +9,7 @@ Dedc_Tests.py
 #  IMPORTS  #
 #############
 # standard python packages
-import os, string, sys, unittest
+import os, sys, unittest
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -56,30 +56,25 @@ class Dedc_Tests( unittest.TestCase ) :
   def test_parse_dedalusParser(self):
     #test detecting facts
     inputArg  = "watch('test', 'test')@1;"
-    inputArg = inputArg.translate(None, string.whitespace)
     outputResult = "fact"
     self.assertEqual(dedalusParser.parse(inputArg)[0],outputResult)
     
     #test detecting rules
     inputArg  = "node(Node, Neighbor)@next :- node(Node, Neighbor);"
-    inputArg = inputArg.translate(None, string.whitespace)
     outputResult = "rule"
     self.assertEqual(dedalusParser.parse(inputArg)[0],outputResult)
     
     #test detecting improper dedalus
     inputArg  = "improper dedalus"
-    inputArg = inputArg.translate(None, string.whitespace)
     outputResult = None
     self.assertEqual(dedalusParser.parse(inputArg),outputResult)
         
     inputArg  = "improper ; dedalus"
-    inputArg  = inputArg.translate(None, string.whitespace)
     with self.assertRaises(SystemExit) as cm:
         dedalusParser.parse(inputArg)
     self.assertIn("ERROR",cm.exception.code)
         
     inputArg  = "'improper' :- 'dedalus' :- ;"
-    inputArg = inputArg.translate(None, string.whitespace)
     with self.assertRaises(SystemExit) as cm:
       dedalusParser.parse(inputArg)
     self.assertIn("ERROR",cm.exception.code)

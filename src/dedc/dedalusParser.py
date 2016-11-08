@@ -21,6 +21,8 @@ sys.path.append( packagePath )
 #############
 DEDALUSPARSER_DEBUG = True
 
+keywords = [ "notin" ] # TODO: make this configurable
+
 ##################
 #  CLEAN RESULT  #
 ##################
@@ -41,6 +43,14 @@ def cleanResult( result ) :
 # input a ded line
 # output parsed line
 def parse( dedLine ) :
+
+  # search and replace prepend keywords.
+  for k in keywords :
+    if k in dedLine :
+      dedLine = dedLine.replace( k, "___"+k+"___")
+
+  # make sure input line contains no whitespace
+  dedLine = dedLine.translate(None, string.whitespace)
 
   # ------------------------------------------------------------- #
   #                          RULES                                #
@@ -175,8 +185,6 @@ def parse( dedLine ) :
 def parseDedalus( dedFile ) :
   parsedLines = []
 
-  keywords = [ "notin" ]
-
   # "always check if files exist" -- Ye Olde SE proverb
   if os.path.isfile( dedFile ) :
     f = open( dedFile, "r" )
@@ -186,11 +194,6 @@ def parseDedalus( dedFile ) :
       if "/" == line[0] : # skip lines beginning with a comment
         continue
 
-      # search and replace prepend keywords.
-      for k in keywords :
-        if k in line :
-          line = line.replace( k, "___"+k+"___")
-      
       result = parse( line.translate(None, string.whitespace) )
 
       if not result == None :
@@ -218,12 +221,8 @@ if __name__ == "__main__" :
 
   #parse( 'node("a","b")@1;'.translate(None, string.whitespace) )
 
-  keywords = [ "notin" ]
   #line = "timer_state(H, I, T-1)@next :- timer_state(H, I, T), notin timer_cancel(H, I), T > 1;"
   line = "watch('test', 'test')@1;"
-  for k in keywords :
-    if k in line :
-      line = line.replace( k, "___"+k+"___")
   parse( line.translate(None, string.whitespace) )
 
 #########
