@@ -19,7 +19,7 @@ node(Node, Neighbor)@next :- node(Node, Neighbor) ;
 log(Node, Pload)@next :- log(Node, Pload) ;
 
 // when a node A sends a message to a node B, B receives the message eventually.
-log(Node2, Pload)@async :- bcast(Node1, Pload), node(Node1, Node2), T< 102321kjafaT ;
+log(Node2, Pload)@async :- S-1>15,bcast(Node1, Pload), node(Node1, Node2), T< 102321kjafaT ;
 
 // if a node sends a message, the event will be recorded in the node's personal log.
 log(Node, Pload) :- bcast(Node, Pload); //asdkjahsdf lkj

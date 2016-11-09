@@ -16,6 +16,7 @@ GoalAtt        (rid text, attID int, attName text)
 Subgoals       (rid text, sid text, subgoalName text, subgoalTimeArg text)
 SubgoalAtt     (rid text, sid text, attID int, attName text)
 SubgoalAddArgs (rid text, sid text, argName text)
+Equation       (rid text, eid text, eqn text)
 Clock          (src text, dest text, sndTime text, delivTime text)
 
 '''
@@ -38,7 +39,7 @@ import Fact, Rule
 #############
 #  GLOBALS  #
 #############
-DEDC_DEBUG = True
+DEDC_DEBUG = False
 
 
 ###############
@@ -85,7 +86,7 @@ def dedToIR( filename, cursor ) :
         print "newFact.getName()    : " + str( newFact.getName()    )
         print "newFact.getAttList() : " + str( newFact.getAttList() )
         print "newFact.getTimeArg() : " + str( newFact.getTimeArg() )
-        print "newFact.display() = ", newFact.display()
+        print "newFact.display() = " + newFact.display()
 
     # ----------------------------------------------- #
     #                     RULES                       #
@@ -178,7 +179,7 @@ def dedToIR( filename, cursor ) :
 
       # check for bugs
       if DEDC_DEBUG :
-        print "newRule.display() = ", newRule.display()
+        print "newRule.display() = " + newRule.display()
 
   # ----------------------------------------------------------- #
 
@@ -225,26 +226,30 @@ def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
   ruleMeta = meta[1]
 
   # check for bugs
-  if DEDC_DEBUG :
-    dumpers.factDump( cursor )
-    dumpers.ruleDump( cursor )
+  #if DEDC_DEBUG :
+  #  dumpers.factDump( cursor )
+  #  dumpers.ruleDump( cursor )
 
   # generate the first clock
   starterClock( cursor, argDict )
 
   # check for bugs
-  if DEDC_DEBUG :
-    dumpers.factDump(  cursor )
-    dumpers.ruleDump(  cursor )
-    dumpers.clockDump( cursor )
+  #if DEDC_DEBUG :
+  #  dumpers.factDump(  cursor )
+  #  dumpers.ruleDump(  cursor )
+  #  dumpers.clockDump( cursor )
 
   # dedalus and provenance rewrite to datalog
   rewriteToDatalog( ruleMeta, cursor )
 
-  if DEDC_DEBUG :
-    dumpers.factDump( cursor )
-    dumpers.ruleDump( cursor )
-    dumpers.clockDump( cursor )
+  dumpers.factDump( cursor )
+  dumpers.ruleDump( cursor )
+  dumpers.clockDump( cursor )
+
+  #if DEDC_DEBUG :
+  #  dumpers.factDump( cursor )
+  #  dumpers.ruleDump( cursor )
+  #  dumpers.clockDump( cursor )
 
   return None
 

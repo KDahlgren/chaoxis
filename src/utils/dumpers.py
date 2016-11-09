@@ -28,7 +28,7 @@ DUMPERS_DEBUG = False
 # output nothing, print all rules to stdout
 def ruleDump( cursor ) :
 
-  print "Program Rules :"
+  print "********************\nProgram Rules :"
 
   rules = []
 
@@ -100,11 +100,13 @@ def ruleDump( cursor ) :
         subTimeArg = cursor.fetchone() # assume only one additional arg
         subTimeArg = tools.toAscii_str( subTimeArg )
 
-        ## get subgoal additional args
-        #cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + i + "' AND sid == '" + s + "'" ) # get list of sids for this rule
-        #subAddArg = cursor.fetchone() # assume only one additional arg
-        #if not subAddArg == None :
-        #  subAddArg = tools.toAscii_str( subAddArg )
+        # get subgoal additional args
+        cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + i + "' AND sid == '" + s + "'" ) # get list of sids for this rule
+        subAddArg = cursor.fetchone() # assume only one additional arg
+        if not subAddArg == None :
+          subAddArg = tools.toAscii_str( subAddArg )
+          subAddArg += " "
+          newRule.append( subAddArg )
 
         # all subgoals have a name and open paren
         newRule.append( subgoalName + "(" )
@@ -163,7 +165,7 @@ def ruleDump( cursor ) :
 # output nothing, print all facts to stdout
 def factDump( cursor ) :
 
-  print "Program Facts :"
+  print "********************\nProgram Facts :"
 
   facts = []
 
@@ -214,7 +216,7 @@ def factDump( cursor ) :
 # input db cursor
 # output nothing, print all clock entries to stdout
 def clockDump( cursor ) :
-  print "Program Clock :"
+  print "********************\nProgram Clock :"
   clock = cursor.execute('''SELECT * FROM Clock''')
   for c in clock :
     print c

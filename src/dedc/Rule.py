@@ -110,9 +110,8 @@ class Rule :
 
         # all subgoals have a name and open paren
         if not subAddArg == None :
-          currSubgoal += subAddArg + " " + subgoalName + "("
-        else :
-          currSubgoal += subgoalName + "("
+          currSubgoal += subAddArg + " "
+        currSubgoal += subgoalName + "("
 
         # add in all attributes
         for i in range(0,len(subAtts)) :
@@ -133,6 +132,7 @@ class Rule :
       currSubgoal = ""
 
     return subgoalList
+
 
   ##############################
   #  GET EQUATION LIST STRING  #
@@ -159,6 +159,34 @@ class Rule :
           eqnList += eqn
           if not e < len(eqnIDs) :
             eqnList += ","
+
+    return eqnList
+
+  #############################
+  #  GET EQUATION LIST ARRAY  #
+  #############################
+  def getEquationListArray( self ) :
+    self.cursor.execute( "SELECT eid FROM Equation" ) # get list of eids for this rule
+    eqnIDs = self.cursor.fetchall()
+    eqnIDs = tools.toAscii_list( eqnIDs )
+
+    eqnList = []
+
+    # iterate over equations in rule
+    for e in range(0,len(eqnIDs)) :
+      currEqnID = eqnIDs[e]
+
+      # get associated equation
+      if not currEqnID == None :
+        self.cursor.execute( "SELECT eqn FROM Equation WHERE rid == '" + self.rid + "' AND eid == '" + str(currEqnID) + "'" )
+        eqn = self.cursor.fetchone()
+        if not eqn == None :
+          eqn = tools.toAscii_str( eqn )
+
+          # convert eqn info to pretty string
+          if not e < len(eqnIDs) :
+            eqn += ","
+          eqnList.append(eqn)
 
     return eqnList
 
@@ -224,13 +252,16 @@ class Rule :
     subgoalStr = self.getSubgoalListStr()
 
     # collect equantion list
-    eqnStr     = self.getEquationListStr()
+    eqnStr = self.getEquationListStr()
 
     # convert rule info to pretty string
-    prettyRule += goalName + "(" + goalAttStr + ")" + " :- " + subgoalStr + "," + eqnStr + " ;"
+    prettyRule += goalName + "(" + goalAttStr + ")" + " :- " + subgoalStr 
+    if not eqnStr == None :
+      prettyRule += "," + eqnStr + " ;"
 
     print prettyRule
 
+    return prettyRule
 
 #########
 #  EOF  #

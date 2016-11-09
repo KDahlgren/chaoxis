@@ -18,7 +18,7 @@ from utils import dumpers, parseCommandLineInput
 #############
 #  GLOBALS  #
 #############
-CLOCKRELATION_DEBUG = True
+CLOCKRELATION_DEBUG = False
 
 #########################
 #  INIT CLOCK RELATION  #

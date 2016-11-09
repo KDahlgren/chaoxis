@@ -18,8 +18,8 @@ from utils import tools, dumpers
 #############
 #  GLOBALS  #
 #############
-DEDALUSREWRITER_DEBUG = True
-DEDALUSREWRITER_DUMPS_DEBUG = True
+DEDALUSREWRITER_DEBUG = False
+DEDALUSREWRITER_DUMPS_DEBUG = False
 
 ############################
 #  GET DEDUCTIVE RULE IDS  #
@@ -61,7 +61,8 @@ def getSubgoalAtts( cursor, rid, sid ) :
 #######################
 def rewriteDeductive( cursor ) :
 
-  print " ... running deductive rewrite ..."
+  if DEDALUSREWRITER_DEBUG :
+    print " ... running deductive rewrite ..."
 
   timeAtt = "Time"
 
@@ -114,14 +115,14 @@ def rewriteDeductive( cursor ) :
     for s in cursor.fetchall():
       print s
 
-  return None
 
 #######################
 #  REWRITE INDUCTIVE  #
 #######################
 def rewriteInductive( cursor ) :
 
-  print " ... running inductive rewrite ..."
+  if DEDALUSREWRITER_DEBUG :
+    print " ... running inductive rewrite ..."
 
   timeAtt = "SndTime"
 
@@ -135,8 +136,11 @@ def rewriteInductive( cursor ) :
   for rid in cleanRIDs :
     cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
     rawMaxID = cursor.fetchone()
-    print "inductive: rawMaxID    = " + str(rawMaxID)
-    print "inductive: rawMaxID[0] = " + str(rawMaxID[0])
+
+    if DEDALUSREWRITER_DEBUG :
+      print "inductive: rawMaxID    = " + str(rawMaxID)
+      print "inductive: rawMaxID[0] = " + str(rawMaxID[0])
+
     if not rawMaxID[0] == None :
       newAttID = int(rawMaxID[0] + 1)
       cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt + "+1" + "')")

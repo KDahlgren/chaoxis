@@ -99,6 +99,7 @@ class Fact :
 
     print prettyFact
 
+    return prettyFact
 
 #########
 #  EOF  #
