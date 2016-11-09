@@ -27,18 +27,78 @@ aggOps = [ "min", "max", "sum", "avg", "count" ] # TODO: make this configurable
 ##############
 #  AGG PROV  #
 ##############
-def aggProv( aggRule, cursor ) :
-  bingingsRule = Rule.Rule( cursor )
-  firingsRule  = Rule.Rule( cursor )
+def aggProv( aggRule, nameAppend, cursor ) :
 
-  # goal name
+  print "... running aggProv ..."
+
+  # create bindings rule (see LDFI paper section 4.1.2)
+  bindingsRule = regProv( aggRule, nameAppend, cursor )
+
+  # generate random ID
+  rid = tools.getID()
+
+  # initialize firings rule
+  firingsRule  = Rule.Rule( rid, cursor )
+
+  # goal info
+  goalName    = aggRule.getGoalName() + "_prov"
+  goalAttList = aggRule.getGoalAttList()
+  goalTimeArg = aggRule.getGoalTimeArg()
+
+  # check for bugs
+  if PROVENANCEREWRITE_DEBUG :
+    print "aggProv: goalName    = " + goalName
+    print "aggProv: goalAttList = " + str(goalAttList)
+    print "aggProv: goalTimeArg = " + goalTimeArg
+
   # subgoal list info
+  subgoalName         = bindingsRule.getGoalName()
+  subgoalAttList_init = bindingsRule.getGoalAttList()
+
+  # check for bugs
+  if PROVENANCEREWRITE_DEBUG :
+    print "aggProv: subgoalName         = " + subgoalName
+    print "aggProv: subgoalAttList_init = " + str(subgoalAttList_init)
+
+  aggAtts = []
+  for att in goalAttList :
+    containsAgg = False
+    for op in aggOps :
+      if op in att :
+        containsAgg = True
+    if containsAgg :
+      att = att.split("<")
+      att = att[1].replace(">", "")
+      aggAtts.append( att )
+
+  subgoalAttList_final = []
+  for att in subgoalAttList_init :
+    for a in aggAtts :
+      if a == att:
+        subgoalAttList_final.append( "_" )
+      else :
+        subgoalAttList_final.append( att )
+
+  # check for bugs
+  if PROVENANCEREWRITE_DEBUG :
+    print "aggProv: subgoalAttList_final = " + str(subgoalAttList_final)
+
+  sid = tools.getID()
+  subgoalTimeArg = ""
+  subgoalAddArgs = ""
+
   # save rule
+  firingsRule.setGoalInfo(               goalName, goalTimeArg            )
+  firingsRule.setGoalAttList(            goalAttList                      )
+  firingsRule.setSingleSubgoalInfo(      sid, subgoalName, subgoalTimeArg )
+  firingsRule.setSingleSubgoalAttList(   sid, subgoalAttList_final        )
+  firingsRule.setSingleSubgoalAddArgs(   sid, subgoalAddArgs              )
+
 
 #######################
 #  REGULAR RULE PROV  #
 #######################
-def regProv( regRule, cursor ) :
+def regProv( regRule, nameAppend, cursor ) :
 
   # parse rule
   print "regRule.display() = " + regRule.display()
@@ -54,7 +114,7 @@ def regProv( regRule, cursor ) :
   # -------------------------------------------------- #
 
   # get goal info
-  goalName    = regRule.getGoalName() + "_firings"
+  goalName    = regRule.getGoalName() + nameAppend
   goalTimeArg = regRule.getGoalTimeArg()
 
   # check for bugs
@@ -120,6 +180,7 @@ def regProv( regRule, cursor ) :
   firingsRule.setGoalInfo(     goalName, goalTimeArg )
   firingsRule.setGoalAttList(  goalAttList           )
 
+  return firingsRule
 
 ########################
 #  REWRITE PROVENANCE  #
@@ -131,15 +192,18 @@ def rewriteProvenance( ruleMeta, cursor ) :
     containsAgg = False
 
     goalAtts = rule.getGoalAttList()
+    print "*** goalAtts = " + str(goalAtts)
 
-    for agg in aggOps :
-      if agg in goalAtts :
-        containsAgg = True
+    for att in goalAtts :
+      for agg in aggOps :
+        if agg in att :
+          containsAgg = True
 
     if containsAgg :
-      aggProv( rule, cursor )
+      aggProv( rule, "_bindings", cursor )
     else :
-      regProv( rule, cursor )
+      regProv( rule, "_prov", cursor )
+
 
 #########
 #  EOF  #
