@@ -5,8 +5,8 @@ dedalusParser.py
    Define the functionality for parsing Dedalus files.
 '''
 
-import os, sys
-from pyparsing import alphanums, nums, Word, Literal, ZeroOrMore, Optional, White
+import os, string, sys
+from pyparsing import *
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -15,6 +15,11 @@ sys.path.append( packagePath )
 
 #from utils import tools, parseCommandLineInput
 # ------------------------------------------------------ #
+
+#############
+#  GLOBALS  #
+#############
+DEDALUSPARSER_DEBUG = True
 
 ##################
 #  CLEAN RESULT  #
@@ -36,60 +41,127 @@ def cleanResult( result ) :
 # input a ded line
 # output parsed line
 def parse( dedLine ) :
-  # basic grammar
-  paren    = Word( "()", exact=1 )
-  name     = Word( alphanums + "_" )
-  amp      = Literal( "@" )
-  dquote   = Literal( '"' )
-  squote   = Literal( "'" )
- 
-  prepend  = Literal( "notin" )
 
-  numArg   = Word( nums )
-  nextArg  = Literal( "next" )
-  asyncArg = Literal( "async" )
-  timeArg  = numArg | nextArg | asyncArg
+  # ------------------------------------------------------------- #
+  #                          RULES                                #
 
-  empty    = Word( "_" )
-  baseAtt  = Word( alphanums ) | empty
-  fatt1    = dquote + baseAtt + dquote #fact attribute version 1
-  fatt2    = squote + baseAtt + squote #fact attribute version 2
-  fatt     = fatt1 | fatt2
-  ratt     = baseAtt                   # rule attribute
-  semi     = Literal( ";" )
+  goal = Word( alphanums + "_" + "(" + ")" + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" )
+  subgoal = goal
+  arg = Optional( Literal ("@") + Word( alphanums ) )
+  fmla = Word( alphanums + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" )
 
-  fattList  = fatt + ZeroOrMore( Optional(",") + Optional( White() ) + fatt )
-  rattList  = ratt + ZeroOrMore( Optional(",") + Optional( White() ) + ratt )
-  
-  comment  = Literal( "//" )
-  commentLine  = ZeroOrMore( comment + alphanums + "_" )
-  
-  # define a fact
-  fact = (name + paren + fattList + paren + semi + commentLine) | (name + paren + fattList + paren + amp + timeArg + semi + commentLine) | (prepend + name + paren + fattList + paren + semi + commentLine) | (prepend + name + paren + fattList + paren + amp + timeArg + semi + commentLine)
-  
-  # define a rule
-  goal        = name + paren + rattList + paren + ZeroOrMore(amp + timeArg) 
-  subgoal     = (goal + Optional( Optional( White() ) + semi + Optional(commentLine) )) | (prepend + goal + Optional( Optional( White() ) + semi ) + Optional(commentLine))
-  subgoalList = subgoal + ZeroOrMore( Optional(",") + Optional( White() ) + subgoal )
-  ruleOp      = Literal( ":-" )
-  rule        = goal + ruleOp + subgoalList
+  rule0 = goal + arg + ":-" + ZeroOrMore(OneOrMore(subgoal + arg) + ZeroOrMore( fmla ))
+  rule1 = goal + arg + ":-" + ZeroOrMore(ZeroOrMore( fmla ) + OneOrMore(subgoal + arg) + ZeroOrMore( fmla ))
+  rule  = rule0 | rule1
+
+  #secondParse = Optional(Word(",")) + Word(alphanums + "_" ) + Word("(") + Word( alphanums + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" ) + Word(")") + Optional( Optional(Word(",")) + Word( alphanums + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" ) )
+
+  # describes second pass
+  opt_comma         = Optional(Word(","))
+  name              = Word(alphanums + "_" )
+  open_paren        = Word("(")
+  closed_paren      = Word(")")
+  att_list          = Word( alphanums + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "_" )
+
+  # subgoal followed by zero or more subgoals or zero or more fmlas
+  subgoal_2 = opt_comma + name + open_paren + att_list + closed_paren + ZeroOrMore( Word(",") + name + open_paren + att_list + closed_paren ) + Optional( opt_comma + fmla )
+
+  # fmla followed by zero or more subgoals or zero or more fmlas
+  fmla_2 = opt_comma + fmla + ZeroOrMore( Word(",") + name + open_paren + att_list + closed_paren ) + ZeroOrMore( Word(",") + fmla )
+
+  secondParse = subgoal_2 | fmla_2
+
+
+  # ------------------------------------------------------------- #
+  #                          FACTS                                #
+
+  fact = Word( alphanums + "_" ) + Word("(") + Word( alphanums + "_" + "," + '"' + "'" ) + Word(")") + Optional(arg)
+
+  # ------------------------------------------------------------- #
+  #                         RULES                                 #
 
   # return tuples
   if ";" in dedLine :
+
+    # parse RULES
     if ":-" in dedLine :
       try :
+        if DEDALUSPARSER_DEBUG :
+          print "dedLine = " + dedLine
+
         result = rule.parseString( dedLine )
         ret    = cleanResult( result )
-        return ("rule", ret)
+
+        if DEDALUSPARSER_DEBUG :
+          print "ret = " + str(ret)
+
+        # parse attribute lists
+        parsed = []
+        # parse any stubborn subgoals and fmlas
+        for substr in ret :
+          print "pass2: substr = " + substr
+          if ("(" in substr) and (")" in substr) :
+            ret2 = secondParse.parseString( substr )
+            ret2 = cleanResult( ret2 )
+            parsed.extend( ret2 )
+            print "ret2 = " + str(ret2)
+          else :
+            parsed.append( substr )
+
+        if DEDALUSPARSER_DEBUG :
+          print "parsed = " + str(parsed)
+
+        # clean up comma-separated attributes
+        finalParsed = []
+        for c in parsed :
+          if c == "," : # keep the commas
+            finalParsed.append( c )
+          elif ("," in c) and (not "(" in c) and (not ")" in c) :
+            finalParsed.extend( c.split(",") )
+          else :
+            finalParsed.append(c)
+
+        if DEDALUSPARSER_DEBUG :
+          print "*** finalParsed = " + str(finalParsed)
+        return ("rule", finalParsed)
       except :
-        sys.exit( "\nERROR: Invalid syntax in rule line : " + dedLine + "Note rule attributes cannot have quotes.\n")
+        sys.exit( "\nERROR: Invalid syntax in rule line : \n      " + dedLine + "\n     Note rule attributes cannot have quotes.\n")
+
+    # ------------------------------------------------------------- #
+    #                         FACTS                                 #
     else :
+      # parse FACTS
+      if DEDALUSPARSER_DEBUG :
+        print "dedLine = " + dedLine
+
+      #result = fact.parseString( dedLine )
+      #ret    = cleanResult( result )
+
+      #if DEDALUSPARSER_DEBUG :
+      #  print "ret = " + str(ret)
+
       try :
         result = fact.parseString( dedLine )
         ret    = cleanResult( result )
+        if DEDALUSPARSER_DEBUG :
+          print "fact ret = " + str(ret)
+
+        # clean up comma-separated attributes
+        finalParsed = []
+        for c in ret :
+          if c == "," : # keep the commas
+            finalParsed.append( c )
+          elif ("," in c) and (not "(" in c) and (not ")" in c) :
+            finalParsed.extend( c.split(",") )
+          else :
+            finalParsed.append(c)
+
+        if DEDALUSPARSER_DEBUG :
+          print "*** finalParsed = " + str(finalParsed)
+
         return ("fact", ret)
       except :
-        sys.exit( "\nERROR: Invalid syntax in fact line : " + dedLine + "Note fact attributes must be surrounded by quotes.\n" )
+        sys.exit( "\nERROR: Invalid syntax in fact line : \n      " + dedLine + "\n     Note fact attributes must be surrounded by quotes.\n" )
   else :
     return None
 
@@ -103,13 +175,24 @@ def parse( dedLine ) :
 def parseDedalus( dedFile ) :
   parsedLines = []
 
+  keywords = [ "notin" ]
+
   # "always check if files exist" -- Ye Olde SE proverb
   if os.path.isfile( dedFile ) :
     f = open( dedFile, "r" )
+
+    # parse line
     for line in f :
       if "/" == line[0] : # skip lines beginning with a comment
         continue
-      result = parse( line )
+
+      # search and replace prepend keywords.
+      for k in keywords :
+        if k in line :
+          line = line.replace( k, "___"+k+"___")
+      
+      result = parse( line.translate(None, string.whitespace) )
+
       if not result == None :
         parsedLines.append( result )
 
@@ -117,6 +200,31 @@ def parseDedalus( dedFile ) :
     sys.exit( "ERROR: File at " + dedFile + " does not exist.\nAborting..." )
 
   return parsedLines
+
+##########
+#  MAIN  #
+##########
+if __name__ == "__main__" :
+  #parse( "watch_state(F-1, H/1, S+1)@next :- watch_state(F/1, 5+H, 6*S) ; //asfhkjl asdf" )
+  #parse( "watch_state(F) :- watch_state(F) ;" )
+  #parse( "watch_state(F-1, h/1)@next :- 1 + 22 > Z, watch_state(F,A)@100,A(b,a,a), 3+124+sdaf>asdf ;".translate(None, string.whitespace) )
+  #parse( "watch_state(max<N>,F, h/1)@next :- watch_state(F,A)@100,A(b,a,count<a>), 3+124+sdaf>asdf ;".translate(None, string.whitespace) )
+  #parse("watch_state(max<N>,F, h/1)@next :- timer_svc(H, I, T);".translate(None, string.whitespace) )
+  parse( "watch_state(max<N>,F, h/1)@next :- 1 + 22 > Z, watch_state(F,A)@100,A(b,a,count<a>), 3+124+sdaf>asdf ;".translate(None, string.whitespace) )
+  #parse( "timer_state(H, I, T-1)@next :- timer_svc(H, I, T);".translate(None, string.whitespace) )
+  #parse( "token(H,T):-send_token(H,_,T);".translate(None, string.whitespace) )
+
+  #parse( "timer_state(H, I, T-1) :- timer_svc(H/213, I*asdf, T)@next,A(avg<B>, C);".translate(None, string.whitespace))
+
+  #parse( 'node("a","b")@1;'.translate(None, string.whitespace) )
+
+  keywords = [ "notin" ]
+  #line = "timer_state(H, I, T-1)@next :- timer_state(H, I, T), notin timer_cancel(H, I), T > 1;"
+  line = "watch('test', 'test')@1;"
+  for k in keywords :
+    if k in line :
+      line = line.replace( k, "___"+k+"___")
+  parse( line.translate(None, string.whitespace) )
 
 #########
 #  EOF  #

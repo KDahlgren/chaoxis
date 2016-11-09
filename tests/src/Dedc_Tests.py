@@ -9,7 +9,7 @@ Dedc_Tests.py
 #  IMPORTS  #
 #############
 # standard python packages
-import os, sys, unittest
+import os, string, sys, unittest
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -45,7 +45,7 @@ class Dedc_Tests( unittest.TestCase ) :
   
     return None
     
-########################
+#########################
 #  DEDALUSPARSER TESTS  #
 #########################
   def test_cleanResult_dedalusParser(self):
@@ -56,37 +56,41 @@ class Dedc_Tests( unittest.TestCase ) :
   def test_parse_dedalusParser(self):
     #test detecting facts
     inputArg  = "watch('test', 'test')@1;"
+    inputArg = inputArg.translate(None, string.whitespace)
     outputResult = "fact"
     self.assertEqual(dedalusParser.parse(inputArg)[0],outputResult)
     
     #test detecting rules
     inputArg  = "node(Node, Neighbor)@next :- node(Node, Neighbor);"
+    inputArg = inputArg.translate(None, string.whitespace)
     outputResult = "rule"
     self.assertEqual(dedalusParser.parse(inputArg)[0],outputResult)
     
     #test detecting improper dedalus
     inputArg  = "improper dedalus"
+    inputArg = inputArg.translate(None, string.whitespace)
     outputResult = None
     self.assertEqual(dedalusParser.parse(inputArg),outputResult)
         
     inputArg  = "improper ; dedalus"
+    inputArg  = inputArg.translate(None, string.whitespace)
     with self.assertRaises(SystemExit) as cm:
         dedalusParser.parse(inputArg)
     self.assertIn("ERROR",cm.exception.code)
         
     inputArg  = "'improper' :- 'dedalus' :- ;"
+    inputArg = inputArg.translate(None, string.whitespace)
     with self.assertRaises(SystemExit) as cm:
       dedalusParser.parse(inputArg)
     self.assertIn("ERROR",cm.exception.code)
 
   def test_parseDedalus_dedalusParser(self): 
     #testing file parsing
-    inputArg  = testPath+"\_testfiles\_testSingleLine.ded"
-    outputResult = [('fact', ['node', '(', '"', 'a', '"', ',', ' ',\
-    '"', 'b', '"', ')', '@', '1', ';'])]
+    inputArg  = testPath+"/testfiles/testSingleLine.ded"
+    outputResult = [('fact', ['node', '(', '"a","b"', ')', '@', '1'])]
     self.assertEqual(dedalusParser.parseDedalus(inputArg),outputResult)
     
-    inputArg  = testPath+"\_testfiles\_testComments.ded"
+    inputArg  = testPath+"/testfiles/testComments.ded"
     outputResult = []
     self.assertEqual(dedalusParser.parseDedalus(inputArg),outputResult)
      
@@ -95,7 +99,7 @@ class Dedc_Tests( unittest.TestCase ) :
       dedalusParser.parseDedalus(inputArg)
     self.assertIn("ERROR",cm.exception.code)
 
-########################
+#########################
 #  CLOCKRELATION TESTS  #
 #########################
   def test_initClockRelation_clockRelation(self):
@@ -104,9 +108,9 @@ class Dedc_Tests( unittest.TestCase ) :
   def test_buildClockRelation_clockRelation(self):
     return None
     
-########################
+###########################
 #  DEDALUSREWRITER TESTS  #
-#########################
+###########################
   def test_clean_dedalusRewriter(self):
     return None 
     
