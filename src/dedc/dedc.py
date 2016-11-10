@@ -21,7 +21,7 @@ Clock          (src text, dest text, sndTime text, delivTime text)
 
 '''
 
-import os, sqlite3, sys
+import os, string, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -40,7 +40,7 @@ import Fact, Rule
 #  GLOBALS  #
 #############
 DEDC_DEBUG = False
-
+DEDC_DEBUG1 = True
 
 ###############
 #  DED TO IR  #
@@ -200,7 +200,7 @@ def starterClock( cursor, argDict ) :
 ########################
 # input cursor, assume IR successful
 # output nothing
-def rewriteToDatalog( ruleMeta, cursor ) :
+def rewrite( ruleMeta, cursor ) :
 
   # rewrite intitial facts and rules
   dedalusRewriter.rewriteDedalus( cursor )
@@ -225,34 +225,22 @@ def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
   meta     = dedToIR( dedFile, cursor )
   ruleMeta = meta[1]
 
-  # check for bugs
-  #if DEDC_DEBUG :
-  #  dumpers.factDump( cursor )
-  #  dumpers.ruleDump( cursor )
-
   # generate the first clock
   starterClock( cursor, argDict )
 
+  # dedalus and provenance rewrite to final IR
+  rewrite( ruleMeta, cursor )
+
   # check for bugs
-  #if DEDC_DEBUG :
-  #  dumpers.factDump(  cursor )
-  #  dumpers.ruleDump(  cursor )
-  #  dumpers.clockDump( cursor )
+  if DEDC_DEBUG :
+    dumpers.factDump( cursor )
+    dumpers.ruleDump( cursor )
+    dumpers.clockDump( cursor )
 
-  # dedalus and provenance rewrite to datalog
-  rewriteToDatalog( ruleMeta, cursor )
+  # compile IR into C4 datalog
+  #c4datalog()
 
-  dumpers.factDump( cursor )
-  dumpers.ruleDump( cursor )
-  dumpers.clockDump( cursor )
-
-  #if DEDC_DEBUG :
-  #  dumpers.factDump( cursor )
-  #  dumpers.ruleDump( cursor )
-  #  dumpers.clockDump( cursor )
-
-  return None
-
+  #return 
 
 ##############################
 #  CREATE DEDALUS IR TABLES  #
@@ -269,6 +257,62 @@ def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime text, delivTime text)''')
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique
 
+
+def skip( line ) :
+  line = line.translate( None, string.whitespace )
+          
+  if (not line == None) and (len(line) > 0) : # skip blank lines
+    if (not line[0] == "/") and (not line[1] == "/") :
+      return False
+
+  return True
+
+##################
+#  GET INCLUDES  #
+##################
+# input a dictionary of file names and examinations statuses
+# output a complete list of files associated with a particular Dedalus program
+
+def getAllFiles( fileDict ) :
+
+  # base case
+  noMoreNewFiles = True
+  for k,v in fileDict.items() :
+    if v == False :
+      noMoreNewFiles = False
+
+  # unexplored files exist
+  if not noMoreNewFiles :
+    print "fileDict1 = " + str( fileDict )
+
+    # iterate over all files
+    for filename, status in fileDict.items() :
+
+      # hit an unexplored file
+      if status == False :
+
+        # check if file exists
+        filepath = os.path.abspath( filename )
+        if os.path.isfile( filepath ) :
+          infile = open( filename, 'r' )
+
+          # iterate over all lines in input file
+          for line in infile :
+            if not skip( line ) :
+              if "include" in line :
+                line    = line.split( " " )
+                newfile = line[1].translate( None, string.whitespace )
+                fileDict[ newfile ] = False
+          infile.close()
+          fileDict[ filename ] = True
+
+        else :
+          sys.exit( "ERROR : file does not exist: " + str(filename) )
+
+    print "fileDict2 = " + str( fileDict )
+    fileDict = getAllFiles( fileDict )
+
+  return fileDict
 
 #####################
 #  COMPILE DEDALUS  #
@@ -288,15 +332,24 @@ def compileDedalus( argDict ) :
 
   # ----------------------------------------------------------------- #
 
-  # TODO: input multiple files via include.
+  # get all input files
+  dedfilename = ""
+  fileDict    = {}
+  for key in argDict :
+    if "file" in key :
+      dedfilename             = argDict[ key ]
+      fileDict[ dedfilename ] = False
+
+  fileDict = getAllFiles( fileDict )
 
   # compile all input dedalus files into a single datalog program
-  for key in argDict :
-    if "file" in key : # key to a ded file
-      dedfilename = argDict[ key ]
-      runCompiler( cursor, dedfilename, argDict, datalogProgPath )
-    else : # this is not the ded file you're looking for. move along.
-      continue # do nothing
+  for dedfilename, status in fileDict.items() :
+    runCompiler( cursor, dedfilename, argDict, datalogProgPath )
+
+  if DEDC_DEBUG1 :
+    dumpers.factDump(  cursor )
+    dumpers.ruleDump(  cursor )
+    dumpers.clockDump( cursor )
 
   # ----------------------------------------------------------------- #
 

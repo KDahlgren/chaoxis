@@ -76,8 +76,6 @@ def rewriteDeductive( cursor ) :
   for rid in cleanRIDs :
     cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
     rawMaxID = cursor.fetchone()
-    print "deductive: rawMaxID    = " + str(rawMaxID)
-    print "deductive: rawMaxID[0] = " + str(rawMaxID[0])
     if not rawMaxID[0] == None :
       newAttID = int(rawMaxID[0] + 1)
       cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt + "')")
@@ -207,7 +205,6 @@ def rewriteAsynchronous( cursor ) :
 
     # sanity check
 
-    print "firstSubgoalAtts = " + str(firstSubgoalAtts)
     baseAtt = firstSubgoalAtts[0]
 
     for c in firstSubgoalAtts :
@@ -225,7 +222,6 @@ def rewriteAsynchronous( cursor ) :
 
     # define second clock attribute
     secondAtt = firstGoalAtt
-    #print secondAtt
 
     # add clock subgoal
     # clock(Node1, Node2, SndTime)

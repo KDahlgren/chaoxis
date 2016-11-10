@@ -21,15 +21,13 @@ import Rule
 #############
 #  GLOBALS  #
 #############
-PROVENANCEREWRITE_DEBUG = True
+PROVENANCEREWRITE_DEBUG = False
 aggOps = [ "min", "max", "sum", "avg", "count" ] # TODO: make this configurable
 
 ##############
 #  AGG PROV  #
 ##############
 def aggProv( aggRule, nameAppend, cursor ) :
-
-  print "... running aggProv ..."
 
   # create bindings rule (see LDFI paper section 4.1.2)
   bindingsRule = regProv( aggRule, nameAppend, cursor )
@@ -101,9 +99,7 @@ def aggProv( aggRule, nameAppend, cursor ) :
 def regProv( regRule, nameAppend, cursor ) :
 
   # parse rule
-  print "regRule.display() = " + regRule.display()
   parsedRule = dedalusParser.parse( regRule.display() )
-  print "parsedRule        = " + str(parsedRule) 
 
   # generate random ID for new rule
   rid = tools.getID()
@@ -192,7 +188,6 @@ def rewriteProvenance( ruleMeta, cursor ) :
     containsAgg = False
 
     goalAtts = rule.getGoalAttList()
-    print "*** goalAtts = " + str(goalAtts)
 
     for att in goalAtts :
       for agg in aggOps :
