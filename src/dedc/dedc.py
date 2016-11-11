@@ -242,6 +242,7 @@ def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
 
   #return 
 
+
 ##############################
 #  CREATE DEDALUS IR TABLES  #
 ##############################
@@ -267,13 +268,14 @@ def skip( line ) :
 
   return True
 
-##################
-#  GET INCLUDES  #
-##################
+
+############################
+#  GET ALL INCLUDED FILES  #
+############################
 # input a dictionary of file names and examinations statuses
 # output a complete list of files associated with a particular Dedalus program
 
-def getAllFiles( fileDict ) :
+def getAllIncludedFiles( fileDict ) :
 
   # base case
   noMoreNewFiles = True
@@ -310,9 +312,10 @@ def getAllFiles( fileDict ) :
           sys.exit( "ERROR : file does not exist: " + str(filename) )
 
     print "fileDict2 = " + str( fileDict )
-    fileDict = getAllFiles( fileDict )
+    fileDict = getAllIncludedFiles( fileDict )
 
   return fileDict
+
 
 #####################
 #  COMPILE DEDALUS  #
@@ -340,7 +343,7 @@ def compileDedalus( argDict ) :
       dedfilename             = argDict[ key ]
       fileDict[ dedfilename ] = False
 
-  fileDict = getAllFiles( fileDict )
+  fileDict = getAllIncludedFiles( fileDict )
 
   # compile all input dedalus files into a single datalog program
   for dedfilename, status in fileDict.items() :
@@ -357,6 +360,7 @@ def compileDedalus( argDict ) :
   os.remove( saveDB ) # delete the IR file to clean up
 
   return datalogProgPath
+
 
 #########
 #  EOF  #
