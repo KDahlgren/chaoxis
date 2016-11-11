@@ -13,7 +13,7 @@ pyLDIF is a Python implementation of the Lineage-Driven Fault Injection approach
 
 The "run.sh" scripts essentially wrap a full execution over the relevant Dedalus files in the directory. If the run exits normally, then the "test" passes. Otherwise, stdout populates with the error message followed by all the lines of the execution printed to the screen leading up to the error. Accordingly, the unit tests represent a more rigorous examinations of functionality correctness. The non-unit tests are most valuable as windows offering a view into the abilities of the current version of pyLDFI.
 
-## More Fun Exercises
+## More Exercises
 
 1. Run simplelog/ with output: "python ../../src/drivers/driver1.py -n a,b,c,d -f ./simpleLog.ded"
 2. Run tokens/ with output: "python ../../src/drivers/driver1.py -n a,b,c,d -f ./timeout\_svc.ded -f ./tokens.ded"
