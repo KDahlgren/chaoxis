@@ -6,8 +6,15 @@ tools.py
    sanity-check particular properties.
 '''
 
-import os, random, sys
+import os, random, string, sys
 
+# ------------------------------------------------------ #
+# import sibling packages HERE!!!
+packagePath  = os.path.abspath( __file__ + "/../.." )
+sys.path.append( packagePath )
+
+#from utils import extractors
+# ------------------------------------------------------ #
 
 ############
 #  GET ID  #
@@ -63,6 +70,93 @@ def toAscii_list( sqlresults ) :
 def toAscii_str( unicodeStr ) :
   return unicodeStr[0].encode( 'utf-8' )
 
+
+##########
+#  SKIP  #
+##########
+# input a ded line
+# determine if line is a comment
+# output boolean
+def skip( line ) :
+  line = line.translate( None, string.whitespace )
+  
+  if (not line == None) and (len(line) > 0) : # skip blank lines
+    if (not line[0] == "/") and (not line[1] == "/") :
+      return False
+
+  return True
+
+
+############################
+#  GET ALL INCLUDED FILES  #
+############################
+# input a dictionary of file names and examinations statuses
+# output a complete list of files associated with a particular Dedalus program
+
+def getAllIncludedFiles( fileDict ) :
+
+  # base case
+  noMoreNewFiles = True
+  for k,v in fileDict.items() :
+    if v == False :
+      noMoreNewFiles = False
+
+  # unexplored files exist
+  if not noMoreNewFiles :
+    print "fileDict1 = " + str( fileDict )
+
+    # iterate over all files
+    for filename, status in fileDict.items() :
+
+      # hit an unexplored file
+      if status == False :
+
+        # check if file exists
+        filepath = os.path.abspath( filename )
+        if os.path.isfile( filepath ) :
+          infile = open( filename, 'r' )
+
+          # iterate over all lines in input file
+          for line in infile :
+            if not skip( line ) :
+              if "include" in line :
+                line    = line.split( " " )
+                newfile = line[1].translate( None, string.whitespace )
+                fileDict[ newfile ] = False
+          infile.close()
+          fileDict[ filename ] = True
+
+        else :
+          sys.exit( "ERROR : file does not exist: " + str(filename) )
+
+    print "fileDict2 = " + str( fileDict )
+    fileDict = getAllIncludedFiles( fileDict )
+
+  return fileDict
+
+
+###################
+#  COMBINE LINES  #
+###################
+# input list of c4-formatted table definitions, facts, and rules
+# output a single line containing the entire program
+
+def combineLines( definesList, factsList, rulesList ) :
+  program = ""
+
+  # get defines
+  for d in definesList :
+    program += d
+
+  # get facts
+  for f in factsList :
+    program += f
+
+  # get rules
+  for r in rulesList :
+    program += r
+
+  return program
 
 #########
 #  EOF  #

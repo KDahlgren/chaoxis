@@ -30,6 +30,7 @@ sys.path.append( packagePath )
 
 from utils import dumpers, extractors, tools, parseCommandLineInput
 import clockRelation
+import c4_tools
 import dedalusParser
 import dedalusRewriter
 import provenanceRewriter
@@ -238,9 +239,9 @@ def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
     dumpers.clockDump( cursor )
 
   # compile IR into C4 datalog
-  #c4datalog()
+  programFilename = c4_tools.c4datalog( cursor )
 
-  #return 
+  return programFilename
 
 
 ##############################
@@ -257,64 +258,6 @@ def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS Equation  (rid text, eid text, eqn text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime text, delivTime text)''')
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique
-
-
-def skip( line ) :
-  line = line.translate( None, string.whitespace )
-          
-  if (not line == None) and (len(line) > 0) : # skip blank lines
-    if (not line[0] == "/") and (not line[1] == "/") :
-      return False
-
-  return True
-
-
-############################
-#  GET ALL INCLUDED FILES  #
-############################
-# input a dictionary of file names and examinations statuses
-# output a complete list of files associated with a particular Dedalus program
-
-def getAllIncludedFiles( fileDict ) :
-
-  # base case
-  noMoreNewFiles = True
-  for k,v in fileDict.items() :
-    if v == False :
-      noMoreNewFiles = False
-
-  # unexplored files exist
-  if not noMoreNewFiles :
-    print "fileDict1 = " + str( fileDict )
-
-    # iterate over all files
-    for filename, status in fileDict.items() :
-
-      # hit an unexplored file
-      if status == False :
-
-        # check if file exists
-        filepath = os.path.abspath( filename )
-        if os.path.isfile( filepath ) :
-          infile = open( filename, 'r' )
-
-          # iterate over all lines in input file
-          for line in infile :
-            if not skip( line ) :
-              if "include" in line :
-                line    = line.split( " " )
-                newfile = line[1].translate( None, string.whitespace )
-                fileDict[ newfile ] = False
-          infile.close()
-          fileDict[ filename ] = True
-
-        else :
-          sys.exit( "ERROR : file does not exist: " + str(filename) )
-
-    print "fileDict2 = " + str( fileDict )
-    fileDict = getAllIncludedFiles( fileDict )
-
-  return fileDict
 
 
 #####################
@@ -343,7 +286,7 @@ def compileDedalus( argDict ) :
       dedfilename             = argDict[ key ]
       fileDict[ dedfilename ] = False
 
-  fileDict = getAllIncludedFiles( fileDict )
+  fileDict = tools.getAllIncludedFiles( fileDict )
 
   # compile all input dedalus files into a single datalog program
   for dedfilename, status in fileDict.items() :

@@ -85,11 +85,28 @@ def rewriteDeductive( cursor ) :
     sids = getSubgoalIDs( cursor, rid ) # get all subgoal ids
     sids = tools.toAscii_list(sids)
 
+    # iterate over rule subgoals
     for s in sids :
+      # get time arg for subgoal
+      cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid = '" + rid + "' AND sid = '" + s + "'" )
+      timeArg = cursor.fetchone()
+      timeArg = tools.toAscii_str( timeArg )
+
+      # add Time as a subgoal attribute
       cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
       rawMaxID = cursor.fetchone()
       newAttID = int(rawMaxID[0] + 1)
       cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "','" + str(newAttID) + "','" + timeAtt + "')")
+
+      # replace subgoal time attribute with numeric time arg
+      if timeArg.isdigit() :
+        cursor.execute( "SELECT attName FROM SubgoalAtt WHERE sid = '" + s + "'" )
+        satts = cursor.fetchall()
+        satts = tools.toAscii_list( satts )
+
+        for i in range(0,len(satts)) :
+          if satts[i]  == "Time" :
+            cursor.execute( "UPDATE SubgoalAtt SET attName='" + timeArg + "' WHERE rid = '" + rid + "' AND sid = '" + s + "' AND attID = '" + str(i) + "'")
 
   # check for bugs
   if DEDALUSREWRITER_DEBUG :
@@ -122,7 +139,7 @@ def rewriteInductive( cursor ) :
   if DEDALUSREWRITER_DEBUG :
     print " ... running inductive rewrite ..."
 
-  timeAtt = "SndTime"
+  timeAtt = "Time"
 
   # grab all existing next rule ids
   inductiveRuleIDs = getInductiveRuleIDs( cursor )
@@ -153,6 +170,10 @@ def rewriteInductive( cursor ) :
       rawMaxID = cursor.fetchone()
       newAttID = int(rawMaxID[0] + 1)
       cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "','" + str(newAttID) + "','" + timeAtt + "')")
+
+  # remove time arg from rule goals
+  for rid in cleanRIDs :
+    cursor.execute( "UPDATE Rule SET goalTimeArg='' WHERE rid='" + rid + "'"  )
 
   # check for bugs
   if DEDALUSREWRITER_DUMPS_DEBUG :
@@ -255,6 +276,10 @@ def rewriteAsynchronous( cursor ) :
     firstGoalAtt     = ""
 
     # --------------------------------------------------------------------- #
+
+  # remove time arg from rule goals
+  for rid in cleanRIDs :
+    cursor.execute( "UPDATE Rule SET goalTimeArg='' WHERE rid='" + rid + "'"  )
 
   # check for bugs
   if DEDALUSREWRITER_DUMPS_DEBUG :

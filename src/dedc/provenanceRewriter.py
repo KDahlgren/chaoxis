@@ -39,15 +39,14 @@ def aggProv( aggRule, nameAppend, cursor ) :
   firingsRule  = Rule.Rule( rid, cursor )
 
   # goal info
-  goalName    = aggRule.getGoalName() + "_prov"
+  goalName    = aggRule.getGoalName() + "_prov" + str(rid) # allows tables for duplicate names
   goalAttList = aggRule.getGoalAttList()
-  goalTimeArg = aggRule.getGoalTimeArg()
+  goalTimeArg = ""
 
   # check for bugs
   if PROVENANCEREWRITE_DEBUG :
     print "aggProv: goalName    = " + goalName
     print "aggProv: goalAttList = " + str(goalAttList)
-    print "aggProv: goalTimeArg = " + goalTimeArg
 
   # subgoal list info
   subgoalName         = bindingsRule.getGoalName()
@@ -110,13 +109,12 @@ def regProv( regRule, nameAppend, cursor ) :
   # -------------------------------------------------- #
 
   # get goal info
-  goalName    = regRule.getGoalName() + nameAppend
-  goalTimeArg = regRule.getGoalTimeArg()
+  goalName    = regRule.getGoalName() + nameAppend + str(rid)
+  goalTimeArg = ""
 
   # check for bugs
   if PROVENANCEREWRITE_DEBUG :
     print "regProv: goalName     = " + goalName
-    print "regProv: goalTimeArg  = " + goalTimeArg
 
   # -------------------------------------------------- #
 
@@ -133,10 +131,10 @@ def regProv( regRule, nameAppend, cursor ) :
     # generate random ID for subgoal
     sid = tools.getID()
 
-    # TODO: create new extraction methods
+    # extract info
     subgoalName    = extractors.extractSubgoalName(     subgoal )
     subgoalAttList = extractors.extractAttList(         subgoal ) # returns list
-    subgoalTimeArg = extractors.extractTimeArg(         subgoal )
+    subgoalTimeArg = ""
     subgoalAddArgs = extractors.extractAdditionalArgs(  subgoal ) # returns list 
 
     # check for bugs
@@ -144,12 +142,11 @@ def regProv( regRule, nameAppend, cursor ) :
       print "regProv: subgoal        = " + str(subgoal)
       print "regProv: subgoalName    = " + subgoalName
       print "regProv: subgoalAttList = " + str(subgoalAttList)
-      print "regProv: subgoalTimeArg = " + subgoalTimeArg
       print "regProv: subgoalAddArgs = " + str(subgoalAddArgs)
 
     # populate goal attribute list
     for att in subgoalAttList :
-      if not att in goalAttList :
+      if (not att in goalAttList) and (not att.isdigit()) and (not att == "_") :  # exclude numbers from goal atts
         goalAttList.append( att )
 
     # save firings subgoal
