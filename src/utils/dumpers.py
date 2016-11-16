@@ -20,31 +20,6 @@ from utils import tools
 #############
 DUMPERS_DEBUG = False
 
-##################
-#  CHECK IF EQN  #
-##################
-def checkIfEqn( i, subgoalName, cursor ) :
-  eqnList = []
-
-  # get list of sids for the subgoals of this rule
-  cursor.execute( "SELECT eid FROM Equation" ) # get list of eids for this rule
-  eqnIDs = cursor.fetchall()
-  eqnIDs = tools.toAscii_list( eqnIDs )
-
-  for e in range(0,len(eqnIDs)) :
-    currEqnID = eqnIDs[e]
- 
-    # get associated equation
-    if not currEqnID == None :
-      cursor.execute( "SELECT eqn FROM Equation WHERE rid == '" + str(i) + "' AND eid == '" + str(currEqnID) + "'" )
-      eqnList = cursor.fetchall()
-      if not eqnList == None :
-        eqnList = tools.toAscii_list( eqnList )
-
-  if subgoalName in eqnList :
-    return True
-  else :
-    return False
 
 ###############
 #  RULE DUMP  #
@@ -53,7 +28,7 @@ def checkIfEqn( i, subgoalName, cursor ) :
 # output nothing, print all rules to stdout
 def ruleDump( cursor ) :
 
-  print " ... running rule dump ..."
+  print "********************\nProgram Rules :"
 
   rules = []
 
@@ -125,11 +100,13 @@ def ruleDump( cursor ) :
         subTimeArg = cursor.fetchone() # assume only one additional arg
         subTimeArg = tools.toAscii_str( subTimeArg )
 
-        ## get subgoal additional args
-        #cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + i + "' AND sid == '" + s + "'" ) # get list of sids for this rule
-        #subAddArg = cursor.fetchone() # assume only one additional arg
-        #if not subAddArg == None :
-        #  subAddArg = tools.toAscii_str( subAddArg )
+        # get subgoal additional args
+        cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + i + "' AND sid == '" + s + "'" ) # get list of sids for this rule
+        subAddArg = cursor.fetchone() # assume only one additional arg
+        if not subAddArg == None :
+          subAddArg = tools.toAscii_str( subAddArg )
+          subAddArg += " "
+          newRule.append( subAddArg )
 
         # all subgoals have a name and open paren
         newRule.append( subgoalName + "(" )
@@ -188,7 +165,7 @@ def ruleDump( cursor ) :
 # output nothing, print all facts to stdout
 def factDump( cursor ) :
 
-  print " ... runnning fact dump ..."
+  print "********************\nProgram Facts :"
 
   facts = []
 
@@ -232,6 +209,17 @@ def factDump( cursor ) :
   for f in facts :
     print ''.join(f)
 
+
+################
+#  CLOCK DUMP  #
+################
+# input db cursor
+# output nothing, print all clock entries to stdout
+def clockDump( cursor ) :
+  print "********************\nProgram Clock :"
+  clock = cursor.execute('''SELECT * FROM Clock''')
+  for c in clock :
+    print c
 
 ######################
 #  RECONSTRUCT RULE  #

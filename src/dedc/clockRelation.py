@@ -12,7 +12,7 @@ import os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-#from utils import parseCommandLineInput
+from utils import dumpers, parseCommandLineInput
 # ------------------------------------------------------ #
 
 #############
@@ -32,7 +32,6 @@ def initClockRelation( cursor, argDict ) :
 
   defaultStartSendTime  = '1'
   maxSendTime           = argDict[ "EOT" ]
-  defaultDelivTime      = 'NULL'
 
   # --------------------------------------------------------------------- #
   # prefer cmdline topology
@@ -44,13 +43,12 @@ def initClockRelation( cursor, argDict ) :
     for i in range( int(defaultStartSendTime), int(maxSendTime)+1 ) :
       for n1 in nodeSet :
         for n2 in nodeSet :
-          cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + defaultDelivTime + "')")
+          delivTime = str(i + 1)
+          cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "')")
 
     # check for bugs
     if CLOCKRELATION_DEBUG :
-      clock = cursor.execute('''SELECT * FROM Clock''')
-      for c in clock :
-        print c
+      dumpers.clockDump( cursor )
 
   # --------------------------------------------------------------------- #
   # otherwise use topology from input files
@@ -97,9 +95,10 @@ def initClockRelation( cursor, argDict ) :
         dest       = conn[1]
         sndTime    = conn[2] # unicode raw
         newSndTime = sndTime.encode('utf-8')
+        delivTime  = str( int(newSndTime) + 1 )
 
         if i >= int( newSndTime ) :
-          cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + str(i) + "','" + defaultDelivTime + "')") # ignore duplicates
+          cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + str(i) + "','" + delivTime + "')") # ignore duplicates
 
     # collect total node set
     nodeSet = []
@@ -111,16 +110,15 @@ def initClockRelation( cursor, argDict ) :
 
     # assume all nodes have self connection at time 1 (may not be specified in input file)
     for n in nodeSet :
-      src     = n
-      dest    = n
-      sndTime = "1"
-      cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + sndTime + "','" + defaultDelivTime + "')") # ignore duplicates
+      src       = n
+      dest      = n
+      sndTime   = 1
+      delivTime = sndTime + 1
+      cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + str(sndTime) + "','" + str(delivTime) + "')") # ignore duplicates
 
     # double check success
-    print "Clock relation :"
-    clock = cursor.execute('''SELECT * FROM Clock''')
-    for c in clock :
-      print c
+    if CLOCKRELATION_DEBUG :
+      dumpers.clockDump( cursor )
 
   # --------------------------------------------------------------------- #
   else :

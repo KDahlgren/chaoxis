@@ -1,4 +1,4 @@
-//include "util/timeout_svc.ded";
+include ./timeout_svc.ded
 
 node(H, N)@next :- node(H, N);
 token(H, T) :- begin(H, T);

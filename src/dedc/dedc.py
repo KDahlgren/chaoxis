@@ -16,11 +16,12 @@ GoalAtt        (rid text, attID int, attName text)
 Subgoals       (rid text, sid text, subgoalName text, subgoalTimeArg text)
 SubgoalAtt     (rid text, sid text, attID int, attName text)
 SubgoalAddArgs (rid text, sid text, argName text)
+Equation       (rid text, eid text, eqn text)
 Clock          (src text, dest text, sndTime text, delivTime text)
 
 '''
 
-import os, sqlite3, sys
+import os, string, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -32,12 +33,14 @@ import clockRelation
 import dedalusParser
 import dedalusRewriter
 import provenanceRewriter
+import Fact, Rule
 # ------------------------------------------------------ #
 
 #############
 #  GLOBALS  #
 #############
-DEDC_DEBUG = True
+DEDC_DEBUG = False
+DEDC_DEBUG1 = True
 
 ###############
 #  DED TO IR  #
@@ -47,48 +50,60 @@ DEDC_DEBUG = True
 # output nothing
 def dedToIR( filename, cursor ) :
 
-  print " ... running dedToIR ..."
-
   parsedLines = []
   parsedLines = dedalusParser.parseDedalus( filename ) # program exits here if file cannot be opened.
 
+  # collect fact and rule metadata for future dumping
+  factMeta = []
+  ruleMeta = []
+
+  # iterate over parsed lines
   for line in parsedLines :
 
-    print "in dedToIR: line = " + str(line)
+    # ----------------------------------------------- #
+    #                     FACTS                       #
 
     if line[0] == "fact" : # save facts
-      name    = extractors.extractName(    line[1] )
-      attList = extractors.extractAttList( line[1] )
-      timeArg = extractors.extractTimeArg( line[1] )
 
       # generate random ID for fact
       fid = tools.getID()
 
-      # save fact name and time arg
-      cursor.execute("INSERT INTO Fact VALUES ('" + fid + "','" + name + "','" + timeArg + "')")
+      # extract fact info
+      name    = extractors.extractName(    line[1] )
+      attList = extractors.extractAttList( line[1] )
+      timeArg = extractors.extractTimeArg( line[1] )
 
-      # save fact attributes
-      attID = 0 # allows duplicate attributes in list
-      for attName in attList :
-        cursor.execute("INSERT INTO FactAtt VALUES ('" + fid + "','" + str(attID) + "','" + attName + "')")
-        attID += 1
+      # save fact data in persistent DB using IR
+      newFact = Fact.Fact( fid, cursor )
+      newFact.setFactInfo( name, timeArg )
+      newFact.setAttList(  attList       )
+
+      # save fact metadata (aka object)
+      factMeta.append( newFact )
+
+      # check for bugs
+      if DEDC_DEBUG :
+        print "newFact.getName()    : " + str( newFact.getName()    )
+        print "newFact.getAttList() : " + str( newFact.getAttList() )
+        print "newFact.getTimeArg() : " + str( newFact.getTimeArg() )
+        print "newFact.display() = " + newFact.display()
+
+    # ----------------------------------------------- #
+    #                     RULES                       #
 
     elif line[0] == "rule" : # save rules
 
-      if DEDC_DEBUG :
-        print "in dedc, processing rule " + str(line[1])
+      # generate a random ID for the rule
+      rid = tools.getID()
+
+      # --------------------------- #
+      #            GOAL             #
 
       # extract goal info
       goal        = extractors.extractGoal(    line[1] )
       goalName    = extractors.extractName(    goal    )
       goalAttList = extractors.extractAttList( goal    )
       goalTimeArg = extractors.extractTimeArg( goal    )
-
-      # extract subgoal info
-      subgoalList = extractors.extractSubgoalList( line[1] )
-
-      # extract equation info
-      eqnList     = extractors.extractEqnList( line[1] )
 
       # check for bugs
       if DEDC_DEBUG :
@@ -97,91 +112,78 @@ def dedToIR( filename, cursor ) :
         print "goalAttList = " + str(goalAttList)
         print "goalTimeArg = " +  str(goalTimeArg)
 
-      # generate random ID for goal
-      rid = tools.getID()
+      # save rule goal info
+      newRule = Rule.Rule(     rid, cursor           )
+      newRule.setGoalInfo(     goalName, goalTimeArg )
+      newRule.setGoalAttList(  goalAttList           )
 
-      # save rule goal name and goal time arg
-      cursor.execute("INSERT INTO Rule VALUES ('" + rid + "','" + goalName + "','" + goalTimeArg + "')")
+      # check for bugs
+      if DEDC_DEBUG :
+        print "newRule.getGoalName()    : " + str( newRule.getGoalName()    )
+        print "newRule.getGoalAttList() : " + str( newRule.getGoalAttList() )
+        print "newRule.getGoalTimeArg() : " + str( newRule.getGoalTimeArg() )
 
-      # save goal attributes
-      attID = 0 # allows duplicate attributes in list
-      for attName in goalAttList :
-        cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(attID) + "','" + attName + "')")
-        attID += 1
+
+      # --------------------------- #
+      #           SUBGOALS          #
+
+      # extract subgoal info
+      subgoalList = extractors.extractSubgoalList( line[1] )
 
       # save subgoal name, time arg, and additional args
       for sub in subgoalList :
+
+        # generate random ID for subgoal
+        sid = tools.getID()
+
         subgoalName    = extractors.extractSubgoalName(    sub )
         subgoalAttList = extractors.extractAttList(        sub ) # returns list
         subgoalTimeArg = extractors.extractTimeArg(        sub )
         subgoalAddArgs = extractors.extractAdditionalArgs( sub ) # returns list
 
+        # check for bugs
         if DEDC_DEBUG :
           print "subgoalName    = " + str(subgoalName)
           print "subgoalAttList = " + str(subgoalAttList)
           print "subgoalTimeArg = " + str(subgoalTimeArg)
           print "subgoalAddArgs = " + str(subgoalAddArgs)
 
-        # generate random ID for subgoal
-        sid = tools.getID()
+        newRule.setSingleSubgoalInfo( sid, subgoalName, subgoalTimeArg )
+        newRule.setSingleSubgoalAttList( sid, subgoalAttList )
+        newRule.setSingleSubgoalAddArgs( sid, subgoalAddArgs )
 
-        # save name and time arg
-        if not subgoalName == None :
-          cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')")
-
-        # save subgoal attributes
-        attID = 0 # allows duplicate attributes in list
-        for attName in subgoalAttList :
-          cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(attID) + "','" + attName + "')")
-          attID += 1
-
-        # save subgoal additional args
-        for addArg in subgoalAddArgs :
-          cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + addArg + "')")
-
-      # save eqns
+      # check for bugs
       if DEDC_DEBUG :
-        print "eqnList = " + str(eqnList)
+        print "newRule.getSubgoalList = " + str( newRule.getSubgoalListStr() )
+
+      # --------------------------- #
+      #          EQUATIONS          #
+
+      # extract equation info
+      eqnList = extractors.extractEqnList( line[1] )
 
       for eqn in eqnList :
         # generate random ID for eqn
         eid = tools.getID()
 
         # save eqn
-        cursor.execute("INSERT INTO Equation VALUES ('" + rid + "','" + eid + "','" + eqn + "')")
+        newRule.setSingleEqn( eid, eqn )
 
       # check for bugs
       if DEDC_DEBUG :
-        print "Rule :"
-        Rule = cursor.execute('''SELECT * FROM Rule''')
-        for r in Rule :
-          print r
-        print "GoalAtt :"
-        GoalAtt = cursor.execute('''SELECT * FROM GoalAtt''')
-        for g in GoalAtt :
-          print g
-        print "Subgoals :"
-        Subgoals = cursor.execute('''SELECT * FROM Subgoals''')
-        for s in Subgoals :
-          print s
-        print "SubgoalsAtt :"
-        SubgoalAtt = cursor.execute('''SELECT * FROM SubgoalAtt''')
-        for s in SubgoalAtt :
-          print s
-        print "SubgoalAdd :"
-        SubgoalAdd = cursor.execute('''SELECT * FROM SubgoalAddArgs''')
-        for s in SubgoalAdd :
-          print s
-        print "Equation :"
-        eqns = cursor.execute('''SELECT * FROM Equation''')
-        for s in eqns :
-          print s
+        print "newRule.getEquationList() = " + newRule.getEquationListStr()
 
-    if DEDC_DEBUG :
-      dumpers.ruleDump( cursor )
-      dumpers.factDump( cursor )
+      # --------------------------- #
 
-  return None
+      ruleMeta.append( newRule )
+
+      # check for bugs
+      if DEDC_DEBUG :
+        print "newRule.display() = " + newRule.display()
+
+  # ----------------------------------------------------------- #
+
+  return ( factMeta, ruleMeta )
 
 #################
 #  IR TO CLOCK  #
@@ -189,27 +191,23 @@ def dedToIR( filename, cursor ) :
 # input cursor and cmdline args, assume IR successful
 # create the initial clock relation in SQL database
 # output nothing
-def StarterClock( cursor, argDict ) :
+def starterClock( cursor, argDict ) :
   clockRelation.initClockRelation( cursor, argDict )
-  return None
+
 
 ########################
 #  REWRITE TO DATALOG  #
 ########################
 # input cursor, assume IR successful
 # output nothing
-def RewriteToDatalog( cursor ) :
+def rewrite( ruleMeta, cursor ) :
+
+  # rewrite intitial facts and rules
   dedalusRewriter.rewriteDedalus( cursor )
-  provenanceRewriter.rewriteProvenance( cursor )
 
-  print "here!!!"
+  # add provenance rules
+  provenanceRewriter.rewriteProvenance( ruleMeta, cursor )
 
-  # check for bugs
-  if DEDC_DEBUG :
-    dumpers.factDump( cursor )
-    dumpers.ruleDump( cursor )
-
-  return None
 
 ##################
 #  RUN COMPILER  #
@@ -222,18 +220,99 @@ def RewriteToDatalog( cursor ) :
 
 # WARNING: CANNOT write rules or facts on multiple lines.
 def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
-  print " ... running compiler ..."
 
   # ded to IR
-  dedToIR( dedFile, cursor )
+  meta     = dedToIR( dedFile, cursor )
+  ruleMeta = meta[1]
 
   # generate the first clock
-  #StarterClock( cursor, argDict )
+  starterClock( cursor, argDict )
 
-  # dedalus and provenance rewrite to datalog
-  #RewriteToDatalog( cursor )
+  # dedalus and provenance rewrite to final IR
+  rewrite( ruleMeta, cursor )
 
-  return None
+  # check for bugs
+  if DEDC_DEBUG :
+    dumpers.factDump( cursor )
+    dumpers.ruleDump( cursor )
+    dumpers.clockDump( cursor )
+
+  # compile IR into C4 datalog
+  #c4datalog()
+
+  #return 
+
+##############################
+#  CREATE DEDALUS IR TABLES  #
+##############################
+def createDedalusIRTables( cursor ) :
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Fact       (fid text, name text, timeArg text)''')    # fact names
+  cursor.execute('''CREATE TABLE IF NOT EXISTS FactAtt    (fid text, attID int, attName text)''')   # fact attributes list
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalName text, subgoalTimeArg text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Equation  (rid text, eid text, eqn text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime text, delivTime text)''')
+  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique
+
+
+def skip( line ) :
+  line = line.translate( None, string.whitespace )
+          
+  if (not line == None) and (len(line) > 0) : # skip blank lines
+    if (not line[0] == "/") and (not line[1] == "/") :
+      return False
+
+  return True
+
+##################
+#  GET INCLUDES  #
+##################
+# input a dictionary of file names and examinations statuses
+# output a complete list of files associated with a particular Dedalus program
+
+def getAllFiles( fileDict ) :
+
+  # base case
+  noMoreNewFiles = True
+  for k,v in fileDict.items() :
+    if v == False :
+      noMoreNewFiles = False
+
+  # unexplored files exist
+  if not noMoreNewFiles :
+    print "fileDict1 = " + str( fileDict )
+
+    # iterate over all files
+    for filename, status in fileDict.items() :
+
+      # hit an unexplored file
+      if status == False :
+
+        # check if file exists
+        filepath = os.path.abspath( filename )
+        if os.path.isfile( filepath ) :
+          infile = open( filename, 'r' )
+
+          # iterate over all lines in input file
+          for line in infile :
+            if not skip( line ) :
+              if "include" in line :
+                line    = line.split( " " )
+                newfile = line[1].translate( None, string.whitespace )
+                fileDict[ newfile ] = False
+          infile.close()
+          fileDict[ filename ] = True
+
+        else :
+          sys.exit( "ERROR : file does not exist: " + str(filename) )
+
+    print "fileDict2 = " + str( fileDict )
+    fileDict = getAllFiles( fileDict )
+
+  return fileDict
 
 #####################
 #  COMPILE DEDALUS  #
@@ -249,38 +328,30 @@ def compileDedalus( argDict ) :
   cursor  = IRDB.cursor()
 
   # create tables
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Fact       (fid text, name text, timeArg text)''')    # fact names
-  cursor.execute('''CREATE TABLE IF NOT EXISTS FactAtt    (fid text, attID int, attName text)''')   # fact attributes list
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalName text, subgoalTimeArg text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Equation  (rid text, eid text, eqn text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime text, delivTime text)''')
-  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique
+  createDedalusIRTables( cursor )
 
   # ----------------------------------------------------------------- #
+
+  # get all input files
+  dedfilename = ""
+  fileDict    = {}
+  for key in argDict :
+    if "file" in key :
+      dedfilename             = argDict[ key ]
+      fileDict[ dedfilename ] = False
+
+  fileDict = getAllFiles( fileDict )
 
   # compile all input dedalus files into a single datalog program
-  for key in argDict :
-    if "file" in key : # key to a ded file
-      dedfilename = argDict[ key ]
-      runCompiler( cursor, dedfilename, argDict, datalogProgPath )
-    else : # this is not the ded file you're looking for. move along.
-      continue # do nothing
+  for dedfilename, status in fileDict.items() :
+    runCompiler( cursor, dedfilename, argDict, datalogProgPath )
+
+  if DEDC_DEBUG1 :
+    dumpers.factDump(  cursor )
+    dumpers.ruleDump(  cursor )
+    dumpers.clockDump( cursor )
 
   # ----------------------------------------------------------------- #
-
-  # clear db  and clean up
-  cursor.execute("DROP TABLE IF EXISTS Fact")
-  cursor.execute("DROP TABLE IF EXISTS FactAtt")
-  cursor.execute("DROP TABLE IF EXISTS Rule")
-  cursor.execute("DROP TABLE IF EXISTS Subgoals")
-  cursor.execute("DROP TABLE IF EXISTS SubgoalAtt")
-  cursor.execute("DROP TABLE IF EXISTS GoalAtt")
-  cursor.execute("DROP TABLE IF EXISTS Clock")
-  cursor.execute("DROP INDEX IF EXISTS IDX_Clock")
 
   IRDB.close()        # close db
   os.remove( saveDB ) # delete the IR file to clean up
