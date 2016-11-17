@@ -9,7 +9,7 @@ Dedc_Tests.py
 #  IMPORTS  #
 #############
 # standard python packages
-import os, sys, unittest
+import os, sys, unittest,sqlite3
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -28,22 +28,105 @@ from dedc import dedc, dedalusParser, clockRelation
 ################
 class Dedc_Tests( unittest.TestCase ) :
 
+  def test_createDedalusIRTables_dedc( self ) : 
+    #testing set up
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    
+    #checks if it runs through function withou error
+    self.assertTrue(dedc.createDedalusIRTables(cursor)==None)
+    
+    #checks if the tables are actually created
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Fact'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='FactAtt'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Rule'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='GoalAtt'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Subgoals'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='SubgoalAddArgs'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Equation'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Clock'").fetchone()==None)
+  
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+    
+    
   def test_dedToIR_dedc( self ) :
-    return None
+    #testing set up. dedToIR has dependency
+    #on createDedalusIRTables so that's
+    #tested first above.
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    dedc.createDedalusIRTables(cursor)
+    
+    #throws error for nonexistent file
+    inputfile = "./nonexistentfile.ded"
+    with self.assertRaises(SystemExit) as cm:
+        dedc.dedToIR(inputfile,cursor)
+    self.assertIn("ERROR",cm.exception.code)
+    
+    #returns a result
+    inputfile = testPath+"/testfiles/testFullProgram.ded"
+    outputResult = None
+    self.assertFalse(dedc.dedToIR(inputfile,cursor)==outputResult)
+    
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
 
-  def test_IRToClock_dedc( self ) :
+  def test_starterClock_dedc( self ) :
+    #tested in clockRelation tests below
     return None
+    
 
-  def test_ClockToDatalog_dedc( self ) :
+  def test_rewrite_dedc( self ) :
+    #tested in dedalusRewriter and
+    #provenanceRewriter below
     return None
 
   def test_runCompiler_dedc( self ) :
-    return None
-
-  def test_compileDedalus_dedc( self ) :
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    dedc.createDedalusIRTables(cursor)
+    inputfile = testPath+"/testfiles/testFullProgram.ded"
+    inputArg = {'prov_diagrams': False, 'use_symmetry': False, 'crashes': 0, 'solver': None, 
+    'disable_dot_rendering': False, 'negative_support': False, 'strategy': None,
+    'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3, 'find_all_counterexamples': False,
+    'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2}
     
+    #returns a result
+    outputResult = None
+    self.assertFalse(dedc.runCompiler(cursor,inputfile,inputArg,None)==outputResult)
+    c4file = dedc.runCompiler(cursor,inputfile,inputArg,None)
+    
+     #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+    os.remove(c4file)
+    
+  def test_compileDedalus_dedc( self ) :
   
-    return None
+    #throw error when file not found (currently leaves behind the DB file)
+    '''inputArg = {'prov_diagrams': False, 'use_symmetry': False, 'crashes': 0, 'solver': None, 
+    'disable_dot_rendering': False, 'negative_support': False, 'strategy': None,
+    'file': './nonexistentfile.ded', 'EOT': 3, 'find_all_counterexamples': False,
+    'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2}
+    with self.assertRaises(SystemExit) as cm:
+        dedc.compileDedalus(inputArg)
+    self.assertIn("ERROR",cm.exception.code)'''
+    
+    #returns a result
+    inputArg = {'prov_diagrams': False, 'use_symmetry': False, 'crashes': 0, 'solver': None, 
+    'disable_dot_rendering': False, 'negative_support': False, 'strategy': None,
+    'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3, 'find_all_counterexamples': False,
+    'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2}
+    outputResult = None
+    self.assertFalse(dedc.compileDedalus(inputArg)==outputResult)
+    
+    
     
 #########################
 #  DEDALUSPARSER TESTS  #
@@ -157,7 +240,6 @@ class Dedc_Tests( unittest.TestCase ) :
 #########################
 # use this main if running this script exclusively.
 if __name__ == "__main__" :
-    dedalusParser.parse("node(Node, Neighbor)@next :- node(Node, Neighbor);")
     unittest.main( verbosity=2 )
 
 
