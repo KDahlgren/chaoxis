@@ -9,7 +9,16 @@ pyLDIF is a Python implementation of the Lineage-Driven Fault Injection approach
 3. bash run.sh
 4. If the string "TEST PASSED" appears, then your computer has all the necessary packages to run the current version of the program. Otherwise, please consult the output for more information.
 5. Next, cd into pyLDFI/tests/pyLDFI\_UnitTests/
-6. Run "python pyLDFI\_TestEnsemble.py". If all the tests pass, then the current functionality supported by the testing framework works on your computer.
+6. Run "python pyLDFI\_TestEnsemble.py". If all the tests pass, then the functionality challenged by the current testing framework works on your computer.
+
+The "run.sh" scripts essentially wrap a full execution over the relevant Dedalus files in the directory. If the run exits normally, then the "test" passes. Otherwise, stdout populates with the error message followed by all the lines of the execution printed to the screen leading up to the error. Accordingly, the unit tests represent a more rigorous examinations of functionality correctness. The non-unit tests are most valuable as windows offering a view into the abilities of the current version of pyLDFI.
+
+## More Exercises
+
+1. Run simplelog/ with output: "python ../../src/drivers/driver1.py -n a,b,c,d -f ./simpleLog.ded"
+2. Run tokens/ with output: "python ../../src/drivers/driver1.py -n a,b,c,d -f ./timeout\_svc.ded -f ./tokens.ded"
+3. Run barrier\_test/ with output: "python ../../src/drivers/driver1.py -n a,b,c,d -f ./barrier\_test.ded"
+4. Run real\_heartbeat/ with output: "python ../../src/drivers/driver1.py -n a,b,c,d -f ./real\_heartbeat.ded"
 
 ## Dependencies
 Python Packages :
