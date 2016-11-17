@@ -10,6 +10,7 @@ Dedc_Tests.py
 #############
 # standard python packages
 import os, sys, unittest,sqlite3
+from StringIO import StringIO
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -34,7 +35,7 @@ class Dedc_Tests( unittest.TestCase ) :
     IRDB    = sqlite3.connect( testDB ) 
     cursor  = IRDB.cursor()
     
-    #checks if it runs through function withou error
+    #checks if it runs through function without error
     self.assertTrue(dedc.createDedalusIRTables(cursor)==None)
     
     #checks if the tables are actually created
@@ -87,6 +88,9 @@ class Dedc_Tests( unittest.TestCase ) :
     return None
 
   def test_runCompiler_dedc( self ) :
+    #testing set up. runCompiler has dependency
+    #on createDedalusIRTables so that's
+    #tested first above.
     testDB = testPath + "/IR.db"
     IRDB    = sqlite3.connect( testDB ) 
     cursor  = IRDB.cursor()
@@ -102,10 +106,12 @@ class Dedc_Tests( unittest.TestCase ) :
     self.assertFalse(dedc.runCompiler(cursor,inputfile,inputArg,None)==outputResult)
     c4file = dedc.runCompiler(cursor,inputfile,inputArg,None)
     
+    
      #clean up testing
     IRDB.close()
     os.remove( testDB )
-    os.remove(c4file)
+    if c4file is not None:
+        os.remove(c4file)
     
   def test_compileDedalus_dedc( self ) :
   
@@ -181,8 +187,46 @@ class Dedc_Tests( unittest.TestCase ) :
 #  CLOCKRELATION TESTS  #
 #########################
   def test_initClockRelation_clockRelation(self):
-    return None
+    #testing setup. initClockRelation has dependency
+    #on createDedalusIRTables and dedToIR so that's
+    #tested first above.
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    #Dependencies
+    dedc.createDedalusIRTables(cursor)
+    dedc.dedToIR( testPath+"/testfiles/testFullProgram.ded", cursor )
     
+    #for saving the program clock output
+    #to be used in comparison below
+    clockRelation.CLOCKRELATION_DEBUG = True
+    originalStdout= sys.stdout
+    cmdResult = StringIO()
+    fileResult = StringIO()
+    
+    #run through using cmdline topology option
+    sys.stdout = cmdResult
+    inputArg = { 'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3,
+    'nodes': ['a','b','c','d']}
+    self.assertTrue(clockRelation.initClockRelation(cursor,inputArg)==None)
+    
+    #run through using node topology from inputfile option
+    sys.stdout = fileResult
+    inputArg = { 'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3,
+    'nodes': []}
+    self.assertTrue(clockRelation.initClockRelation(cursor,inputArg)==None)
+    
+    #check to make sure that the outputs from both options are the same
+    sys.stdout =originalStdout #return stdout to original 
+    cmdOutput=cmdResult.getvalue()[cmdResult.getvalue().find('\n')+1:]
+    fileOutput=fileResult.getvalue()[fileResult.getvalue().find('\n')+1:]
+    self.assertEqual(cmdOutput,fileOutput)
+    
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+  
+
   def test_buildClockRelation_clockRelation(self):
     return None
     
