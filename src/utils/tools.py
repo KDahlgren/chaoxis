@@ -143,7 +143,11 @@ def getAllIncludedFiles( fileDict ) :
             if not skip( line ) :
               if "include" in line :
                 line    = line.split( " " )
-                newfile = line[1].translate( None, string.whitespace )
+                newfile = line[1]
+                newfile = newfile.replace( ";", "" )
+                newfile = newfile.replace( '"', "" )
+                newfile = newfile.replace( "'", "" )
+                newfile  = newfile.translate( None, string.whitespace ) # removes extra spaces and newlines
                 fileDict[ newfile ] = False
           infile.close()
           fileDict[ filename ] = True

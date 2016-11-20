@@ -1,2 +1,2 @@
-include ./simplog.ded ;
-include ./deliv_assert.ded ;
+include "./simplog.ded" ;
+include "./deliv_assert.ded" ;

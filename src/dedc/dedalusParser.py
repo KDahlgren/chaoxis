@@ -91,7 +91,7 @@ def parse( dedLine ) :
   #                         RULES                                 #
 
   # return tuples
-  if ";" in dedLine :
+  if (";" in dedLine) and (not "include" in dedLine) :
 
     # parse RULES
     if ":-" in dedLine :
