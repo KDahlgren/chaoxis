@@ -47,7 +47,7 @@ def checkParentheses( line ) :
 ###################
 #  TO ASCII LIST  #
 ###################
-# input list of unicoded sql results
+# input list of unicoded sql results (array of unary tuples)
 # output list of ascii results
 def toAscii_list( sqlresults ) :
 
@@ -56,6 +56,28 @@ def toAscii_list( sqlresults ) :
     if not r[0] == None :
       asciiResult = r[0].encode('utf-8')
       cleanResults.append( asciiResult )
+
+  if not cleanResults == None :
+    return cleanResults
+  else :
+    return None
+
+#########################
+#  TO ASCII MULTI LIST  #
+#########################
+# input list of unicoded sql results (n-ary tuples)
+# output list of ascii results as an array of n-ary arrays
+def toAscii_multiList( tupleList ) :
+
+  cleanResults = []
+
+  for tup in tupleList :
+    cleanTup = []
+    for item in tup :
+      if not item[0] == None :
+        asciiResult = item[0].encode('utf-8')
+        cleanTup.append( asciiResult )
+    cleanResults.append( cleanTup )
 
   if not cleanResults == None :
     return cleanResults
@@ -141,20 +163,12 @@ def getAllIncludedFiles( fileDict ) :
 # input list of c4-formatted table definitions, facts, and rules
 # output a single line containing the entire program
 
-def combineLines( definesList, factsList, rulesList ) :
+def combineLines( listOfStatementLists ) :
   program = ""
 
-  # get defines
-  for d in definesList :
-    program += d
-
-  # get facts
-  for f in factsList :
-    program += f
-
-  # get rules
-  for r in rulesList :
-    program += r
+  for listOfStatments in listOfStatementLists :
+    for statement in listOfStatments :
+      program += statement
 
   return program
 

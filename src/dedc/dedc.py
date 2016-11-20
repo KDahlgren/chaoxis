@@ -25,16 +25,20 @@ import os, string, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath )
+packagePath1  = os.path.abspath( __file__ + "/../.." )
+sys.path.append( packagePath1 )
 
 from utils import dumpers, extractors, tools, parseCommandLineInput
 import clockRelation
-import c4_tools
 import dedalusParser
 import dedalusRewriter
 import provenanceRewriter
 import Fact, Rule
+
+packagePath2  = os.path.abspath( __file__ + "/translators" )
+sys.path.append( packagePath2 )
+
+from translators import c4_tools, pydatalog_tools
 # ------------------------------------------------------ #
 
 #############
@@ -239,7 +243,8 @@ def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
     dumpers.clockDump( cursor )
 
   # compile IR into C4 datalog
-  programFilename = c4_tools.c4datalog( cursor )
+  #programFilename = c4_tools.c4datalog( cursor )
+  programFilename = pydatalog_tools.getPyDatalogProg( cursor )
 
   return programFilename
 

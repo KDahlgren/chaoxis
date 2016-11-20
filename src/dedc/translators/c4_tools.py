@@ -2,14 +2,14 @@
 
 '''
 c4_tools.py
-   Tools for producig c4 datalog programs in dedc compiler.
+   Tools for producig c4 datalog programs from the IR in the dedc compiler.
 '''
 
 import os, string, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/../.." )
+packagePath  = os.path.abspath( __file__ + "/../../.." )
 sys.path.append( packagePath )
 
 from utils import dumpers, tools
@@ -134,7 +134,7 @@ def c4datalog( cursor ) :
 
   factList = []
   for fid in fidList :
-    newFact = dumpers.dumpSingleFact( fid, cursor )
+    newFact = dumpers.dumpSingleFact_c4( fid, cursor )
     factList.append( newFact )
 
   # ----------------------------------------------------------- #
@@ -146,7 +146,7 @@ def c4datalog( cursor ) :
 
   ruleList = []
   for rid in ridList :
-    newRule = dumpers.dumpSingleRule( rid, cursor )
+    newRule = dumpers.dumpSingleRule_c4( rid, cursor )
     ruleList.append( newRule )
 
   # ----------------------------------------------------------- #
@@ -165,8 +165,8 @@ def c4datalog( cursor ) :
 
   program = tools.combineLines( definesList, factList, ruleList )
 
-  testpath = os.path.abspath( __file__ + "/../.." ) + "/evaluators/programFiles/"
-  programFilename = os.path.abspath( __file__ + "/../.." ) + "/evaluators/programFiles/" + "c4program.datalog"
+  testpath = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
+  programFilename = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/" + "c4program.datalog"
 
   if os.path.isdir( testpath ) :
     outfile = open( programFilename, "w" )
