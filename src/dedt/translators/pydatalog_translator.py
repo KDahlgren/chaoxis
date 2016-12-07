@@ -6,13 +6,14 @@ pydatalog_translator.py
 '''
 
 import os, string, sqlite3, sys
+import dumpers_pydatalog
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../../.." )
 sys.path.append( packagePath )
 
-from utils import dumpers, dumpers_pydatalog, tools
+from utils import dumpers, tools
 # ------------------------------------------------------ #
 
 #############
@@ -179,7 +180,7 @@ def getPyDatalogProg( cursor ) :
   # ----------------------------------------------------------- #
   # edit original rule list for goals with operators
 
-  pydatalogToos.
+  #pydatalogTools.
 
   # ----------------------------------------------------------- #
   # save program

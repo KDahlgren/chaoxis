@@ -38,7 +38,7 @@ import Fact, Rule
 packagePath2  = os.path.abspath( __file__ + "/translators" )
 sys.path.append( packagePath2 )
 
-from translators import c4, pydatalog_translator
+from translators import c4_translator, pydatalog_translator
 # ------------------------------------------------------ #
 
 #############
@@ -245,7 +245,7 @@ def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
 
   # compile IR into C4 datalog
   #programFilename = c4.c4datalog( cursor )
-  programFilename = pydatalog_tools.getPyDatalogProg( cursor )
+  programFilename = pydatalog_translator.getPyDatalogProg( cursor )
 
   return programFilename
 
