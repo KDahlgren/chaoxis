@@ -12,13 +12,13 @@ import os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from utils import tools
+from utils import dumpers_c4, tools
 # ------------------------------------------------------ #
 
 #############
 #  GLOBALS  #
 #############
-DUMPERS_DEBUG = False
+DUMPERS_DEBUG = True
 
 
 ###############
@@ -224,10 +224,126 @@ def clockDump( cursor ) :
 ######################
 #  RECONSTRUCT RULE  #
 ######################
-# input a rule id, db cursor
-# output full rule string
 def reconstructRule( rid, cursor ) :
-  return "TODO: output full rule string"
+
+  if DUMPERS_DEBUG :
+    print "... running reconstructRule ..."
+
+  rule = ""
+
+  # -------------------------------------------------------------- #
+  #                           GOAL                                 #
+
+  # get goal name
+  cursor.execute( "SELECT goalName FROM Rule WHERE rid == '" + rid + "'" ) # get goal name
+  goalName    = cursor.fetchone()
+  goalName    = tools.toAscii_str( goalName )
+
+  # get list of attribs in goal
+  goalList    = cursor.execute( "SELECT attName FROM GoalAtt WHERE rid == '" + rid + "'" )# list of goal atts
+  goalList    = tools.toAscii_list( goalList )
+
+  # get goal time arg
+  goalTimeArg = ""
+  cursor.execute( "SELECT goalTimeArg FROM Rule WHERE rid == '" + rid + "'" )
+  goalTimeArg = cursor.fetchone()
+  goalTimeArg = tools.toAscii_str( goalTimeArg )
+
+  # convert goal info to pretty string
+  rule += goalName + "("
+  for j in range(0,len(goalList)) :
+    if j < (len(goalList) - 1) :
+      rule += goalList[j] + ","
+    else :
+      rule += goalList[j] + ")"
+  if not goalTimeArg == "" :
+    rule += "@" + goalTimeArg + " :- "
+  else :
+    rule += " <= "
+
+  # --------------------------------------------------------------- #
+  #                         SUBGOALS                                #
+
+  # get list of sids for the subgoals of this rule
+  cursor.execute( "SELECT sid FROM Subgoals WHERE rid == '" + str(rid) + "'" ) # get list of sids for this rule
+  subIDs = cursor.fetchall()
+  subIDs = tools.toAscii_list( subIDs )
+
+  # iterate over subgoal ids
+  for k in range(0,len(subIDs)) :
+    newSubgoal = ""
+
+    s = subIDs[k]
+
+    # get subgoal name
+    cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid == '" + str(rid) + "' AND sid == '" + str(s) + "'" )
+    subgoalName = cursor.fetchone()
+
+    if not subgoalName == None :
+      subgoalName = tools.toAscii_str( subgoalName )
+
+      if DUMPERS_DEBUG :
+        print "subgoalName = " + subgoalName
+
+      # get subgoal attribute list
+      subAtts = cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid == '" + rid + "' AND sid == '" + s + "'" )
+      subAtts = tools.toAscii_list( subAtts )
+
+      # get subgoal time arg
+      cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid == '" + rid + "' AND sid == '" + s + "'" ) # get list of sids for this rule
+      subTimeArg = cursor.fetchone() # assume only one additional arg
+      subTimeArg = tools.toAscii_str( subTimeArg )
+
+      # get subgoal additional args
+      cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + rid + "' AND sid == '" + s + "'" ) # get list of sids for this rule
+      subAddArg = cursor.fetchone() # assume only one additional arg
+      if not subAddArg == None :
+        subAddArg = tools.toAscii_str( subAddArg )
+        subAddArg += " "
+        newSubgoal += subAddArg
+
+      # all subgoals have a name and open paren
+      newSubgoal += subgoalName + "("
+
+      # add in all attributes
+      for j in range(0,len(subAtts)) :
+        if j < (len(subAtts) - 1) :
+          newSubgoal += subAtts[j] + ","
+        else :
+          newSubgoal += subAtts[j] + ")"
+
+      # cap with a comma, if applicable
+      if k < len( subIDs ) - 1 :
+        newSubgoal += ","
+
+    rule += newSubgoal
+
+  # --------------------------------------------------------------- #
+  #                         EQUATIONS                               #
+
+  # get list of sids for the subgoals of this rule
+  cursor.execute( "SELECT eid FROM Equation" ) # get list of eids for this rule
+  eqnIDs = cursor.fetchall()
+  eqnIDs = tools.toAscii_list( eqnIDs )
+
+  for e in range(0,len(eqnIDs)) :
+    currEqnID = eqnIDs[e]
+   
+    # get associated equation
+    if not currEqnID == None :
+      cursor.execute( "SELECT eqn FROM Equation WHERE rid == '" + rid + "' AND eid == '" + str(currEqnID) + "'" )
+      eqn = cursor.fetchone()
+      if not eqn == None :
+        eqn = tools.toAscii_str( eqn )
+
+        # convert eqn info to pretty string
+        rule += "," + str(eqn)
+
+  # --------------------------------------------------------------- #
+
+  rule += " ;" # end all rules with a semicolon
+
+  return rule
 
 #########
 #  EOF  #

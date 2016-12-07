@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-dedc.py
+dedt.py
    Define the functionality for converting parsed Dedalus into 
    SQL relations (the intermediate representation).
 '''
@@ -11,7 +11,7 @@ IR SCHEMA:
 
 Fact           (fid text, name text, timeArg text)
 FactAtt        (fid text, attID int, attName text)
-Rule           (rid text, goalName text, goalTimeArg text)
+Rule           (rid text, goalName text, goalTimeArg text, rewritten int)
 GoalAtt        (rid text, attID int, attName text)
 Subgoals       (rid text, sid text, subgoalName text, subgoalTimeArg text)
 SubgoalAtt     (rid text, sid text, attID int, attName text)
@@ -38,7 +38,7 @@ import Fact, Rule
 packagePath2  = os.path.abspath( __file__ + "/translators" )
 sys.path.append( packagePath2 )
 
-from translators import c4_tools, pydatalog_tools
+from translators import c4, pydatalog_translator
 # ------------------------------------------------------ #
 
 #############
@@ -105,10 +105,11 @@ def dedToIR( filename, cursor ) :
       #            GOAL             #
 
       # extract goal info
-      goal        = extractors.extractGoal(    line[1] )
-      goalName    = extractors.extractName(    goal    )
-      goalAttList = extractors.extractAttList( goal    )
-      goalTimeArg = extractors.extractTimeArg( goal    )
+      goal          = extractors.extractGoal(    line[1] )
+      goalName      = extractors.extractName(    goal    )
+      goalAttList   = extractors.extractAttList( goal    )
+      goalTimeArg   = extractors.extractTimeArg( goal    )
+      rewrittenFlag = 0     # all new goals have not yet been rewritten
 
       # check for bugs
       if DEDC_DEBUG :
@@ -118,9 +119,9 @@ def dedToIR( filename, cursor ) :
         print "goalTimeArg = " +  str(goalTimeArg)
 
       # save rule goal info
-      newRule = Rule.Rule(     rid, cursor           )
-      newRule.setGoalInfo(     goalName, goalTimeArg )
-      newRule.setGoalAttList(  goalAttList           )
+      newRule = Rule.Rule(     rid, cursor                          )
+      newRule.setGoalInfo(     goalName, goalTimeArg, rewrittenFlag )
+      newRule.setGoalAttList(  goalAttList                          )
 
       # check for bugs
       if DEDC_DEBUG :
@@ -243,7 +244,7 @@ def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
     dumpers.clockDump( cursor )
 
   # compile IR into C4 datalog
-  #programFilename = c4_tools.c4datalog( cursor )
+  #programFilename = c4.c4datalog( cursor )
   programFilename = pydatalog_tools.getPyDatalogProg( cursor )
 
   return programFilename
@@ -255,7 +256,7 @@ def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
 def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS Fact       (fid text, name text, timeArg text)''')    # fact names
   cursor.execute('''CREATE TABLE IF NOT EXISTS FactAtt    (fid text, attID int, attName text)''')   # fact attributes list
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text, rewritten int)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalName text, subgoalTimeArg text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text)''')

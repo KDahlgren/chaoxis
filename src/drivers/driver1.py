@@ -19,7 +19,7 @@ import os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from dedc import dedc, dedalusParser
+from dedt import dedt, dedalusParser
 from utils import parseCommandLineInput
 # ------------------------------------------------------ #
 
@@ -70,7 +70,7 @@ def driver() :
   print argDict
 
   # compile all input dedalus files into a single datalog program
-  datalogProgPath = dedc.compileDedalus( argDict )
+  datalogProgPath = dedt.compileDedalus( argDict )
 
   # run through pydatalog, collect bindings ~ provenance
   # if buggy => output results

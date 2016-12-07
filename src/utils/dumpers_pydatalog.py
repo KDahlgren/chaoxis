@@ -173,10 +173,18 @@ def dumpSingleRule_pydatalog( rid, cursor ) :
 
       # add in all attributes
       for j in range(0,len(subAtts)) :
+        currAtt = subAtts[j]
+        print ">>> currAtt = " + str(currAtt) + ", subgoalName = " + str(subgoalName) 
+
+        # handle wildcards
+        if currAtt == "_" :
+          currAtt = "THISISAWILDCARD" + tools.getID()
+
+        # punctutation
         if j < (len(subAtts) - 1) :
-          newSubgoal += subAtts[j] + ","
+          newSubgoal += currAtt + ","
         else :
-          newSubgoal += subAtts[j] + ")"
+          newSubgoal += currAtt + ")"
 
       # cap with a comma, if applicable
       if k < len( subIDs ) - 1 :

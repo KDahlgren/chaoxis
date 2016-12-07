@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 '''
-c4_tools.py
-   Tools for producig c4 datalog programs from the IR in the dedc compiler.
+c4.py
+   Tools for producig c4 datalog programs from the IR in the dedt compiler.
 '''
 
 import os, string, sqlite3, sys

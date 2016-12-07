@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 '''
-pydatalog_tools.py
-   Tools for producig pydatalog programs from the IR in the dedc compiler.
+pydatalog_translator.py
+   Tools for producig pydatalog programs from the IR in the dedt compiler.
 '''
 
 import os, string, sqlite3, sys
@@ -22,7 +22,6 @@ PYDATALOG_TOOLS_DEBUG = True
 
 operators = [ "+", "-", "*", "/", "<", ">", "<=", ">=" ]
 
-
 #################
 #  CREATE TERM  #
 #################
@@ -33,7 +32,7 @@ def createTerm( strList ) :
   createTerm = ""
   createTerm += "pyDatalog.create_terms('"
 
-  # remove all numbers
+  # remove all numbers as rule attributes
   tmp = []
   for s in strList :
     if not s.isdigit() :
@@ -60,13 +59,6 @@ def createTerm( strList ) :
     else :
       createTerm += "')\n"
 
-  if ",_," in createTerm :
-    createTerm = createTerm.replace( ",_,", ",THISISAWILDCARD," )
-  if ",_'" in createTerm :
-    createTerm = createTerm.replace( ",_'", ",THISISAWILDCARD'" )
-  if "'_," in createTerm :
-    createTerm = createTerm.replace( "'_,", "'THISISAWILDCARD," )
-
   return createTerm
 
 
@@ -80,6 +72,7 @@ def getPyDatalogProg( cursor ) :
 
   list_names = []
   list_atts  = []
+  list_wilds = []
 
   # ----------------------------------------------------------- #
   # get goal names and attributes
@@ -171,6 +164,24 @@ def getPyDatalogProg( cursor ) :
     ruleList.append( newRule )
 
   # ----------------------------------------------------------- #
+  # add wildcards
+
+  # make a second pass over the rules to extract the complete set of
+  #    random wildcards.
+  for rule in ruleList :
+    print ">>>> rule = " + str( rule )
+    wildList = tools.attSearchPass2(rule)
+    print " >>>>> attSearchPass2 = " + str( wildList )
+    list_wilds.extend( wildList )
+
+  createTerm_wilds = createTerm( list_wilds )
+
+  # ----------------------------------------------------------- #
+  # edit original rule list for goals with operators
+
+  pydatalogToos.
+
+  # ----------------------------------------------------------- #
   # save program
 
   if PYDATALOG_TOOLS_DEBUG :
@@ -181,6 +192,9 @@ def getPyDatalogProg( cursor ) :
     print "createTerm_atts :"
     print createTerm_atts
     print "*******************************************"
+    print "createTerm_wilds :"
+    print createTerm_wilds
+    print "*******************************************"
     print "factList :"
     print factList
     print "*******************************************"
@@ -190,7 +204,7 @@ def getPyDatalogProg( cursor ) :
     print "ruleList :"
     print ruleList
 
-  listOfStatementLists = [ createTerm_names, createTerm_atts, factList, clockFacts, ruleList ]
+  listOfStatementLists = [ createTerm_names, createTerm_atts, createTerm_wilds, factList, clockFacts, ruleList ]
   program = tools.combineLines( listOfStatementLists )
 
   testpath = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
@@ -203,8 +217,8 @@ def getPyDatalogProg( cursor ) :
     outfile.write( "pyEngine.Logging = True\n" )
     outfile.write( "logging.basicConfig(level=logging.INFO)\n" )
     outfile.write( program )
-    outfile.write( "print ( pre(X,Pl,Time).data[0] )\n" )
-    outfile.write( "print ( post(X,Pl,Time).data[0] )\n" )
+    outfile.write( "print ( pre(X,Pl,SndTime) )\n" )
+    outfile.write( "print ( post(X,Pl,SndTime) )\n" )
     outfile.close()
   else :
     sys.exit( "ERROR: directory for saving datalog program does not exist: " + testpath )

@@ -2,7 +2,7 @@
 
 '''
 Dedc_Tests.py
-  Defines unit tests for dedc.
+  Defines unit tests for dedt.
 '''
 
 #############
@@ -18,7 +18,7 @@ sys.path.append( packagePath )
 testPath = os.path.abspath(__file__+"/../../../tests")
 
 
-from dedc import dedc, dedalusParser, clockRelation
+from dedt import dedt, dedalusParser, clockRelation
 
 # ------------------------------------------------------ #
 
@@ -28,19 +28,19 @@ from dedc import dedc, dedalusParser, clockRelation
 ################
 class Dedc_Tests( unittest.TestCase ) :
 
-  def test_dedToIR_dedc( self ) :
+  def test_dedToIR_dedt( self ) :
     return None
 
-  def test_IRToClock_dedc( self ) :
+  def test_IRToClock_dedt( self ) :
     return None
 
-  def test_ClockToDatalog_dedc( self ) :
+  def test_ClockToDatalog_dedt( self ) :
     return None
 
-  def test_runCompiler_dedc( self ) :
+  def test_runCompiler_dedt( self ) :
     return None
 
-  def test_compileDedalus_dedc( self ) :
+  def test_compileDedalus_dedt( self ) :
     
   
     return None

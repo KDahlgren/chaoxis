@@ -6,15 +6,20 @@ tools.py
    sanity-check particular properties.
 '''
 
-import os, random, string, sys
+import os, random, re, string, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-#from utils import extractors
+import dumpers
 # ------------------------------------------------------ #
+
+#############
+#  GLOBALS  #
+#############
+TOOLS_DEBUG = True
 
 ############
 #  GET ID  #
@@ -22,7 +27,20 @@ sys.path.append( packagePath )
 # input nothing
 # output random 16 char alphanumeric id
 def getID() :
-  return "".join( random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ') for i in range(16) )
+  return "".join( random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ') for i in range(16) )
+
+################################
+#  CHECK IF REWRITTEN ALREADY  #
+################################
+def checkIfRewrittenAlready( rid, cursor ) :
+  cursor.execute( "SELECT rewritten FROM Rule WHERE rid == '" + rid + "'" )
+  flag = cursor.fetchone()
+  flag = flag[0]
+  if flag == 0 :
+    return False
+  else :
+    print "RULE PREVIOUSLY REWRITTEN: " + str( dumpers.reconstructRule( rid, cursor ) )
+    return True
 
 
 #######################
@@ -175,6 +193,31 @@ def combineLines( listOfStatementLists ) :
       program += statement
 
   return program
+
+
+######################
+#  ATT SEARCH PASS 2 #
+######################
+# input list of any formatted datalog rule, possibly containing wild cards
+#    of the form 'THISISAWILDCARD<16 random upper-case letters>'
+# output an array containing the extracted wildcards
+
+def attSearchPass2( pydatalogRule ) :
+  wildList = []
+
+  pydatalogRule = pydatalogRule.split(",")
+
+  # iterate over components of the rule to extract all wildcards
+  for substr in pydatalogRule :
+    print " >>> substr = " + substr
+    r = re.search('THISISAWILDCARD([A-Z]*)', substr)
+    if r :
+      r = r.group(0)
+      print ">>>> r = " + str(r)
+      wildList.append(r)
+
+  return wildList
+
 
 #########
 #  EOF  #

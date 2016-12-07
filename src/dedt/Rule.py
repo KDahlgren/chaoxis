@@ -47,7 +47,20 @@ class Rule :
       if len(nameList) == 1 :
         return nameList[0]
       else :
-        sys.exit( "ERROR: Rule possesses more than 1 goal : " + nameList )
+        sys.exit( "ERROR: Rule possesses more than one goal : " + nameList )
+
+  ###################
+  #  GET REWRITTEN  #
+  ###################
+  def getRewritten( self ) :
+    self.cursor.execute( "SELECT rewritten FROM Rule WHERE rid = '" + self.rid + "'" )
+    rewrittenList = self.cursor.fetchall()
+    rewrittenList = tools.toAscii_list( nameList )
+    if not rewrittenList == None :
+      if len(rewrittenList) == 1 :
+        return rewrittenList[0]
+      else :
+        sys.exit( "ERROR: Rule possesses more than one rewritten flag : " + rewrittenList )
 
   #############################
   #  GET GOAL ATTRIBUTE LIST  #
@@ -194,8 +207,10 @@ class Rule :
   #                SET                    #
 
   # set goal name and time arg
-  def setGoalInfo( self, name, timeArg ) :
-    self.cursor.execute("INSERT INTO Rule VALUES ('" + self.rid + "','" + name + "','" + timeArg + "')")
+  def setGoalInfo( self, name, timeArg, rewrittenFlag ) :
+    if timeArg == None :
+      timeArg = asyn
+    self.cursor.execute("INSERT INTO Rule (rid, goalName, goalTimeArg, rewritten) VALUES ('" + self.rid + "','" + name + "','" + timeArg + "','" + str(rewrittenFlag) + "')")
 
   # set goal attribute list
   def setGoalAttList( self, attList ) :
