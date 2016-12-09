@@ -44,8 +44,8 @@ from translators import c4_translator, pydatalog_translator
 #############
 #  GLOBALS  #
 #############
-DEDC_DEBUG = False
-DEDC_DEBUG1 = True
+DEDT_DEBUG  = False
+DEDT_DEBUG1 = False
 
 ###############
 #  DED TO IR  #
@@ -87,7 +87,7 @@ def dedToIR( filename, cursor ) :
       factMeta.append( newFact )
 
       # check for bugs
-      if DEDC_DEBUG :
+      if DEDT_DEBUG :
         print "newFact.getName()    : " + str( newFact.getName()    )
         print "newFact.getAttList() : " + str( newFact.getAttList() )
         print "newFact.getTimeArg() : " + str( newFact.getTimeArg() )
@@ -112,7 +112,7 @@ def dedToIR( filename, cursor ) :
       rewrittenFlag = 0     # all new goals have not yet been rewritten
 
       # check for bugs
-      if DEDC_DEBUG :
+      if DEDT_DEBUG :
         print "goal        = " + str(goal)
         print "goalName    = " + str(goalName)
         print "goalAttList = " + str(goalAttList)
@@ -124,7 +124,7 @@ def dedToIR( filename, cursor ) :
       newRule.setGoalAttList(  goalAttList                          )
 
       # check for bugs
-      if DEDC_DEBUG :
+      if DEDT_DEBUG :
         print "newRule.getGoalName()    : " + str( newRule.getGoalName()    )
         print "newRule.getGoalAttList() : " + str( newRule.getGoalAttList() )
         print "newRule.getGoalTimeArg() : " + str( newRule.getGoalTimeArg() )
@@ -148,7 +148,7 @@ def dedToIR( filename, cursor ) :
         subgoalAddArgs = extractors.extractAdditionalArgs( sub ) # returns list
 
         # check for bugs
-        if DEDC_DEBUG :
+        if DEDT_DEBUG :
           print "subgoalName    = " + str(subgoalName)
           print "subgoalAttList = " + str(subgoalAttList)
           print "subgoalTimeArg = " + str(subgoalTimeArg)
@@ -159,7 +159,7 @@ def dedToIR( filename, cursor ) :
         newRule.setSingleSubgoalAddArgs( sid, subgoalAddArgs )
 
       # check for bugs
-      if DEDC_DEBUG :
+      if DEDT_DEBUG :
         print "newRule.getSubgoalList = " + str( newRule.getSubgoalListStr() )
 
       # --------------------------- #
@@ -176,7 +176,7 @@ def dedToIR( filename, cursor ) :
         newRule.setSingleEqn( eid, eqn )
 
       # check for bugs
-      if DEDC_DEBUG :
+      if DEDT_DEBUG :
         print "newRule.getEquationList() = " + newRule.getEquationListStr()
 
       # --------------------------- #
@@ -184,7 +184,7 @@ def dedToIR( filename, cursor ) :
       ruleMeta.append( newRule )
 
       # check for bugs
-      if DEDC_DEBUG :
+      if DEDT_DEBUG :
         print "newRule.display() = " + newRule.display()
 
   # ----------------------------------------------------------- #
@@ -225,7 +225,7 @@ def rewrite( ruleMeta, cursor ) :
 # output nothing
 
 # WARNING: CANNOT write rules or facts on multiple lines.
-def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
+def runTranslator( cursor, dedFile, argDict, datalogProgPath ) :
 
   # ded to IR
   meta     = dedToIR( dedFile, cursor )
@@ -238,12 +238,12 @@ def runCompiler( cursor, dedFile, argDict, datalogProgPath ) :
   rewrite( ruleMeta, cursor )
 
   # check for bugs
-  if DEDC_DEBUG :
+  if DEDT_DEBUG :
     dumpers.factDump( cursor )
     dumpers.ruleDump( cursor )
     dumpers.clockDump( cursor )
 
-  # compile IR into C4 datalog
+  # translate IR into C4 datalog
   #programFilename = c4.c4datalog( cursor )
   programFilename = pydatalog_translator.getPyDatalogProg( cursor )
 
@@ -271,7 +271,7 @@ def createDedalusIRTables( cursor ) :
 #####################
 # input command line arguments
 # output abs path to datalog program
-def compileDedalus( argDict ) :
+def translateDedalus( argDict ) :
   datalogProgPath = os.getcwd() + "/run.datalog"
 
   # instantiate IR database
@@ -294,11 +294,11 @@ def compileDedalus( argDict ) :
 
   fileDict = tools.getAllIncludedFiles( fileDict )
 
-  # compile all input dedalus files into a single datalog program
+  # translate all input dedalus files into a single datalog program
   for dedfilename, status in fileDict.items() :
-    runCompiler( cursor, dedfilename, argDict, datalogProgPath )
+    runTranslator( cursor, dedfilename, argDict, datalogProgPath )
 
-  if DEDC_DEBUG1 :
+  if DEDT_DEBUG1 :
     dumpers.factDump(  cursor )
     dumpers.ruleDump(  cursor )
     dumpers.clockDump( cursor )

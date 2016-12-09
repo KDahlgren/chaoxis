@@ -21,7 +21,7 @@ import Rule
 #############
 #  GLOBALS  #
 #############
-PROVENANCEREWRITE_DEBUG = True
+PROVENANCEREWRITE_DEBUG = False
 aggOps = [ "min", "max", "sum", "avg", "count" ] # TODO: make this configurable
 
 timeAtt = "SndTime"

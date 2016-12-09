@@ -68,7 +68,10 @@ def dumpClock_pydatalog( cursor ) :
 
   cursor.execute( "SELECT src, dest, sndTime, delivTime FROM Clock" )
   clockFacts = cursor.fetchall()
-  print "DUMPERS_PYDATALOG: clockFacts = " + str(clockFacts)
+
+  if DUMPERS_PYDATALOG_DEBUG :
+    print "DUMPERS_PYDATALOG: clockFacts = " + str(clockFacts)
+
   clockFacts = tools.toAscii_multiList( clockFacts )
 
   formattedClockFacts = []
@@ -181,7 +184,9 @@ def dumpSingleRule_pydatalog( rid, cursor ) :
       # add in all attributes
       for j in range(0,len(subAtts)) :
         currAtt = subAtts[j]
-        print ">>> currAtt = " + str(currAtt) + ", subgoalName = " + str(subgoalName) 
+
+        if DUMPERS_PYDATALOG_DEBUG :
+          print ">>> currAtt = " + str(currAtt) + ", subgoalName = " + str(subgoalName) 
 
         # handle wildcards
         if currAtt == "_" :

@@ -26,7 +26,7 @@ from dedt import dedalusParser
 #############
 #  GLOBALS  #
 #############
-TOOLS_PYDATALOG_DEBUG = True
+TOOLS_PYDATALOG_DEBUG = False
 
 operators = [ "+", "-", "*", "/", "<", ">", "<=", ">=" ]
 
@@ -53,8 +53,10 @@ def cleanThisAtt( att ) :
 
   parsedAtt = att.split( foundOp )
 
-  print "att       = "  + att
-  print "parsedAtt = " + str(parsedAtt)
+  if TOOLS_PYDATALOG_DEBUG :
+    print "att       = "  + att
+    print "parsedAtt = " + str(parsedAtt)
+
   return [parsedAtt[0], parsedAtt[1]]
 
 
@@ -110,9 +112,10 @@ def parseGoal( rawPydatalogGoal ) :
   parsedGoal.extend( goalAttList )
   parsedGoal.append( ")" )
 
-  print "rawPydatalogGoal = " + rawPydatalogGoal
-  print "attList          = " + str(attList)
-  print "parsedGoal       = " + str(parsedGoal)
+  if TOOLS_PYDATALOG_DEBUG :
+    print "rawPydatalogGoal = " + rawPydatalogGoal
+    print "attList          = " + str(attList)
+    print "parsedGoal       = " + str(parsedGoal)
 
   return [ parsedGoal, goalName, goalAttList ]
 
@@ -122,7 +125,9 @@ def parseGoal( rawPydatalogGoal ) :
 ##############
 def getGoal( rawRule ) :
 
-  print "rawRule = " + str(rawRule)
+  if TOOLS_PYDATALOG_DEBUG :
+    print "rawRule = " + str(rawRule)
+
   splitR  = splitRule( rawRule )
   rawGoal = splitR[0]
 
@@ -130,7 +135,9 @@ def getGoal( rawRule ) :
   goalName    = cleanGoal[1]
   goalAttList = cleanGoal[2]
 
-  print "cleanGoal = " + str(cleanGoal)
+  if TOOLS_PYDATALOG_DEBUG :
+    print "cleanGoal = " + str(cleanGoal)
+
   return [ cleanGoal, goalName, goalAttList ]
 
 
@@ -188,7 +195,8 @@ def getNewRules( rule ) :
   tempRel2        = tempName2 + "(" + ",".join( rel2Atts ) + ")"
   rule2_1         = tempRel2 + "<=" + tempRel1 + "&"
 
-  print "op = " + op
+  if TOOLS_PYDATALOG_DEBUG :
+    print "op = " + op
 
   if op == "+" :
     rule2_2       = "(OPLOC==(lambda " + opAtt + ": " + opAtt + "+" + num + "))" 

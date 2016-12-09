@@ -18,7 +18,7 @@ import dumpers, tools
 #############
 #  GLOBALS  #
 #############
-CLOCKTOOLS_DEBUG = True
+CLOCKTOOLS_DEBUG = False
 
 
 #################################

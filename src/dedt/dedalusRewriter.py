@@ -18,8 +18,8 @@ from utils import clockTools, tools, dumpers
 #############
 #  GLOBALS  #
 #############
-DEDALUSREWRITER_DEBUG = True
-DEDALUSREWRITER_DUMPS_DEBUG = True
+DEDALUSREWRITER_DEBUG       = False
+DEDALUSREWRITER_DUMPS_DEBUG = False
 
 timeAtt_snd   = "SndTime"
 timeAtt_deliv = "DelivTime"
@@ -134,7 +134,8 @@ def rewriteDeductive( cursor ) :
           firstAtt = tools.toAscii_str( firstAtt )
           firstSubgoalAtts.append( firstAtt )
         else :
-          print "firstAtt = " + str(firstAtt)
+          if DEDALUSREWRITER_DEBUG :
+            print "firstAtt = " + str(firstAtt)
 
       # add clock subgoal
       clockTools.addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv, cursor )
@@ -227,7 +228,8 @@ def rewriteInductive( cursor ) :
         firstAtt = tools.toAscii_str( firstAtt )
         firstSubgoalAtts.append( firstAtt )
       else :
-        print "firstAtt = " + str(firstAtt)
+        if DEDALUSREWRITER_DEBUG :
+          print "firstAtt = " + str(firstAtt)
 
     # add clock subgoal
     clockTools.addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv, cursor )

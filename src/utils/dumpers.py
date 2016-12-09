@@ -6,19 +6,20 @@ dumpers.py
 '''
 
 import os, sys
+import tools
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath )
+#packagePath  = os.path.abspath( __file__ + "/../.." )
+#sys.path.append( packagePath )
 
-from utils import *
+#from utils import *
 # ------------------------------------------------------ #
 
 #############
 #  GLOBALS  #
 #############
-DUMPERS_DEBUG = True
+DUMPERS_DEBUG = False
 
 
 ###############
@@ -28,7 +29,8 @@ DUMPERS_DEBUG = True
 # output nothing, print all rules to stdout
 def ruleDump( cursor ) :
 
-  print "********************\nProgram Rules :"
+  if DUMPERS_DEBUG :
+    print "********************\nProgram Rules :"
 
   rules = []
 
@@ -154,8 +156,9 @@ def ruleDump( cursor ) :
     newRule = []
 
   # print rules
-  for r in rules :
-    print ''.join(r)
+  if DUMPERS_DEBUG :
+    for r in rules :
+      print ''.join(r)
 
 
 ###############
@@ -165,7 +168,8 @@ def ruleDump( cursor ) :
 # output nothing, print all facts to stdout
 def factDump( cursor ) :
 
-  print "********************\nProgram Facts :"
+  if DUMPERS_DEBUG :
+    print "********************\nProgram Facts :"
 
   facts = []
 
@@ -207,7 +211,8 @@ def factDump( cursor ) :
 
   # print facts
   for f in facts :
-    print ''.join(f)
+    if DUMPERS_DEBUG :
+      print ''.join(f)
 
 
 ################
@@ -216,10 +221,13 @@ def factDump( cursor ) :
 # input db cursor
 # output nothing, print all clock entries to stdout
 def clockDump( cursor ) :
-  print "********************\nProgram Clock :"
+  if DUMPERS_DEBUG :
+    print "********************\nProgram Clock :"
   clock = cursor.execute('''SELECT * FROM Clock''')
-  for c in clock :
-    print c
+
+  if DUMPERS_DEBUG :
+    for c in clock :
+      print c
 
 ######################
 #  RECONSTRUCT RULE  #

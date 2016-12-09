@@ -69,8 +69,8 @@ def driver() :
   argDict = parseArgs( )
   print argDict
 
-  # compile all input dedalus files into a single datalog program
-  datalogProgPath = dedt.compileDedalus( argDict )
+  # translate all input dedalus files into a single datalog program
+  datalogProgPath = dedt.translateDedalus( argDict )
 
   # run through pydatalog, collect bindings ~ provenance
   # if buggy => output results

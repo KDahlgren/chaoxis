@@ -20,7 +20,7 @@ from utils import dumpers, extractors, tools
 #############
 #  GLOBALS  #
 #############
-PYDATALOG_TRANSLATOR_DEBUG = True
+PYDATALOG_TRANSLATOR_DEBUG = False
 
 operators = [ "+", "-", "*", "/", "<", ">", "<=", ">=" ]
 
@@ -171,9 +171,11 @@ def getPyDatalogProg( cursor ) :
   # make a second pass over the rules to extract the complete set of
   #    random wildcards.
   for rule in ruleList :
-    print ">>>> rule = " + str( rule )
+    if PYDATALOG_TRANSLATOR_DEBUG :
+      print ">>>> rule = " + str( rule )
     wildList = tools.attSearchPass2(rule)
-    print " >>>>> attSearchPass2 = " + str( wildList )
+    if PYDATALOG_TRANSLATOR_DEBUG :
+      print " >>>>> attSearchPass2 = " + str( wildList )
     list_wilds.extend( wildList )
 
   createTerm_wilds = createTerm( list_wilds )

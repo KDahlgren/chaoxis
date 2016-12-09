@@ -40,8 +40,8 @@ if __name__ == "__main__" :
   unittest.TextTestRunner( verbosity=2 ).run( suite )
 
   print "\n\n******************"
-  print ">> Dedc_Tests"
-  suite = unittest.TestLoader().loadTestsFromTestCase( Dedc_Tests )
+  print ">> Dedt_Tests"
+  suite = unittest.TestLoader().loadTestsFromTestCase( Dedt_Tests )
   unittest.TextTestRunner( verbosity=2 ).run( suite )
 
   print "\n\n******************"

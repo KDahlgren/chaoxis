@@ -19,7 +19,7 @@ import dumpers
 #############
 #  GLOBALS  #
 #############
-TOOLS_DEBUG = True
+TOOLS_DEBUG = False
 
 ############
 #  GET ID  #
@@ -39,7 +39,8 @@ def checkIfRewrittenAlready( rid, cursor ) :
   if flag == 0 :
     return False
   else :
-    print "RULE PREVIOUSLY REWRITTEN: " + str( dumpers.reconstructRule( rid, cursor ) )
+    if TOOLS_DEBUG :
+      print "RULE PREVIOUSLY REWRITTEN: " + str( dumpers.reconstructRule( rid, cursor ) )
     return True
 
 
@@ -90,7 +91,8 @@ def toAscii_multiList( tupleList ) :
   cleanResults = []
 
   for tup in tupleList :
-    print "TOOLS tup = " + str(tup)
+    if TOOLS_DEBUG :
+      print "TOOLS tup = " + str(tup)
     cleanTup = []
     for item in tup :
       if isinstance(item, numbers.Real) :
@@ -148,7 +150,8 @@ def getAllIncludedFiles( fileDict ) :
 
   # unexplored files exist
   if not noMoreNewFiles :
-    print "fileDict1 = " + str( fileDict )
+    if TOOLS_DEBUG :
+      print "fileDict1 = " + str( fileDict )
 
     # iterate over all files
     for filename, status in fileDict.items() :
@@ -178,7 +181,8 @@ def getAllIncludedFiles( fileDict ) :
         else :
           sys.exit( "ERROR : file does not exist: " + str(filename) )
 
-    print "fileDict2 = " + str( fileDict )
+    if TOOLS_DEBUG :
+      print "fileDict2 = " + str( fileDict )
     fileDict = getAllIncludedFiles( fileDict )
 
   return fileDict
@@ -214,11 +218,13 @@ def attSearchPass2( pydatalogRule ) :
 
   # iterate over components of the rule to extract all wildcards
   for substr in pydatalogRule :
-    print " >>> substr = " + substr
+    if TOOLS_DEBUG :
+      print " >>> substr = " + substr
     r = re.search('THISISAWILDCARD([A-Z]*)', substr)
     if r :
       r = r.group(0)
-      print ">>>> r = " + str(r)
+      if TOOLS_DEBUG :
+        print ">>>> r = " + str(r)
       wildList.append(r)
 
   return wildList

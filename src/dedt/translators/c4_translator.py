@@ -18,7 +18,7 @@ from utils import dumpers, tools
 #############
 #  GLOBALS  #
 #############
-C4_TOOLS_DEBUG = True
+C4_TOOLS_DEBUG = False
 
 
 #####################
