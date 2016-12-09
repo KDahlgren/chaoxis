@@ -9,7 +9,8 @@ Dedc_Tests.py
 #  IMPORTS  #
 #############
 # standard python packages
-import os, sys, unittest
+import os, sys, unittest,sqlite3
+from StringIO import StringIO
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -18,7 +19,7 @@ sys.path.append( packagePath )
 testPath = os.path.abspath(__file__+"/../../../tests")
 
 
-from dedc import dedc, dedalusParser, clockRelation
+from dedc import dedc, dedalusParser, clockRelation, dedalusRewriter
 
 # ------------------------------------------------------ #
 
@@ -28,22 +29,115 @@ from dedc import dedc, dedalusParser, clockRelation
 ################
 class Dedc_Tests( unittest.TestCase ) :
 
+  def test_createDedalusIRTables_dedc( self ) : 
+    #testing set up
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    
+    #checks if it runs through function without error
+    self.assertTrue(dedc.createDedalusIRTables(cursor)==None)
+    
+    #checks if the tables are actually created
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Fact'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='FactAtt'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Rule'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='GoalAtt'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Subgoals'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='SubgoalAddArgs'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Equation'").fetchone()==None)
+    self.assertFalse(cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Clock'").fetchone()==None)
+  
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+    
+    
   def test_dedToIR_dedc( self ) :
-    return None
+    #testing set up. dedToIR has dependency
+    #on createDedalusIRTables so that's
+    #tested first above.
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    
+    #dependency
+    dedc.createDedalusIRTables(cursor)
+    
+    #throws error for nonexistent file
+    inputfile = "./nonexistentfile.ded"
+    with self.assertRaises(SystemExit) as cm:
+        dedc.dedToIR(inputfile,cursor)
+    self.assertIn("ERROR",cm.exception.code)
+    
+    #runs through function to make sure it finishes without error
+    inputfile = testPath+"/testfiles/testFullProgram.ded"
+    outputResult = None
+    self.assertFalse(dedc.dedToIR(inputfile,cursor)==outputResult)
+    
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
 
-  def test_IRToClock_dedc( self ) :
+  def test_starterClock_dedc( self ) :
+    #tested in clockRelation tests below
     return None
+    
 
-  def test_ClockToDatalog_dedc( self ) :
+  def test_rewrite_dedc( self ) :
+    #tested in dedalusRewriter and
+    #provenanceRewriter below
     return None
 
   def test_runCompiler_dedc( self ) :
-    return None
-
-  def test_compileDedalus_dedc( self ) :
+    #testing set up. runCompiler has dependency
+    #on createDedalusIRTables so that's
+    #tested first above.
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
     
+    #dependency
+    dedc.createDedalusIRTables(cursor)
+    
+    inputfile = testPath+"/testfiles/testFullProgram.ded"
+    inputArg = {'prov_diagrams': False, 'use_symmetry': False, 'crashes': 0, 'solver': None, 
+    'disable_dot_rendering': False, 'negative_support': False, 'strategy': None,
+    'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3, 'find_all_counterexamples': False,
+    'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2}
+    
+    #runs through function to make sure it finishes without error
+    outputResult = None
+    self.assertFalse(dedc.runCompiler(cursor,inputfile,inputArg,None)==outputResult)
+    c4file = dedc.runCompiler(cursor,inputfile,inputArg,None)
+    
+    
+     #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+    if c4file is not None:
+        os.remove(c4file)
+    
+  def test_compileDedalus_dedc( self ) :
   
-    return None
+    #throw error when file not found (currently leaves behind the DB file)
+    '''inputArg = {'prov_diagrams': False, 'use_symmetry': False, 'crashes': 0, 'solver': None, 
+    'disable_dot_rendering': False, 'negative_support': False, 'strategy': None,
+    'file': './nonexistentfile.ded', 'EOT': 3, 'find_all_counterexamples': False,
+    'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2}
+    with self.assertRaises(SystemExit) as cm:
+        dedc.compileDedalus(inputArg)
+    self.assertIn("ERROR",cm.exception.code)'''
+    
+    #returns a result
+    inputArg = {'prov_diagrams': False, 'use_symmetry': False, 'crashes': 0, 'solver': None, 
+    'disable_dot_rendering': False, 'negative_support': False, 'strategy': None,
+    'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3, 'find_all_counterexamples': False,
+    'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2}
+    outputResult = None
+    self.assertFalse(dedc.compileDedalus(inputArg)==outputResult)
+    
+    
     
 #########################
 #  DEDALUSPARSER TESTS  #
@@ -98,28 +192,84 @@ class Dedc_Tests( unittest.TestCase ) :
 #  CLOCKRELATION TESTS  #
 #########################
   def test_initClockRelation_clockRelation(self):
-    return None
+    #testing setup. initClockRelation has dependency
+    #on createDedalusIRTables and dedToIR so that's
+    #tested first above.
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    inputfile = testPath+"/testfiles/testFullProgram.ded"
     
+    #Dependencies
+    dedc.createDedalusIRTables(cursor)
+    dedc.dedToIR( inputfile, cursor )
+    
+    #for saving the program clock output
+    #to be used in comparison below
+    clockRelation.CLOCKRELATION_DEBUG = True
+    originalStdout= sys.stdout
+    cmdResult = StringIO()
+    fileResult = StringIO()
+    
+    #run through using cmdline topology option to make sure it doesn't
+    #throw up an error
+    sys.stdout = cmdResult
+    inputArg = { 'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3,
+    'nodes': ['a','b','c','d']}
+    outputResult = None
+    self.assertTrue(clockRelation.initClockRelation(cursor,inputArg)==outputResult)
+    
+    #run through using node topology from inputfile option to make sure it
+    #doesn't throw up an error
+    sys.stdout = fileResult
+    inputArg = { 'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3,
+    'nodes': []}
+    self.assertTrue(clockRelation.initClockRelation(cursor,inputArg)==outputResult)
+    
+    #check to make sure that the outputs from both options are the same
+    sys.stdout =originalStdout #return stdout to original 
+    cmdOutput=cmdResult.getvalue()[cmdResult.getvalue().find('\n')+1:]
+    fileOutput=fileResult.getvalue()[fileResult.getvalue().find('\n')+1:]
+    self.assertEqual(cmdOutput,fileOutput)
+    
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+  
+
   def test_buildClockRelation_clockRelation(self):
+    #Not implemented in src yet
     return None
     
 ###########################
 #  DEDALUSREWRITER TESTS  #
 ###########################
-  def test_clean_dedalusRewriter(self):
-    return None 
-    
-  def test_ruleDump_dedalusRewriter(self):
-    return None  
-    
-  def test_getDeductiveRuleIDs_dedalusRewriter(self):
-    return None 
-    
-  def test_getInductiveRuleIDs_dedalusRewriter(self):
-    return None     
+   #TODO: clean up and add more specific testcases
 
-  def test_getAsynchronousRuleIDs_dedalusRewriter(self):
-    return None  
+  #testing for the helper functions: getdeductiveRuleIDs,
+  #getInductiveRuleIDs and getAsynchronousRuleIDs
+  def test_getRuleIDs_dedalusRewriter(self):
+    #testing set up. Dependencies listed below.
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    inputfile = testPath+"/testfiles/testFullProgram.ded"
+    
+    #dependency
+    dedc.createDedalusIRTables(cursor)
+    dedc.dedToIR(inputfile,cursor)
+    
+    #runs through function to make sure it finishes without error
+    self.assertFalse(dedalusRewriter.getDeductiveRuleIDs(cursor)==None)
+    #runs through function to make sure it finishes without error
+    self.assertFalse(dedalusRewriter.getInductiveRuleIDs(cursor)==None)
+    #runs through function to make sure it finishes without error
+    self.assertFalse(dedalusRewriter.getAsynchronousRuleIDs(cursor)==None)
+    
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
     
   def test_getSubgoalsIDs_dedalusRewriter(self):
     return None   
@@ -128,13 +278,58 @@ class Dedc_Tests( unittest.TestCase ) :
     return None
     
   def test_rewriteDeductive_dedalusRewriter(self):
-    return None 
+    #testing set up. Dependencies listed below.
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    inputfile = testPath+"/testfiles/testFullProgram.ded"
+    
+    #dependency
+    dedc.createDedalusIRTables(cursor)
+    dedc.dedToIR(inputfile,cursor)
+    
+    #runs through function to make sure it finishes without error
+    self.assertTrue(dedalusRewriter.rewriteDeductive(cursor)==None)
+    
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB ) 
    
   def test_rewriteInductive_dedalusRewriter(self):
-    return None
+    #testing set up. Dependencies listed below.
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    inputfile = testPath+"/testfiles/testFullProgram.ded"
+    
+    #dependency
+    dedc.createDedalusIRTables(cursor)
+    dedc.dedToIR(inputfile,cursor)
+    
+    #runs through function to make sure it finishes without error
+    self.assertTrue(dedalusRewriter.rewriteInductive(cursor)==None)
+    
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB ) 
 
   def test_rewriteAsynchronous_dedalusRewriter(self):
-    return None
+    #testing set up. Dependencies listed below.
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB ) 
+    cursor  = IRDB.cursor()
+    inputfile = testPath+"/testfiles/testFullProgram.ded"
+    
+    #dependency
+    dedc.createDedalusIRTables(cursor)
+    dedc.dedToIR(inputfile,cursor)
+    
+    #runs through function to make sure it finishes without error
+    self.assertTrue(dedalusRewriter.rewriteAsynchronous(cursor)==None)
+    
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB ) 
     
   def test_rewriteDedalus_dedalusRewriter(self):
     return None
@@ -157,7 +352,6 @@ class Dedc_Tests( unittest.TestCase ) :
 #########################
 # use this main if running this script exclusively.
 if __name__ == "__main__" :
-    dedalusParser.parse("node(Node, Neighbor)@next :- node(Node, Neighbor);")
     unittest.main( verbosity=2 )
 
 
