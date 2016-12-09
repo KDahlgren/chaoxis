@@ -12,7 +12,7 @@ import os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from utils import tools
+from utils import *
 # ------------------------------------------------------ #
 
 #############

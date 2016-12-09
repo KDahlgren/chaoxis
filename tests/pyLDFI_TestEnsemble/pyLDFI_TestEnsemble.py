@@ -17,12 +17,12 @@ import os, sys, unittest
 packagePath  = os.path.abspath( __file__ + "/../../src" )
 sys.path.append( packagePath )
 
-from Utils_Tests import Utils_Tests
-from Dedc_Tests  import Dedc_Tests
-from DerivTools_Tests import DerivTools_Tests
-from Evaluators_Tests import Evaluators_Tests
-from Solvers_Tests import Solvers_Tests
-from VizTools_Tests import VizTools_Tests
+from Utils_Tests      import *
+from Dedt_Tests       import *
+from DerivTools_Tests import *
+from Evaluators_Tests import *
+from Solvers_Tests    import *
+from VizTools_Tests   import * 
 # ------------------------------------------------------ #
 
 #########################

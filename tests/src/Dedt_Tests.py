@@ -24,7 +24,7 @@ from dedt import dedt, dedalusParser, clockRelation
 
 
 ################
-#  DEDC TESTS  #
+#  DEDT TESTS  #
 ################
 class Dedc_Tests( unittest.TestCase ) :
 
@@ -41,8 +41,6 @@ class Dedc_Tests( unittest.TestCase ) :
     return None
 
   def test_compileDedalus_dedt( self ) :
-    
-  
     return None
     
 #########################
