@@ -5,7 +5,7 @@ dumpers.py
    Methods for dumping specific contents from the database.
 '''
 
-import os, sys
+import os, sys, numbers
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -68,6 +68,7 @@ def dumpClock_pydatalog( cursor ) :
 
   cursor.execute( "SELECT src, dest, sndTime, delivTime FROM Clock" )
   clockFacts = cursor.fetchall()
+  print "DUMPERS_PYDATALOG: clockFacts = " + str(clockFacts)
   clockFacts = tools.toAscii_multiList( clockFacts )
 
   formattedClockFacts = []
@@ -77,9 +78,15 @@ def dumpClock_pydatalog( cursor ) :
 
     for i in range(0,len(fact)) :
       if i < (len(fact) - 1) :
-        newFact += "'" + fact[i] + "'" + ","
+        if isinstance( fact[i], numbers.Real ) :
+          newFact += str(fact[i]) + ","
+        else :
+          newFact += "'" + fact[i] + "'" + ","
       else :
-        newFact += "'" + fact[i] + "'"
+        if isinstance( fact[i], numbers.Real ) :
+          newFact += str(fact[i]) + ","
+        else :
+          newFact += "'" + fact[i] + "'"
 
     newFact += ")\n"
     formattedClockFacts.append( newFact )
@@ -125,7 +132,7 @@ def dumpSingleRule_pydatalog( rid, cursor ) :
     #rule += "@" + goalTimeArg + " <= "
     sys.exit( "ERROR: leftover timeArg in goal: " + rule + "@" + goalTimeArg )
   else :
-    rule = "(" + rule + ")"
+    #rule = "(" + rule + ")"
     rule += " <= "
 
   # --------------------------------------------------------------- #

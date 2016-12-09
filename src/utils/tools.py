@@ -6,7 +6,7 @@ tools.py
    sanity-check particular properties.
 '''
 
-import os, random, re, string, sys
+import os, random, re, string, sys, numbers
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -90,11 +90,16 @@ def toAscii_multiList( tupleList ) :
   cleanResults = []
 
   for tup in tupleList :
+    print "TOOLS tup = " + str(tup)
     cleanTup = []
     for item in tup :
-      if not item[0] == None :
-        asciiResult = item[0].encode('utf-8')
-        cleanTup.append( asciiResult )
+      if isinstance(item, numbers.Real) :
+        cleanTup.append( item )
+      else :
+        # cleanse the unicode
+        if not item[0] == None :
+          asciiResult = item[0].encode('utf-8')
+          cleanTup.append( asciiResult )
     cleanResults.append( cleanTup )
 
   if not cleanResults == None :

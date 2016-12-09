@@ -17,7 +17,7 @@ Subgoals       (rid text, sid text, subgoalName text, subgoalTimeArg text)
 SubgoalAtt     (rid text, sid text, attID int, attName text)
 SubgoalAddArgs (rid text, sid text, argName text)
 Equation       (rid text, eid text, eqn text)
-Clock          (src text, dest text, sndTime text, delivTime text)
+Clock          (src text, dest text, sndTime int, delivTime int)
 
 '''
 
@@ -262,7 +262,7 @@ def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Equation  (rid text, eid text, eqn text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime text, delivTime text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime int, delivTime int)''')
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique
 
 

@@ -7,19 +7,20 @@ pydatalog_translator.py
 
 import os, string, sqlite3, sys
 import dumpers_pydatalog
+import tools_pydatalog
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../../.." )
 sys.path.append( packagePath )
 
-from utils import dumpers, tools
+from utils import dumpers, extractors, tools
 # ------------------------------------------------------ #
 
 #############
 #  GLOBALS  #
 #############
-PYDATALOG_TOOLS_DEBUG = True
+PYDATALOG_TRANSLATOR_DEBUG = True
 
 operators = [ "+", "-", "*", "/", "<", ">", "<=", ">=" ]
 
@@ -128,7 +129,7 @@ def getPyDatalogProg( cursor ) :
   # ----------------------------------------------------------- #
   #  populate new pydatalog create_terms statement
 
-  if PYDATALOG_TOOLS_DEBUG :
+  if PYDATALOG_TRANSLATOR_DEBUG :
     print " >>> list_names :\n    " + str(list_names)
     print " >>> list_atts  :\n    " + str(list_atts)
 
@@ -180,12 +181,34 @@ def getPyDatalogProg( cursor ) :
   # ----------------------------------------------------------- #
   # edit original rule list for goals with operators
 
-  #pydatalogTools.
+  temp = []
+  for rule in ruleList :
+    cleanGoal   = tools_pydatalog.getGoal( rule )
+    goalAttList = cleanGoal[2]
+
+    flag = False
+    for att in goalAttList :
+      for op in operators :
+        if op in att :
+          flag = True
+
+    # if a goal att contains an operator, then needs extra
+    #   processing.
+    if PYDATALOG_TRANSLATOR_DEBUG :
+      print "HERE!"
+
+    if flag :
+      temp.extend( tools_pydatalog.opRules( rule ) )
+    else :
+      temp.append( rule )
+
+  if len(temp) > 0 :
+    ruleList = temp
 
   # ----------------------------------------------------------- #
   # save program
 
-  if PYDATALOG_TOOLS_DEBUG :
+  if PYDATALOG_TRANSLATOR_DEBUG :
     print "*******************************************"
     print "createTerm_names :"
     print createTerm_names
