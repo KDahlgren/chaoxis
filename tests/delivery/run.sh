@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # run the test
-(python ../../src/drivers/driver1.py -n a,b,c,d -f ./main.ded) > tmp.txt
+(python ../../src/drivers/driver1.py -n a,b,c -f ./main.ded) > tmp.txt
 
 # check if test passed (TODO: make more sophisticated)
 if grep -Fxq "PASSED" tmp.txt

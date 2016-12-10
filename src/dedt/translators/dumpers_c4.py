@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-dumpers.py
+dumpers_c4.py
    Methods for dumping specific contents from the database.
 '''
 
@@ -12,7 +12,7 @@ import os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from utils import *
+from utils import tools
 # ------------------------------------------------------ #
 
 #############

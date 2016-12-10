@@ -24,6 +24,7 @@ def parseCommandLineInput( ) :
   parser.add_argument("-c", "--crashes", type=int, help="number of crash failures (default 0)", default = 0)
   parser.add_argument("-n", "--nodes", type=str, help="a comma-separated set of nodes indicating an all-to-all topology (optionally specify topology facts in input file(s))")
   parser.add_argument("--solver", type=str,  choices=['z3', 'sat4j', 'ilp'], help="the solver to use")
+  parser.add_argument("--evaluator", type=str,  choices=['c4', 'pyDatalog'], help="the evaluator to use", default = "pyDatalog")
   parser.add_argument("--strategy", choices=['sat', 'random', 'pcausal'], help="the search strategy")
   parser.add_argument("--use-symmetry", help="use symmetry to skip equivalent failure scenarios", action="store_true")
   parser.add_argument("--prov-diagrams", help="generate provenance diagrams for each execution", action="store_true")

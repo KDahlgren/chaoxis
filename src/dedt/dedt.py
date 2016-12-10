@@ -215,9 +215,9 @@ def rewrite( ruleMeta, cursor ) :
   provenanceRewriter.rewriteProvenance( ruleMeta, cursor )
 
 
-##################
-#  RUN COMPILER  #
-##################
+####################
+#  RUN TRANSLATOR  #
+####################
 # input db cursor, name of raw dedalus file, cmdline args, and path to datalog savefile
 # convert ded files to IR
 # use IR or cmdline args to create clock relation
@@ -225,7 +225,7 @@ def rewrite( ruleMeta, cursor ) :
 # output nothing
 
 # WARNING: CANNOT write rules or facts on multiple lines.
-def runTranslator( cursor, dedFile, argDict, datalogProgPath ) :
+def runTranslator( cursor, dedFile, argDict, datalogProgPath, evaluator ) :
 
   # ded to IR
   meta     = dedToIR( dedFile, cursor )
@@ -243,9 +243,11 @@ def runTranslator( cursor, dedFile, argDict, datalogProgPath ) :
     dumpers.ruleDump( cursor )
     dumpers.clockDump( cursor )
 
-  # translate IR into C4 datalog
-  #programFilename = c4.c4datalog( cursor )
-  programFilename = pydatalog_translator.getPyDatalogProg( cursor )
+  # translate IR into datalog
+  if evaluator == "c4" :
+    programFilename = c4_translator.c4datalog( cursor )
+  elif evaluator == "pyDatalog" :
+    programFilename = pydatalog_translator.getPyDatalogProg( cursor )
 
   return programFilename
 
@@ -266,9 +268,9 @@ def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique
 
 
-#####################
-#  COMPILE DEDALUS  #
-#####################
+#######################
+#  TRANSLATE DEDALUS  #
+#######################
 # input command line arguments
 # output abs path to datalog program
 def translateDedalus( argDict ) :
@@ -295,8 +297,9 @@ def translateDedalus( argDict ) :
   fileDict = tools.getAllIncludedFiles( fileDict )
 
   # translate all input dedalus files into a single datalog program
+  evaluator = argDict[ 'evaluator' ]
   for dedfilename, status in fileDict.items() :
-    runTranslator( cursor, dedfilename, argDict, datalogProgPath )
+    runTranslator( cursor, dedfilename, argDict, datalogProgPath, evaluator )
 
   if DEDT_DEBUG1 :
     dumpers.factDump(  cursor )

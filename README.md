@@ -15,10 +15,10 @@ The "run.sh" scripts essentially wrap a full execution over the relevant Dedalus
 
 ## More Exercises
 
-1. Run simplelog/ with output: "python ../../src/drivers/driver1.py -n a,b,c,d -f ./simpleLog.ded"
-2. Run tokens/ with output: "python ../../src/drivers/driver1.py -n a,b,c,d -f ./timeout\_svc.ded -f ./tokens.ded"
-3. Run barrier\_test/ with output: "python ../../src/drivers/driver1.py -n a,b,c,d -f ./barrier\_test.ded"
-4. Run real\_heartbeat/ with output: "python ../../src/drivers/driver1.py -n a,b,c,d -f ./real\_heartbeat.ded"
+1. Run simplelog/ with output: "python ../../src/drivers/driver1.py -n a,b,c -f ./simpleLog.ded"
+2. Run tokens/ with output: "python ../../src/drivers/driver1.py -n a,b,c -f ./timeout\_svc.ded -f ./tokens.ded"
+3. Run barrier\_test/ with output: "python ../../src/drivers/driver1.py -n a,b,c -f ./barrier\_test.ded"
+4. Run real\_heartbeat/ with output: "python ../../src/drivers/driver1.py -n a,b,c -f ./real\_heartbeat.ded"
 
 ## Dependencies
 Python Packages :

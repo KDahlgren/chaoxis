@@ -6,13 +6,14 @@ c4.py
 '''
 
 import os, string, sqlite3, sys
+import dumpers_c4
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../../.." )
 sys.path.append( packagePath )
 
-from utils import dumpers, tools
+from utils import tools
 # ------------------------------------------------------ #
 
 #############
@@ -134,7 +135,7 @@ def c4datalog( cursor ) :
 
   factList = []
   for fid in fidList :
-    newFact = dumpers.dumpSingleFact_c4( fid, cursor )
+    newFact = dumpers_c4.dumpSingleFact_c4( fid, cursor )
     factList.append( newFact )
 
   # ----------------------------------------------------------- #
@@ -146,7 +147,7 @@ def c4datalog( cursor ) :
 
   ruleList = []
   for rid in ridList :
-    newRule = dumpers.dumpSingleRule_c4( rid, cursor )
+    newRule = dumpers_c4.dumpSingleRule_c4( rid, cursor )
     ruleList.append( newRule )
 
   # ----------------------------------------------------------- #
@@ -163,7 +164,8 @@ def c4datalog( cursor ) :
     print "ruleList :"
     print ruleList
 
-  program = tools.combineLines( definesList, factList, ruleList )
+  listOfStatementLists = [ definesList, factList, ruleList ]
+  program = tools.combineLines( listOfStatementLists )
 
   testpath = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
   programFilename = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/" + "c4program.datalog"
