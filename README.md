@@ -25,12 +25,15 @@ Python Packages :
   * [argparse](https://pypi.python.org/pypi/argparse)
   * [pyparsing](http://pyparsing.wikispaces.com/Download+and+Installation)
   * [sqlite3](https://docs.python.org/2/library/sqlite3.html)
+  * [pyDatalog](https://sites.google.com/site/pydatalog/installation)
+
+Other Tools :
+  * [C4 Overlog Runtime](https://sites.google.com/site/pydatalog/installation://github.com/bloom-lang/c4) (installed automatically)
 
 ## More information
 
 [Disorderly Labs](https://disorderlylabs.github.io)
 
 pyLDFI is an alternative to Molly, an implementation of LDFI written primarily in Scala.<br />
-Molly is described in a [SIGMOD paper](http://people.ucsc.edu/~palvaro/molly.pdf).
-
+Molly is described in a [SIGMOD paper](http://people.ucsc.edu/~palvaro/molly.pdf).<br />
 Dedalus is described [here](http://www.eecs.berkeley.edu/Pubs/TechRpts/2009/EECS-2009-173.html).
