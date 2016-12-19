@@ -1,0 +1,3 @@
+[submodule "rewrite/lib/c4"]
+    path = lib/c4
+    url = https://github.com/bloom-lang/c4/
