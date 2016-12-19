@@ -28,7 +28,7 @@ Python Packages :
   * [pyDatalog](https://sites.google.com/site/pydatalog/installation)
 
 Other Tools :
-  * [C4 Overlog Runtime](https://sites.google.com/site/pydatalog/installation://github.com/bloom-lang/c4) (installed automatically)
+  * [C4 Overlog Runtime](https://sites.google.com/site/pydatalog/installation://github.com/bloom-lang/c4) (installed locally automatically)
 
 ## More information
 
