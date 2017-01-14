@@ -4,6 +4,9 @@ import os, sys
 
 # TODO: place magical installation code here
 
+#################
+#  GETAPR_LIST  #
+#################
 def getAPR_list() :
   os.system( 'find / -name "apr_file_io.h" | grep -v "Permission denied" > out.txt' )
   fo = open( "out.txt", "r" )
@@ -13,6 +16,11 @@ def getAPR_list() :
     pathList.append( path )
 
   os.system( 'rm out.txt' )
+
+
+##############################
+#  MAIN THREAD OF EXECUTION  #
+##############################
 
 print "Running pyLDFI setup with : \n" + str(sys.argv)
 
