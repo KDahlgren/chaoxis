@@ -23,6 +23,8 @@ from dedt import dedt, dedalusParser
 from utils import parseCommandLineInput
 # ------------------------------------------------------ #
 
+DRIVER_DEBUG = True
+
 # **************************************** #
 
 ################
@@ -71,6 +73,8 @@ def driver() :
 
   # translate all input dedalus files into a single datalog program
   datalogProgPath = dedt.translateDedalus( argDict )
+  if DRIVER_DEBUG :
+    print "datalog program path = " + datalogProgPath
 
   # run through pydatalog, collect bindings ~ provenance
   # if buggy => output results

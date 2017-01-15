@@ -97,7 +97,7 @@ def dumpSingleRule_c4( rid, cursor ) :
     #rule += "@" + goalTimeArg + " :- "
     sys.exit( "ERROR: leftover timeArg in goal: " + rule + "@" + goalTimeArg )
   else :
-    rule += " <= "
+    rule += " :- "
 
   # --------------------------------------------------------------- #
   #                         SUBGOALS                                #

@@ -19,8 +19,8 @@ from utils import tools
 #############
 #  GLOBALS  #
 #############
-C4_TOOLS_DEBUG = False
-
+C4_TRANSLATOR_DEBUG   = False
+C4_TRANSLATOR_DEBUG_1 = True
 
 #####################
 #  EXISTING DEFINE  #
@@ -67,10 +67,13 @@ def c4datalog( cursor ) :
       goalAttList = cursor.fetchall()
       goalAttList = tools.toAscii_list( goalAttList )
 
-      # populat type list for rule
+      if C4_TRANSLATOR_DEBUG_1 :
+        print "* goalName = " + goalName + ", goalAttList " + str( goalAttList )
+
+      # populate type list for rule
       typeList = []
       for att in goalAttList :
-        if "Time" in att :
+        if "Time" in att : # TODO: not generalizable. Also does not combine hints from multiple appearances of the same sub/goal to combat underscores.
           typeList.append( "int" )
         else :
           typeList.append( "string" )
@@ -110,11 +113,19 @@ def c4datalog( cursor ) :
         typeList       = []
         cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid = '" + rid + "' AND sid = '" + sid + "'" )
         subgoalAttList = cursor.fetchall()
-        for att in subgoalAttList :
-          if "Time" in att :
-            typeList.append( "int" )
-          else :
-            typeList.append( "string" )
+        subgoalAttList = tools.toAscii_list( subgoalAttList )
+
+        if C4_TRANSLATOR_DEBUG_1 :
+          print "* subgoalName = " + subgoalName + ", subgoalAttList " + str( subgoalAttList )
+
+        if subgoalName == "clock" :
+          typeList = [ "string", "string", "int", "int" ]
+        else :
+          for att in subgoalAttList :
+            if "Time" in att :
+              typeList.append( "int" )
+            else :
+              typeList.append( "string" )
 
         newDefine += "define("
         newDefine += subgoalName + ",{"
@@ -153,7 +164,7 @@ def c4datalog( cursor ) :
   # ----------------------------------------------------------- #
   # save program
 
-  if C4_TOOLS_DEBUG :
+  if C4_TRANSLATOR_DEBUG :
     print "*******************************************"
     print "definesList :"
     print definesList
@@ -168,7 +179,7 @@ def c4datalog( cursor ) :
   program = tools.combineLines( listOfStatementLists )
 
   testpath = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
-  programFilename = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/" + "c4program.datalog"
+  programFilename = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/" + "c4program.olg"
 
   if os.path.isdir( testpath ) :
     outfile = open( programFilename, "w" )

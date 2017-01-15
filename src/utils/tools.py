@@ -27,7 +27,7 @@ TOOLS_DEBUG = False
 # input nothing
 # output random 16 char alphanumeric id
 def getID() :
-  return "".join( random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ') for i in range(16) )
+  return "".join( random.choice('abcdefghijklmnopqrstuvwxyz') for i in range(16) )
 
 ################################
 #  CHECK IF REWRITTEN ALREADY  #
