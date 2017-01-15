@@ -5,6 +5,8 @@ import os, sys
 from ctypes import cdll
 lib = cdll.LoadLibrary('../../../lib/c4/build/src/libc4/libc4.dylib')
 
+C4_WRAPPER_DEBUG = True
+
 class C4Wrapper( object ) :
 
   #############
@@ -20,33 +22,11 @@ class C4Wrapper( object ) :
     self.c4_obj = lib.c4_make( None, 0 )
 
   #########################
-  #  GET INPUT LIST FILE  #
-  #########################
-  def getInputList_file( self, filename ) :
-    print "Importing program from " + filename
-
-    try :
-      fo = open( filename, "r" )
-      program = fo.readline()
-      listProgram = program.split(";")
-
-      print "Program :" + "\n" #+ program
-      prog = []
-      for l in listProgram :
-        print l + " ;"
-        prog.append( l + " ;" )
-
-      return prog
-
-    except IOError :
-      print "Could not open file " + filename
-      return None
-
-  #########################
   #  GET INPUT PROG FILE  #
   #########################
   def getInputProg_file( self, filename ) :
-    print "Importing program from " + filename
+    if C4_WRAPPER_DEBUG :
+      print "Importing program from " + filename
 
     try :
       fo = open( filename, "r" )
@@ -57,47 +37,54 @@ class C4Wrapper( object ) :
       print "Could not open file " + filename
       return None
 
-  #####################
-  #  LOAD PROG LINES  #
-  #####################
-  def loadProgLines( self, progLineList ) :
-    print "... running c4_loadProgLines ..."
-
-    for line in progLineList :
-      print "line = " + line
-      lib.c4_install_str( self.c4_obj, line )
-
   ###############
   #  LOAD PROG  #
   ###############
   def loadProg( self, prog ) :
-    print "... running c4_loadProg ..."
+    if C4_WRAPPER_DEBUG :
+      print "... running loadProg ..."
     lib.c4_install_str( self.c4_obj, prog )
+
+  ######################
+  #  LOAD CLOCK FACTS  #
+  ######################
+  def loadClockFacts( self, clockFactsList ) :
+    if C4_WRAPPER_DEBUG :
+      print "... running loadClockFacts ..."
+    for f in clockFactsList :
+      if C4_WRAPPER_DEBUG :
+        print "Clock fact = " + str( f )
+      lib.c4_install_str( self.c4_obj, prog )
 
   ################
   #  CLOSE PROG  #
   ################
   def closeProg( self ) :
-    print "... running closeProg ..."
-    #lib.c4_destroy( self.c4_obj )
-    #lib.c4_terminate( )    # terminate runs without seg faulting. \(^.^)/
+    if C4_WRAPPER_DEBUG :
+      print "... running closeProg ..."
+    lib.c4_destroy( self.c4_obj )
+    lib.c4_terminate( )    # terminate runs without seg faulting. \(^.^)/
 
+    return None
 
 ##############################
 #  MAIN THREAD OF EXECUTION  #
 ##############################
 print "[ Executing C4 wrapper ]"
-w         = C4Wrapper() # initializes c4
-filename  = "/Users/KsComp/projects/pyldfi/src/evaluators/programFiles/c4program.olg"
-progList  = w.getInputList_file( filename )
-progList1 = progList[:len(progList)-1]
-print progList1
-#w.loadProgLines( progList1 )
+w              = C4Wrapper() # initializes c4
+filename       = "/Users/KsComp/projects/pyldfi/src/evaluators/programFiles/c4program.olg"
 
-progFull = w.getInputProg_file( filename )
-print progFull
+progFull       = w.getInputProg_file( filename )
+clockFactsList = []
+
+if C4_WRAPPER_DEBUG :
+  print "Program = \n" + str( progFull )
+  print "clock facts list = \n" + str(clockFactsList)
+
+
 w.loadProg( progFull )
-w.closeProg()
+#w.loadClockFacts( clockFactsList )
+#w.closeProg()
 
 #########
 #  EOF  #
