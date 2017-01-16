@@ -119,4 +119,3 @@ Scanning dependencies of target c4i
 [ 98%] Building C object src/c4i/CMakeFiles/c4i.dir/c4i.c.o
 [100%] Linking C executable c4i
 [100%] Built target c4i
->>> C4 Installation SUCCESSFUL <<<
