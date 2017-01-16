@@ -4,6 +4,9 @@ import os, sys
 
 # TODO: place magical installation code here
 
+C4_FINDAPR_PATH="./lib/c4/cmake/FindApr.cmake"
+SETUP_DEBUG = True
+
 #################
 #  GETAPR_LIST  #
 #################
@@ -32,9 +35,22 @@ if "c4" in sys.argv :
 
   # set correct apr location
   for path in apr_path_cands :
-    os.system( "" ) # how can you tell if a make failed?
 
-  os.system( "make" )
+    NOT_INSTALLED = True
+    while NOT_INSTALLED == True :
+      # set one of the candidate APR paths
+      os.system( "sed 's/" + '_apr_invoke(APR_VERSION   ""        --version)' + "/g'" + " " + C4_FINDAPR_PATH + " > " + '_apr_invoke(APR_VERSION   ""        --version)\nset(APR_INCLUDES "' + path + '")'  )
+      os.system( "make" )
+ 
+      fo = open( "./c4_out.txt", "r" )
+      for line in fo :
+        if ">>> C4 Installation SUCCESSFUL <<<" in line :
+          NOT_INSTALLED = False
+      fo.close()
+      os.system( "rm ./c4_out.txt" ) # clean up
+
+    print "Using APR path : " + path
+
   print "... Done installing C4 Datalog evaluator"
 
 elif "pyDatalog" in sys.argv :

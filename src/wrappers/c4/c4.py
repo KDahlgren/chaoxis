@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#/usr/bin/env python
 
 import os, sys
 
@@ -31,6 +31,7 @@ class C4Wrapper( object ) :
     try :
       fo = open( filename, "r" )
       program = fo.readline()
+      fo.close()
       return program
 
     except IOError :
@@ -51,7 +52,7 @@ class C4Wrapper( object ) :
   def loadClockFacts( self, clockFactsList ) :
     if C4_WRAPPER_DEBUG :
       print "... running loadClockFacts ..."
-    for f in clockFactsList :
+    for f in clockFactsList : #adding clock facts separately to mimic time delay.
       if C4_WRAPPER_DEBUG :
         print "Clock fact = " + str( f )
       lib.c4_install_str( self.c4_obj, prog )
@@ -63,7 +64,7 @@ class C4Wrapper( object ) :
     if C4_WRAPPER_DEBUG :
       print "... running closeProg ..."
     lib.c4_destroy( self.c4_obj )
-    lib.c4_terminate( )    # terminate runs without seg faulting. \(^.^)/
+    lib.c4_terminate( )
 
     return None
 
@@ -82,7 +83,7 @@ if C4_WRAPPER_DEBUG :
   print "clock facts list = \n" + str(clockFactsList)
 
 
-w.loadProg( progFull )
+#w.loadProg( progFull )
 #w.loadClockFacts( clockFactsList )
 #w.closeProg()
 
