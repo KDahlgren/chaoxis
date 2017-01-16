@@ -27,35 +27,26 @@ def getAPR_list() :
 
 print "Running pyLDFI setup with : \n" + str(sys.argv)
 
-if "c4" in sys.argv :
-  print "Installing C4 Datalog evaluator ... "
+# find candidate apr locations
+apr_path_cands = getAPR_list()
 
-  # find candidate apr locations
-  apr_path_cands = getAPR_list()
+# set correct apr location
+for path in apr_path_cands :
 
-  # set correct apr location
-  for path in apr_path_cands :
-
-    NOT_INSTALLED = True
-    while NOT_INSTALLED == True :
-      # set one of the candidate APR paths
-      os.system( "sed 's/" + '_apr_invoke(APR_VERSION   ""        --version)' + "/g'" + " " + C4_FINDAPR_PATH + " > " + '_apr_invoke(APR_VERSION   ""        --version)\nset(APR_INCLUDES "' + path + '")'  )
-      os.system( "make" )
+  NOT_INSTALLED = True
+  while NOT_INSTALLED == True :
+    # set one of the candidate APR paths
+    os.system( "sed 's/" + '_apr_invoke(APR_VERSION   ""        --version)' + "/g'" + " " + C4_FINDAPR_PATH + " > " + '_apr_invoke(APR_VERSION   ""        --version)\nset(APR_INCLUDES "' + path + '")'  )
+    os.system( "make" )
  
-      fo = open( "./c4_out.txt", "r" )
-      for line in fo :
-        if ">>> C4 Installation SUCCESSFUL <<<" in line :
-          NOT_INSTALLED = False
-      fo.close()
-      os.system( "rm ./c4_out.txt" ) # clean up
+    fo = open( "./c4_out.txt", "r" )
+    for line in fo :
+      if ">>> C4 Installation SUCCESSFUL <<<" in line :
+        NOT_INSTALLED = False
+    fo.close()
+    os.system( "rm ./c4_out.txt" ) # clean up
 
-    print "Using APR path : " + path
+  print "Using APR path : " + path
 
-  print "... Done installing C4 Datalog evaluator"
-
-elif "pyDatalog" in sys.argv :
-  print "Using pyDatalog Datalog evaluator."
-
-else :
-  print "Using pyDatalog Datalog evaluator."
+print "... Done installing C4 Datalog evaluator"
 
