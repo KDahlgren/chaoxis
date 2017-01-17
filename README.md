@@ -8,7 +8,7 @@ To install pyLDFI, run the following command from the top directory:
 ```
 python setup.py
 ```
-To clean up a previous installation, run the following command from the top directory:
+To clean up after a previous installation, run the following command from the top directory:
 ```
 make clean
 ```
