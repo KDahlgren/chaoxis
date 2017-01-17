@@ -29,19 +29,11 @@ def getAPR_list() :
 
   return pathList
 
-##############################
-#  MAIN THREAD OF EXECUTION  #
-##############################
 
-print "Running pyLDFI setup with : \n" + str(sys.argv)
-
-# run make for c4
-# find candidate apr locations
-apr_path_cands = getAPR_list()
-
-# set correct apr location
-flag    = True
-for path in apr_path_cands :
+########################
+#  DE DUPLICATE SETUP  #
+########################
+def deDuplicateSetup() :
   # http://stackoverflow.com/questions/4710067/deleting-a-specific-line-in-a-file-python
   # protect against multiple runs of setup
   f = open( C4_FINDAPR_PATH, "r+" )
@@ -53,6 +45,11 @@ for path in apr_path_cands :
   f.truncate()
   f.close()
 
+
+#############
+#  SET APR  #
+#############
+def setAPR( path ) :
   # set one of the candidate APR paths
   newCmd = 'set(APR_INCLUDES "' + path + '")'
   #cmd = "echo '" + newCmd + "' | cat - " + C4_FINDAPR_PATH + " > temp && mv temp " + C4_FINDAPR_PATH
@@ -60,27 +57,67 @@ for path in apr_path_cands :
   os.system( cmd )
   os.system( "make c4" )
 
-  try :
+
+##########################
+#  CHECK FOR MAKE ERROR  #
+##########################
+def checkForMakeError( path ) :
+  flag = True
+  if os.path.exists( os.path.dirname(os.path.abspath( __file__ )) + "/c4_out.txt" ) :
     fo = open( "./c4_out.txt", "r" )
     for line in fo :
       line = line.strip()
       if "error generated." in line :
-        print "failed path = " + path
+        print "failed path apr = " + path
         flag = False
-  except IOError :
-    print "./c4_out.txt does not exist"
+    fo.close()
+    os.system( "rm ./c4_out.txt" ) # clean up
+  return flag
 
-  # found a valid apr library
-  if flag :
-    break
+##########
+#  MAIN  #
+##########
+def main() :
+  print "Running pyLDFI setup with : \n" + str(sys.argv)
+  
+  # ---------------------------------------------- #
+  # run make for c4
+  # find candidate apr locations
+  apr_path_cands = getAPR_list()
+  
+  # set correct apr location
+  flag    = True
+  for path in apr_path_cands :
+    deDuplicateSetup()
+    setAPR( path )
+    try :
+      flag = checkForMakeError( path )
+    except IOError :
+      print "./c4_out.txt does not exist"
+  
+    # found a valid apr library
+    if flag :
+      print ">>> C4 installed successfully <<<"
+      print "... Done installing C4 Datalog evaluator"
+      break
+    print "C4 install using APR path : " + path
 
-  fo.close()
-  os.system( "rm ./c4_out.txt" ) # clean up
+  # ---------------------------------------------- #
+  # copy over template c4 main
+  os.system( "cp ./src/templateFiles/c4i_template.c ./lib/c4/src/c4i/c4i.c" )
+ 
+  # ---------------------------------------------- #
+  # run make for everything else
+  os.system( "make" )
+  
 
-  print "Using APR path : " + path
 
-# run make for everything else
-os.system( "make" )
+##############################
+#  MAIN THREAD OF EXECUTION  #
+##############################
+main()
 
-print "... Done installing C4 Datalog evaluator"
 
+#########
+#  EOF  #
+#########
