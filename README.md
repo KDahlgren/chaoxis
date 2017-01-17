@@ -47,7 +47,8 @@ Python Packages :
   * [pyDatalog](https://sites.google.com/site/pydatalog/installation)
 
 Other Tools :
-  * [C4 Overlog Runtime](https://sites.google.com/site/pydatalog/installation://github.com/bloom-lang/c4) (installed locally automatically)
+  * [C4 Overlog Runtime](https://github.com/bloom-lang/c4) (installed locally automatically)
+  * [Z3 Theorem Prover](https://github.com/Z3Prover/z3) (installed locally automatically)
 
 ## More information
 
