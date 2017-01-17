@@ -2,7 +2,7 @@
 
 import os, sys
 
-from ctypes import cdll
+from ctypes import *
 lib = cdll.LoadLibrary('../../../lib/c4/build/src/libc4/libc4.dylib')
 
 C4_WRAPPER_DEBUG = True
@@ -12,14 +12,13 @@ class C4Wrapper( object ) :
   #############
   #  ATTRIBS  #
   #############
-  c4_obj = None    # the target c4 program object 
+  wrapperID = None
 
   ##########
   #  INIT  #
   ##########
   def __init__( self ) :
-    lib.c4_initialize()
-    self.c4_obj = lib.c4_make( None, 0 )
+    self.wrapperID = 0
 
   #########################
   #  GET INPUT PROG FILE  #
@@ -38,35 +37,49 @@ class C4Wrapper( object ) :
       print "Could not open file " + filename
       return None
 
-  ###############
-  #  LOAD PROG  #
-  ###############
-  def loadProg( self, prog ) :
-    if C4_WRAPPER_DEBUG :
-      print "... running loadProg ..."
-    lib.c4_install_str( self.c4_obj, prog )
+  #########
+  #  RUN  #
+  #########
+  # fullprog is a string of concatenated overlog commands.
+  # clockFactList = list of complete clocl fact commands in overlog.
+  def run( self, fullprog, clockFactList ) :
+    lib.c4_initialize()
+    self.c4_obj = lib.c4_make( None, 0 )
 
-  ######################
-  #  LOAD CLOCK FACTS  #
-  ######################
-  def loadClockFacts( self, clockFactsList ) :
+    # ---------------------------------------- #
+    # loading program
     if C4_WRAPPER_DEBUG :
-      print "... running loadClockFacts ..."
-    for f in clockFactsList : #adding clock facts separately to mimic time delay.
+      print "... loading prog ..."
+
+    c_prog = bytes(fullprog)
+    #lib.c4_install_str( self.c4_obj, c_prog )
+
+    # ---------------------------------------- #
+    # loading clock facts
+    if C4_WRAPPER_DEBUG :
+      print "... loading clock facts ..."
+
+    for f in clockFactList : #adding clock facts separately to mimic time delay.
       if C4_WRAPPER_DEBUG :
         print "Clock fact = " + str( f )
-      lib.c4_install_str( self.c4_obj, prog )
 
-  ################
-  #  CLOSE PROG  #
-  ################
-  def closeProg( self ) :
+      c_str_fact = None
+      #lib.c4_install_str( self.c4_obj, c_str_fact )
+
+    # ---------------------------------------- #
+    # dump program results
+
+    # ---------------------------------------- #
+    # close prog
     if C4_WRAPPER_DEBUG :
-      print "... running closeProg ..."
-    lib.c4_destroy( self.c4_obj )
-    lib.c4_terminate( )
+      print "... closing C4 ..."
 
+    lib.c4_destroy( self.c4_obj )
+    #lib.c4_terminate( )
+
+    # ---------------------------------------- #
     return None
+
 
 ##############################
 #  MAIN THREAD OF EXECUTION  #
@@ -76,16 +89,13 @@ w              = C4Wrapper() # initializes c4
 filename       = "/Users/KsComp/projects/pyldfi/src/evaluators/programFiles/c4program.olg"
 
 progFull       = w.getInputProg_file( filename )
-clockFactsList = []
+clockFactList  = []
 
 if C4_WRAPPER_DEBUG :
   print "Program = \n" + str( progFull )
-  print "clock facts list = \n" + str(clockFactsList)
+  print "clock facts list = \n" + str(clockFactList)
 
-
-#w.loadProg( progFull )
-#w.loadClockFacts( clockFactsList )
-#w.closeProg()
+w.run( progFull, clockFactList)
 
 #########
 #  EOF  #
