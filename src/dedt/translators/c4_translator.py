@@ -43,6 +43,8 @@ def existingDefine( name, definesList ) :
 
 def c4datalog( cursor ) :
 
+  tableListStr = "" # collect all table names delmited by a single comma only.
+
   # ----------------------------------------------------------- #
   # create goal defines
 
@@ -58,6 +60,8 @@ def c4datalog( cursor ) :
     cursor.execute( "SELECT goalName FROM Rule WHERE rid = '" + rid + "'" )
     goalName = cursor.fetchone()
     goalName = tools.toAscii_str( goalName )
+
+    tableListStr += goalName + ","
 
     # prevent duplicates
     print "In c4datalog: definesList = " + str(definesList)
@@ -108,6 +112,8 @@ def c4datalog( cursor ) :
       cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid = '" + rid + "' AND sid = '" + sid + "'" )
       subgoalName = cursor.fetchone()
       subgoalName = tools.toAscii_str( subgoalName )
+
+      tableListStr += subgoalName + ","
 
       if not existingDefine( subgoalName, definesList ) :
         typeList       = []
@@ -162,6 +168,25 @@ def c4datalog( cursor ) :
     ruleList.append( newRule )
 
   # ----------------------------------------------------------- #
+  # save table list
+
+  if C4_TRANSLATOR_DEBUG :
+    print "*******************************************"
+    print "table list str :"
+    print tableListStr
+
+  testpath_tables = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
+  tablesFilename  = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/" + "tableListStr.data"
+
+  if os.path.isdir( testpath_tables ) :
+    outfile = open( tablesFilename, "w" )
+    outfile.write( tableListStr )
+    outfile.close()
+  else :
+    sys.exit( "ERROR: directory for saving tables for C4 Overlog program does not exist: " + testpath_tables )
+  
+
+  # ----------------------------------------------------------- #
   # save program
 
   if C4_TRANSLATOR_DEBUG :
@@ -176,9 +201,9 @@ def c4datalog( cursor ) :
     print ruleList
 
   listOfStatementLists = [ definesList, factList, ruleList ]
-  program = tools.combineLines( listOfStatementLists )
+  program              = tools.combineLines( listOfStatementLists )
 
-  testpath = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
+  testpath        = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
   programFilename = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/" + "c4program.olg"
 
   if os.path.isdir( testpath ) :
@@ -186,9 +211,9 @@ def c4datalog( cursor ) :
     outfile.write( program )
     outfile.close()
   else :
-    sys.exit( "ERROR: directory for saving datalog program does not exist: " + testpath )
+    sys.exit( "ERROR: directory for saving C4 Overlog program does not exist: " + testpath )
 
-  return programFilename
+  return ( tablesFilename, programFilename )
 
 
 #########

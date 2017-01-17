@@ -245,11 +245,11 @@ def runTranslator( cursor, dedFile, argDict, datalogProgPath, evaluator ) :
 
   # translate IR into datalog
   if evaluator == "c4" :
-    programFilename = c4_translator.c4datalog( cursor )
+    outpaths = c4_translator.c4datalog( cursor )
   elif evaluator == "pyDatalog" :
-    programFilename = pydatalog_translator.getPyDatalogProg( cursor )
+    outpaths = pydatalog_translator.getPyDatalogProg( cursor )
 
-  return programFilename
+  return outpaths
 
 
 ##############################
@@ -299,7 +299,7 @@ def translateDedalus( argDict ) :
   # translate all input dedalus files into a single datalog program
   evaluator = argDict[ 'evaluator' ]
   for dedfilename, status in fileDict.items() :
-    datalogProgPath = runTranslator( cursor, dedfilename, argDict, datalogProgPath, evaluator )
+    outpaths = runTranslator( cursor, dedfilename, argDict, datalogProgPath, evaluator )
 
   if DEDT_DEBUG1 :
     dumpers.factDump(  cursor )
@@ -311,7 +311,10 @@ def translateDedalus( argDict ) :
   IRDB.close()        # close db
   os.remove( saveDB ) # delete the IR file to clean up
 
-  return datalogProgPath
+  if DEDT_DEBUG :
+    print "DEDT_DEBUG > outpaths = " + str( outpaths )
+
+  return outpaths
 
 
 #########

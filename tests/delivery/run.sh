@@ -4,7 +4,7 @@
 (python ../../src/drivers/driver1.py -n a,b,c -f ./main.ded) > tmp.txt
 
 # check if test passed (TODO: make more sophisticated)
-if grep -Fxq "PASSED" tmp.txt
+if grep -Fxq "PROGRAMM EXITED SUCCESSFULLY" tmp.txt
 then
   echo "TEST PASSED"
 else

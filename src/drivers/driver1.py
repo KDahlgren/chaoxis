@@ -19,13 +19,13 @@ import os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from dedt import dedt, dedalusParser
-from utils import parseCommandLineInput
-# ------------------------------------------------------ #
-
-DRIVER_DEBUG = True
+from dedt       import dedt, dedalusParser
+from utils      import parseCommandLineInput
+from evaluators import c4_evaluator
 
 # **************************************** #
+
+DRIVER_DEBUG = True
 
 ################
 #  PARSE ARGS  #
@@ -72,16 +72,22 @@ def driver() :
   print argDict
 
   # translate all input dedalus files into a single datalog program
-  datalogProgPath = dedt.translateDedalus( argDict )
+  outpaths        = dedt.translateDedalus( argDict )
+  tableListPath   = outpaths[0]
+  datalogProgPath = outpaths[1]
   if DRIVER_DEBUG :
+    print "outpaths             = " + str( outpaths )
+    print "table   list    path = " + tableListPath
     print "datalog program path = " + datalogProgPath
 
-  # run through pydatalog, collect bindings ~ provenance
+  # run through pydatalog, collect bindings ~= provenance
+  c4_evaluator.runC4( datalogProgPath, tableListPath )
+
   # if buggy => output results
   # else => ...
 
-  print "PASSED" # needed for simpleLog in tests/
-                 # TODO: create more robust testing framework
+  print "PROGRAM EXITED SUCCESSFULLY" # needed for simpleLog in tests/
+                                      # TODO: create more robust testing framework
 
 #########################
 #  THREAD OF EXECUTION  #
