@@ -18,7 +18,7 @@ from utils import tools
 #############
 #  GLOBALS  #
 #############
-DUMPERS_C4_DEBUG = False
+DUMPERS_C4_DEBUG = True
 
 #########################
 #  DUMP SINGLE FACT C4  #
@@ -183,6 +183,42 @@ def dumpSingleRule_c4( rid, cursor ) :
 
   return rule
 
+
+################
+#  DUMP CLOCK  #
+################
+# dump and format all clock facts in c4 overlog
+def dump_clock( cursor ) :
+
+  if DUMPERS_C4_DEBUG :
+    print "...running dumpers_c4 dump_clock..."
+
+  formattedClockFactsList = []
+
+  cursor.execute( "SELECT * FROM Clock" )
+  clockFacts = cursor.fetchall()
+  clockFacts = tools.toAscii_multiList( clockFacts )
+
+  if DUMPERS_C4_DEBUG :
+    print "dump_clock: clockFacts = " + str(clockFacts)
+
+  for c in clockFacts :
+    if DUMPERS_C4_DEBUG :
+      print "c = " + str(c)
+
+    clockF = 'clock('
+    for i in range(0,len(c)) :
+      currData = c[i]
+      if i < 2 :
+        clockF += '"' + currData + '",'
+      else :
+        clockF += str(currData)
+        if i < len(c)-1 :
+          clockF += ","
+    clockF += ");"
+    formattedClockFactsList.append( clockF )
+
+  return formattedClockFactsList
 
 #########
 #  EOF  #

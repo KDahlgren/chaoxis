@@ -19,7 +19,7 @@ from utils import tools
 #############
 #  GLOBALS  #
 #############
-C4_TRANSLATOR_DEBUG   = False
+C4_TRANSLATOR_DEBUG   = True
 C4_TRANSLATOR_DEBUG_1 = True
 
 #####################
@@ -156,6 +156,14 @@ def c4datalog( cursor ) :
     factList.append( newFact )
 
   # ----------------------------------------------------------- #
+  # add clock facts
+
+  print "HEREE!!!!!!"
+  clockFactList = dumpers_c4.dump_clock( cursor )
+  if C4_TRANSLATOR_DEBUG :
+    print "c4_translator: clockFactList = " + str( clockFactList )
+
+  # ----------------------------------------------------------- #
   # add rules
 
   cursor.execute( "SELECT rid FROM Rule" )
@@ -200,7 +208,7 @@ def c4datalog( cursor ) :
     print "ruleList :"
     print ruleList
 
-  listOfStatementLists = [ definesList, factList, ruleList ]
+  listOfStatementLists = [ definesList, factList, clockFactList, ruleList ]
   program              = tools.combineLines( listOfStatementLists )
 
   testpath        = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"

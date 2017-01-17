@@ -103,19 +103,23 @@ class Dedt_Tests( unittest.TestCase ) :
     inputArg = {'prov_diagrams': False, 'use_symmetry': False, 'crashes': 0, 'solver': None, 
     'disable_dot_rendering': False, 'negative_support': False, 'strategy': None,
     'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3, 'find_all_counterexamples': False,
-    'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2}
+    'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2, 'evaluator': 'c4'}
     
     #runs through function to make sure it finishes without error
     outputResult = None
-    self.assertFalse(dedt.runTranslator(cursor,inputfile,inputArg,None)==outputResult)
-    c4file = dedt.runTranslator(cursor,inputfile,inputArg,None)
-    
-    
-     #clean up testing
+    evaluator    = "c4"
+    self.assertFalse(dedt.runTranslator(cursor,inputfile,inputArg,None,evaluator)==outputResult)
+    outpaths = dedt.runTranslator(cursor,inputfile,inputArg,None,evaluator)
+    tables   = outpaths[0]
+    c4file   = outpaths[1]
+
+    #clean up testing
     IRDB.close()
     os.remove( testDB )
+    if tables is not None:
+      os.remove(tables)
     if c4file is not None:
-        os.remove(c4file)
+      os.remove(c4file)
     
   def test_translateDedalus_dedt( self ) :
   
@@ -132,7 +136,7 @@ class Dedt_Tests( unittest.TestCase ) :
     inputArg = {'prov_diagrams': False, 'use_symmetry': False, 'crashes': 0, 'solver': None, 
     'disable_dot_rendering': False, 'negative_support': False, 'strategy': None,
     'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3, 'find_all_counterexamples': False,
-    'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2}
+    'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2, 'evaluator': 'c4'}
     outputResult = None
     self.assertFalse(dedt.translateDedalus(inputArg)==outputResult)
     
