@@ -50,7 +50,7 @@ python ../../src/drivers/driver1.py -n a,b,c -f ./real\_heartbeat.ded --evaluato
 ```
 
 ## Dependencies
-Python Packages :
+Python Packages (not automatically installed with pyLDFI) :
   * [argparse](https://pypi.python.org/pypi/argparse)
   * [pyparsing](http://pyparsing.wikispaces.com/Download+and+Installation)
   * [sqlite3](https://docs.python.org/2/library/sqlite3.html)
