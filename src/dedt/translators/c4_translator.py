@@ -1,25 +1,26 @@
 #!/usr/bin/env python
 
 '''
-c4_tools.py
-   Tools for producig c4 datalog programs in dedc compiler.
+c4.py
+   Tools for producig c4 datalog programs from the IR in the dedt compiler.
 '''
 
 import os, string, sqlite3, sys
+import dumpers_c4
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/../.." )
+packagePath  = os.path.abspath( __file__ + "/../../.." )
 sys.path.append( packagePath )
 
-from utils import dumpers, tools
+from utils import tools
 # ------------------------------------------------------ #
 
 #############
 #  GLOBALS  #
 #############
-C4_TOOLS_DEBUG = True
-
+C4_TRANSLATOR_DEBUG   = True
+C4_TRANSLATOR_DEBUG_1 = True
 
 #####################
 #  EXISTING DEFINE  #
@@ -42,6 +43,8 @@ def existingDefine( name, definesList ) :
 
 def c4datalog( cursor ) :
 
+  tableListStr = "" # collect all table names delmited by a single comma only.
+
   # ----------------------------------------------------------- #
   # create goal defines
 
@@ -58,6 +61,8 @@ def c4datalog( cursor ) :
     goalName = cursor.fetchone()
     goalName = tools.toAscii_str( goalName )
 
+    tableListStr += goalName + ","
+
     # prevent duplicates
     print "In c4datalog: definesList = " + str(definesList)
     if not existingDefine( goalName, definesList ) :
@@ -66,10 +71,13 @@ def c4datalog( cursor ) :
       goalAttList = cursor.fetchall()
       goalAttList = tools.toAscii_list( goalAttList )
 
-      # populat type list for rule
+      if C4_TRANSLATOR_DEBUG_1 :
+        print "* goalName = " + goalName + ", goalAttList " + str( goalAttList )
+
+      # populate type list for rule
       typeList = []
       for att in goalAttList :
-        if "Time" in att :
+        if "Time" in att : # TODO: not generalizable. Also does not combine hints from multiple appearances of the same sub/goal to combat underscores.
           typeList.append( "int" )
         else :
           typeList.append( "string" )
@@ -105,15 +113,25 @@ def c4datalog( cursor ) :
       subgoalName = cursor.fetchone()
       subgoalName = tools.toAscii_str( subgoalName )
 
+      tableListStr += subgoalName + ","
+
       if not existingDefine( subgoalName, definesList ) :
         typeList       = []
         cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid = '" + rid + "' AND sid = '" + sid + "'" )
         subgoalAttList = cursor.fetchall()
-        for att in subgoalAttList :
-          if "Time" in att :
-            typeList.append( "int" )
-          else :
-            typeList.append( "string" )
+        subgoalAttList = tools.toAscii_list( subgoalAttList )
+
+        if C4_TRANSLATOR_DEBUG_1 :
+          print "* subgoalName = " + subgoalName + ", subgoalAttList " + str( subgoalAttList )
+
+        if subgoalName == "clock" :
+          typeList = [ "string", "string", "int", "int" ]
+        else :
+          for att in subgoalAttList :
+            if "Time" in att :
+              typeList.append( "int" )
+            else :
+              typeList.append( "string" )
 
         newDefine += "define("
         newDefine += subgoalName + ",{"
@@ -134,8 +152,16 @@ def c4datalog( cursor ) :
 
   factList = []
   for fid in fidList :
-    newFact = dumpers.dumpSingleFact( fid, cursor )
+    newFact = dumpers_c4.dumpSingleFact_c4( fid, cursor )
     factList.append( newFact )
+
+  # ----------------------------------------------------------- #
+  # add clock facts
+
+  print "HEREE!!!!!!"
+  clockFactList = dumpers_c4.dump_clock( cursor )
+  if C4_TRANSLATOR_DEBUG :
+    print "c4_translator: clockFactList = " + str( clockFactList )
 
   # ----------------------------------------------------------- #
   # add rules
@@ -146,13 +172,32 @@ def c4datalog( cursor ) :
 
   ruleList = []
   for rid in ridList :
-    newRule = dumpers.dumpSingleRule( rid, cursor )
+    newRule = dumpers_c4.dumpSingleRule_c4( rid, cursor )
     ruleList.append( newRule )
+
+  # ----------------------------------------------------------- #
+  # save table list
+
+  if C4_TRANSLATOR_DEBUG :
+    print "*******************************************"
+    print "table list str :"
+    print tableListStr
+
+  testpath_tables = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
+  tablesFilename  = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/" + "tableListStr.data"
+
+  if os.path.isdir( testpath_tables ) :
+    outfile = open( tablesFilename, "w" )
+    outfile.write( tableListStr )
+    outfile.close()
+  else :
+    sys.exit( "ERROR: directory for saving tables for C4 Overlog program does not exist: " + testpath_tables )
+  
 
   # ----------------------------------------------------------- #
   # save program
 
-  if C4_TOOLS_DEBUG :
+  if C4_TRANSLATOR_DEBUG :
     print "*******************************************"
     print "definesList :"
     print definesList
@@ -163,19 +208,20 @@ def c4datalog( cursor ) :
     print "ruleList :"
     print ruleList
 
-  program = tools.combineLines( definesList, factList, ruleList )
+  listOfStatementLists = [ definesList, factList, clockFactList, ruleList ]
+  program              = tools.combineLines( listOfStatementLists )
 
-  testpath = os.path.abspath( __file__ + "/../.." ) + "/evaluators/programFiles/"
-  programFilename = os.path.abspath( __file__ + "/../.." ) + "/evaluators/programFiles/" + "c4program.datalog"
+  testpath        = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
+  programFilename = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/" + "c4program.olg"
 
   if os.path.isdir( testpath ) :
     outfile = open( programFilename, "w" )
     outfile.write( program )
     outfile.close()
   else :
-    sys.exit( "ERROR: directory for saving datalog program does not exist: " + testpath )
+    sys.exit( "ERROR: directory for saving C4 Overlog program does not exist: " + testpath )
 
-  return programFilename
+  return ( tablesFilename, programFilename )
 
 
 #########

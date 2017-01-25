@@ -6,15 +6,20 @@ tools.py
    sanity-check particular properties.
 '''
 
-import os, random, string, sys
+import os, random, re, string, sys, numbers
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-#from utils import extractors
+import dumpers
 # ------------------------------------------------------ #
+
+#############
+#  GLOBALS  #
+#############
+TOOLS_DEBUG = False
 
 ############
 #  GET ID  #
@@ -22,7 +27,21 @@ sys.path.append( packagePath )
 # input nothing
 # output random 16 char alphanumeric id
 def getID() :
-  return "".join( random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ') for i in range(16) )
+  return "".join( random.choice('abcdefghijklmnopqrstuvwxyz') for i in range(16) )
+
+################################
+#  CHECK IF REWRITTEN ALREADY  #
+################################
+def checkIfRewrittenAlready( rid, cursor ) :
+  cursor.execute( "SELECT rewritten FROM Rule WHERE rid == '" + rid + "'" )
+  flag = cursor.fetchone()
+  flag = flag[0]
+  if flag == 0 :
+    return False
+  else :
+    if TOOLS_DEBUG :
+      print "RULE PREVIOUSLY REWRITTEN: " + str( dumpers.reconstructRule( rid, cursor ) )
+    return True
 
 
 #######################
@@ -47,7 +66,7 @@ def checkParentheses( line ) :
 ###################
 #  TO ASCII LIST  #
 ###################
-# input list of unicoded sql results
+# input list of unicoded sql results (array of unary tuples)
 # output list of ascii results
 def toAscii_list( sqlresults ) :
 
@@ -56,6 +75,34 @@ def toAscii_list( sqlresults ) :
     if not r[0] == None :
       asciiResult = r[0].encode('utf-8')
       cleanResults.append( asciiResult )
+
+  if not cleanResults == None :
+    return cleanResults
+  else :
+    return None
+
+#########################
+#  TO ASCII MULTI LIST  #
+#########################
+# input list of unicoded sql results (n-ary tuples)
+# output list of ascii results as an array of n-ary arrays
+def toAscii_multiList( tupleList ) :
+
+  cleanResults = []
+
+  for tup in tupleList :
+    if TOOLS_DEBUG :
+      print "TOOLS tup = " + str(tup)
+    cleanTup = []
+    for item in tup :
+      if isinstance(item, numbers.Real) :
+        cleanTup.append( item )
+      else :
+        # cleanse the unicode
+        if not item[0] == None :
+          asciiResult = item[0].encode('utf-8')
+          cleanTup.append( asciiResult )
+    cleanResults.append( cleanTup )
 
   if not cleanResults == None :
     return cleanResults
@@ -103,7 +150,8 @@ def getAllIncludedFiles( fileDict ) :
 
   # unexplored files exist
   if not noMoreNewFiles :
-    print "fileDict1 = " + str( fileDict )
+    if TOOLS_DEBUG :
+      print "fileDict1 = " + str( fileDict )
 
     # iterate over all files
     for filename, status in fileDict.items() :
@@ -121,7 +169,11 @@ def getAllIncludedFiles( fileDict ) :
             if not skip( line ) :
               if "include" in line :
                 line    = line.split( " " )
-                newfile = line[1].translate( None, string.whitespace )
+                newfile = line[1]
+                newfile = newfile.replace( ";", "" )
+                newfile = newfile.replace( '"', "" )
+                newfile = newfile.replace( "'", "" )
+                newfile  = newfile.translate( None, string.whitespace ) # removes extra spaces and newlines
                 fileDict[ newfile ] = False
           infile.close()
           fileDict[ filename ] = True
@@ -129,7 +181,8 @@ def getAllIncludedFiles( fileDict ) :
         else :
           sys.exit( "ERROR : file does not exist: " + str(filename) )
 
-    print "fileDict2 = " + str( fileDict )
+    if TOOLS_DEBUG :
+      print "fileDict2 = " + str( fileDict )
     fileDict = getAllIncludedFiles( fileDict )
 
   return fileDict
@@ -141,22 +194,41 @@ def getAllIncludedFiles( fileDict ) :
 # input list of c4-formatted table definitions, facts, and rules
 # output a single line containing the entire program
 
-def combineLines( definesList, factsList, rulesList ) :
+def combineLines( listOfStatementLists ) :
   program = ""
 
-  # get defines
-  for d in definesList :
-    program += d
-
-  # get facts
-  for f in factsList :
-    program += f
-
-  # get rules
-  for r in rulesList :
-    program += r
+  for listOfStatments in listOfStatementLists :
+    for statement in listOfStatments :
+      program += statement
 
   return program
+
+
+######################
+#  ATT SEARCH PASS 2 #
+######################
+# input list of any formatted datalog rule, possibly containing wild cards
+#    of the form 'THISISAWILDCARD<16 random upper-case letters>'
+# output an array containing the extracted wildcards
+
+def attSearchPass2( pydatalogRule ) :
+  wildList = []
+
+  pydatalogRule = pydatalogRule.split(",")
+
+  # iterate over components of the rule to extract all wildcards
+  for substr in pydatalogRule :
+    if TOOLS_DEBUG :
+      print " >>> substr = " + substr
+    r = re.search('THISISAWILDCARD([A-Z]*)', substr)
+    if r :
+      r = r.group(0)
+      if TOOLS_DEBUG :
+        print ">>>> r = " + str(r)
+      wildList.append(r)
+
+  return wildList
+
 
 #########
 #  EOF  #

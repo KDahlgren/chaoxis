@@ -24,6 +24,8 @@ import Rule
 PROVENANCEREWRITE_DEBUG = False
 aggOps = [ "min", "max", "sum", "avg", "count" ] # TODO: make this configurable
 
+timeAtt = "SndTime"
+
 ##############
 #  AGG PROV  #
 ##############
@@ -39,9 +41,10 @@ def aggProv( aggRule, nameAppend, cursor ) :
   firingsRule  = Rule.Rule( rid, cursor )
 
   # goal info
-  goalName    = aggRule.getGoalName() + "_prov" + str(rid) # allows tables for duplicate names
-  goalAttList = aggRule.getGoalAttList()
-  goalTimeArg = ""
+  goalName      = aggRule.getGoalName() + "_prov" + str(rid) # allows tables for duplicate names
+  goalAttList   = aggRule.getGoalAttList()
+  goalTimeArg   = ""
+  rewrittenFlag = 0 # new rules have not yet been rewritten
 
   # check for bugs
   if PROVENANCEREWRITE_DEBUG :
@@ -85,17 +88,20 @@ def aggProv( aggRule, nameAppend, cursor ) :
   subgoalAddArgs = ""
 
   # save rule
-  firingsRule.setGoalInfo(               goalName, goalTimeArg            )
-  firingsRule.setGoalAttList(            goalAttList                      )
-  firingsRule.setSingleSubgoalInfo(      sid, subgoalName, subgoalTimeArg )
-  firingsRule.setSingleSubgoalAttList(   sid, subgoalAttList_final        )
-  firingsRule.setSingleSubgoalAddArgs(   sid, subgoalAddArgs              )
+  firingsRule.setGoalInfo(               goalName, goalTimeArg, rewrittenFlag  )
+  firingsRule.setGoalAttList(            goalAttList                           )
+  firingsRule.setSingleSubgoalInfo(      sid, subgoalName, subgoalTimeArg      )
+  firingsRule.setSingleSubgoalAttList(   sid, subgoalAttList_final             )
+  firingsRule.setSingleSubgoalAddArgs(   sid, subgoalAddArgs                   )
 
 
 #######################
 #  REGULAR RULE PROV  #
 #######################
 def regProv( regRule, nameAppend, cursor ) :
+
+  if PROVENANCEREWRITE_DEBUG :
+    print " ... running regProv ..."
 
   # parse rule
   parsedRule = dedalusParser.parse( regRule.display() )
@@ -109,8 +115,9 @@ def regProv( regRule, nameAppend, cursor ) :
   # -------------------------------------------------- #
 
   # get goal info
-  goalName    = regRule.getGoalName() + nameAppend + str(rid)
-  goalTimeArg = ""
+  goalName      = regRule.getGoalName() + nameAppend + str(rid)
+  goalTimeArg   = ""
+  rewrittenFlag = 1  # new log rules are not rewritten
 
   # check for bugs
   if PROVENANCEREWRITE_DEBUG :
@@ -126,7 +133,16 @@ def regProv( regRule, nameAppend, cursor ) :
     print "regProv: subgoalArray = " + str(subgoalArray)
 
   # collect goal args while inserting subgoals
+  firstSubgoalAtts = []
   goalAttList = []
+
+  # populate with original goal atts first
+  goalAttList = regRule.getGoalAttList()
+
+  if PROVENANCEREWRITE_DEBUG :
+    print ">>>>>>>> goalAttList init = " + str(goalAttList)
+
+  # then populate with remaining subgoal atts
   for subgoal in subgoalArray :
     # generate random ID for subgoal
     sid = tools.getID()
@@ -144,15 +160,32 @@ def regProv( regRule, nameAppend, cursor ) :
       print "regProv: subgoalAttList = " + str(subgoalAttList)
       print "regProv: subgoalAddArgs = " + str(subgoalAddArgs)
 
+    # catch first subgoal att
+    if len(subgoalAddArgs) == 0 :
+      firstSubgoalAtts.append( subgoalAttList[0] )
+
     # populate goal attribute list
     for att in subgoalAttList :
       if (not att in goalAttList) and (not att.isdigit()) and (not att == "_") :  # exclude numbers from goal atts
         goalAttList.append( att )
 
+    # make sure time attribute appears as rightmost attribute
+    if not goalAttList == None :
+      if PROVENANCEREWRITE_DEBUG :
+        print "timeAtt = " + timeAtt
+        print "old goalAttList = " + str(goalAttList)
+      goalAttList = [x for x in goalAttList if x != timeAtt]
+      if PROVENANCEREWRITE_DEBUG :
+        print "new goalAttList = " + str(goalAttList)
+      goalAttList.append(timeAtt)
+
     # save firings subgoal
     firingsRule.setSingleSubgoalInfo( sid, subgoalName, subgoalTimeArg )
     firingsRule.setSingleSubgoalAttList( sid, subgoalAttList )
     firingsRule.setSingleSubgoalAddArgs( sid, subgoalAddArgs )
+
+  if PROVENANCEREWRITE_DEBUG :
+    print ">>>>>>>> goalAttList final = " + str(goalAttList)
 
   # -------------------------------------------------- #
 
@@ -170,15 +203,19 @@ def regProv( regRule, nameAppend, cursor ) :
   # -------------------------------------------------- #
 
   # save firings rule goal
-  firingsRule.setGoalInfo(     goalName, goalTimeArg )
-  firingsRule.setGoalAttList(  goalAttList           )
+  firingsRule.setGoalInfo(     goalName, goalTimeArg, rewrittenFlag  )
+  firingsRule.setGoalAttList(  goalAttList                           )
 
   return firingsRule
+
 
 ########################
 #  REWRITE PROVENANCE  #
 ########################
 def rewriteProvenance( ruleMeta, cursor ) :
+
+  if PROVENANCEREWRITE_DEBUG :
+    print " ... running rewriteProvenance ... "
 
   # iterate over rules
   for rule in ruleMeta :
@@ -196,6 +233,8 @@ def rewriteProvenance( ruleMeta, cursor ) :
     else :
       regProv( rule, "_prov", cursor )
 
+  if PROVENANCEREWRITE_DEBUG :
+    print " ... done rewriteProvenance ... "
 
 #########
 #  EOF  #

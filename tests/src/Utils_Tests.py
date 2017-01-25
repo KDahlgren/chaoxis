@@ -19,7 +19,6 @@ sys.path.append( packagePath )
 from utils import tools, extractors
 # ------------------------------------------------------ #
 
-
 ################
 #  UNIT TESTS  #
 ################
