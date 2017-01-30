@@ -221,7 +221,7 @@ def c4datalog( cursor ) :
   else :
     sys.exit( "ERROR: directory for saving C4 Overlog program does not exist: " + testpath )
 
-  return ( tablesFilename, programFilename )
+  return [ tablesFilename, programFilename ]
 
 
 #########

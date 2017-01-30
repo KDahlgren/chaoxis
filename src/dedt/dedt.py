@@ -268,6 +268,14 @@ def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique
 
 
+##############
+#  CLEAN UP  #
+##############
+def cleanUp( IRDB, saveDB ) :
+  IRDB.close()        # close db
+  os.remove( saveDB ) # delete the IR file to clean up
+
+
 #######################
 #  TRANSLATE DEDALUS  #
 #######################
@@ -301,6 +309,10 @@ def translateDedalus( argDict ) :
   for dedfilename, status in fileDict.items() :
     outpaths = runTranslator( cursor, dedfilename, argDict, datalogProgPath, evaluator )
 
+  # expose IRDB cursor, need to call cleanUp at caller of translateDedalus
+  outpaths.append( cursor )
+  outpaths.append( saveDB )
+
   if DEDT_DEBUG1 :
     dumpers.factDump(  cursor )
     dumpers.ruleDump(  cursor )
@@ -308,8 +320,9 @@ def translateDedalus( argDict ) :
 
   # ----------------------------------------------------------------- #
 
-  IRDB.close()        # close db
-  os.remove( saveDB ) # delete the IR file to clean up
+  #cleanUp( IRDB )
+  #IRDB.close()        # close db
+  #os.remove( saveDB ) # delete the IR file to clean up
 
   if DEDT_DEBUG :
     print "DEDT_DEBUG > outpaths = " + str( outpaths )

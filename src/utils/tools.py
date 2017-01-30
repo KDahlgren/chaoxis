@@ -95,12 +95,18 @@ def toAscii_multiList( tupleList ) :
       print "TOOLS tup = " + str(tup)
     cleanTup = []
     for item in tup :
+      if TOOLS_DEBUG :
+        print "TOOLS tup item  = "
+        print item
       if isinstance(item, numbers.Real) :
         cleanTup.append( item )
       else :
         # cleanse the unicode
-        if not item[0] == None :
-          asciiResult = item[0].encode('utf-8')
+        #if not item[0] == None :
+        #  asciiResult = item[0].encode('utf-8')
+        #  cleanTup.append( asciiResult )
+        if not item == None :
+          asciiResult = item.encode('utf-8')
           cleanTup.append( asciiResult )
     cleanResults.append( cleanTup )
 
