@@ -27,7 +27,8 @@ from evaluators import c4_evaluator
 # **************************************** #
 
 DRIVER_DEBUG = True
-DEV_HACK     = True
+DEV_HACK1    = False
+DEV_HACK2    = True
 
 ################
 #  PARSE ARGS  #
@@ -104,9 +105,13 @@ def driver() :
   # ----------------------------------------------- #
   # get provenance trees
 
-  if DEV_HACK :
+  if DEV_HACK1 :
     resultsPath = "/Users/KsComp/projects/pyldfi/src/derivation/testData.txt"
-    print "driver1.py DEV_HACK True : resultsPath = " + resultsPath
+    print "driver1.py DEV_HACK1 True : resultsPath = " + resultsPath
+
+  if DEV_HACK2 :
+    resultsPath = "/Users/KsComp/projects/pyldfi/tests/provtree_dev/testOutput.txt"
+    print "driver1.py DEV_HACK2 True : resultsPath = " + resultsPath
 
   if resultsPath :
     parsedResults = provTree.getEvalResults_file( resultsPath )
@@ -117,6 +122,9 @@ def driver() :
         print "seedRecord = " + str( seedRecord )
       newProvTree = provTree.generateProvTree( seedRecord, parsedResults, irCursor )
       provTreeComplete.append( newProvTree )
+
+      if DRIVER_DEBUG :
+        print "provTreeComplete :\n" + str(provTreeComplete)
 
     # -------------------------------------------- #
     # cleanUp saved db stuff

@@ -24,7 +24,7 @@ DEBUG = False
 #  GENERATE PROVE TREE  #
 #########################
 def generateProvTree( seedRecord, fullResults, cursor ) :
-  return DerivTree.DerivTree( "post", "goal", False, seedRecord, fullResults, cursor )
+  return DerivTree.DerivTree( "post", "goal", False, seedRecord, fullResults, cursor, None, None )
 
 # --------------------------------------------------- #
 
@@ -88,3 +88,8 @@ def getEvalResults_file( path ) :
       print cleanResultsDict[ key ]
 
   return cleanResultsDict
+
+
+#########
+#  EOF  #
+#########

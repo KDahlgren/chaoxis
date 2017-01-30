@@ -1,0 +1,30 @@
+// broadcast a message to all neighbors. neighbors save message content in log.
+// based on simplog.ded
+
+// initial connections between nodes
+node("a", "b")@1 ;
+node("a", "c")@1 ;
+node("b", "a")@1 ;
+node("b", "c")@1 ;
+node("c", "a")@1 ;
+node("c", "b")@1 ;
+
+// initial stimulus
+//bcast("a", "hello")@1 ;
+
+// each node's vision of the topology does not change over time.
+node(Node, Neighbor)@next :- node(Node, Neighbor) ;
+
+// each node's log contents carries over through time.
+//log(Node, Pload)@next :- log(Node, Pload) ;
+
+// when a node A sends a message to a node B, B receives the message eventually.
+//log(Node2, Pload)@async :- bcast(Node1, Pload), node(Node1, Node2) ;
+
+// if a node sends a message, the event will be recorded in the node's personal log.
+//log(Node, Pload) :- bcast(Node, Pload); //asdkjahsdf lkj
+
+// invariants
+//pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1, notin crash(X, X, _);
+//post(X, Pl) :- log(X, Pl), notin missing_log(_, Pl);
+post(X, Y) :- node( X, Y ) ;

@@ -24,6 +24,7 @@ class GoalNode( ) :
   isNeg       = False # is goal negative? assume positive
   record      = []
   descendants = []
+  bindings    = None
 
   #################
   #  CONSTRUCTOR  #
@@ -55,14 +56,18 @@ class GoalNode( ) :
   #  SET DESCENDANTS  #
   #####################
   def setDescendants( self, allRules, bindings, results, cursor ) :
+    self.bindings = bindings
     for rule in allRules :
       rid     = rule[0]
       rname   = rule[1]
       subinfo = rule[2]
 
       for rule in allRules :
-        newRuleNode = DerivTree.DerivTree( rname, "rule", False, self.record, results, cursor )
-        descendants.append( newRuleNode )
+        if DEBUG :
+          print "rule = " + str(rule)
+
+        newRuleNode = DerivTree.DerivTree( rname, "rule", False, self.record, results, cursor, rule, bindings )
+        self.descendants.append( newRuleNode )
 
     return None
 
@@ -76,7 +81,7 @@ class GoalNode( ) :
   #  PRINT NODE  #
   ################
   def printNode( self ) :
-    print "GOAL NODE: \nname = " + self.name + " ; \nisNeg = " + self.isNeg + " ; \nrecord = " + self.record + ";\ndescendants = " + self.descendants
+    print "GOAL NODE: \nname = " + self.name + " ; \nisNeg = " + self.isNeg + " ; \nrecord = " + self.record + ";\ndescendants = " + self.descendants + ";\nbindings = " + str(self.bindings)
 
 
 #########

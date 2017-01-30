@@ -20,7 +20,8 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = True
+DEBUG   = False
+DEBUG_2 = True
 
 # --------------------------------------------------- #
 #                   DERIV TREE CLASS                  #
@@ -39,12 +40,13 @@ class DerivTree( ) :
   #################
   #  CONSTRUCTOR  #
   #################
-  # results == complete dictionary of parsed results from the c4 dump
-  def __init__( self, n, t, i, record, results, cursor ) :
+  # results := complete dictionary of parsed results from the c4 dump
+  # arg     := rule info in the case of a rule-based deriv tree, passed as None otherwise
+  def __init__( self, n, t, i, record, results, cursor, arg, bindings ) :
     self.name     = n
     self.treeType = t
     self.isNeg    = i
-    self.generateDerivTree( self.name, self.treeType, self.isNeg, record, results, cursor )
+    self.generateDerivTree( self.name, self.treeType, self.isNeg, record, results, cursor, arg, bindings )
 
   # ------------------------------------------ #
   ##############
@@ -57,7 +59,9 @@ class DerivTree( ) :
   #########################
   #  GENERATE DERIV TREE  #
   #########################
-  def generateDerivTree( self, name, treeType, isNeg, record, results, cursor ) :
+  # arg          := 
+  # goalBindings := dictionary matching atts to values according to goal bindings; None if goal
+  def generateDerivTree( self, name, treeType, isNeg, record, results, cursor, arg, goalBindings ) :
     if DEBUG :
       print "... running generateDerivTree ..."
 
@@ -65,25 +69,32 @@ class DerivTree( ) :
     # set root
     node = None
     if self.treeType == "goal" :
+      if DEBUG_2 :
+        print "HIT GOAL : " + str(name) + ", " + str(record)
+        #sys.exit("HIT GOAL : " + str(name) + ", " + str(record))
       goalInfo = self.getGoalAtts( name, cursor )
       goalAtts = goalInfo[0]
       goalRids = goalInfo[1]
-      bindings = self.setBindings( record, goalAtts )
+      bindings = self.setBindings( record, goalAtts, None )
       allRules = self.getGoalRules( goalRids, cursor )
 
       node     = GoalNode.GoalNode( name, isNeg, record )
       node.setDescendants( allRules, bindings, results, cursor )
 
     elif self.treeType == "fact" :
-      record      = getFactInfo( name )
-      node        = FactNode.RuleNode( name, isNeg, record )
-      node.setDescendants( results, cursor )
+      if DEBUG_2 :
+        print "HIT FACT : " + str(name) + ", " + str(record)
+        #sys.exit("HIT FACT : " + str(name) + ", " + str(record))
+      node     = FactNode.FactNode( name, isNeg, record )
 
     elif self.treeType == "rule" :
-      data         = getRuleInfo( name, cursor )
-      origRuleDefs = data[0]
-      bindings     = data[1]
-      node         = RuleNode.RuleNode( name, isNeg, record )
+      if DEBUG_2 :
+        print "HIT RULE : " + str(name) + ", " + str(record)
+        #sys.exit("HIT RULE : " + str(name) + ", " + str(record))
+      ruleInfo = self.getRuleInfo( name, cursor, arg )
+      bindings = self.setBindings( record, ruleInfo, goalBindings )
+
+      node     = RuleNode.RuleNode( ruleInfo, record, goalBindings )
       node.setDescendants( results, cursor )
 
     # -------------------------------- #
@@ -92,6 +103,57 @@ class DerivTree( ) :
       root = node
     else :
       sys.exit( "DerivTree root assignment failed : \nroot = " + str( self.root ) + "\nname = " + str( self.name ) + "\ntreeType = " + str( self.treeType ) + "\nisNeg = " + str( self.isNeg ) + "\ndescendants = " + str( self.descendants )  )
+
+  # ------------------------------------------ #
+  # ------------------------------------------ #
+  ###################
+  #  GET RULE INFO  #
+  ###################
+  # returns [ ( isNeg bool, subgoalName str, subgoalAtts [str] ) ]
+  def getRuleInfo( self, rname, cursor, arg ) :
+    ruleInfo = []
+
+    if DEBUG :
+      print "... running getRuleInfo ..."
+
+    ruleSubsDict = arg[2]
+
+    for subgoal in ruleSubsDict :
+      isNeg = False
+
+      if DEBUG :
+        print "subgoal = " + str(subgoal)
+
+      info = ruleSubsDict[ subgoal ]
+      extraArgsList = []
+      for arg in info[0] :
+        extraArgsList.extend( arg )
+
+      if DEBUG :
+        print "info          = " + str( info )
+        print "extraArgsList = " + str( extraArgsList )
+
+      # set sign of current subgoal
+      if "notin" in extraArgsList :
+        isNeg = True
+
+      # set subgoal name
+      subName = subgoal
+
+      # get subgoal attribute list
+      subgoalAtts = info[1]
+
+      if DEBUG :
+        print "isNeg       = " + str( isNeg )
+        print "subName     = " + str( subName )
+        print "subgoalAtts = " + str( subgoalAtts )
+
+      ruleInfo.append( (isNeg, subName, subgoalAtts) )
+
+    if DEBUG :
+      print "ruleInfo = " + str( ruleInfo )
+
+    return ruleInfo
 
   # ------------------------------------------ #
   ###################
@@ -166,27 +228,37 @@ class DerivTree( ) :
   ##################
   #  GET BINDINGS  #
   ##################
-  def setBindings( self, record, goalAtts ) :
+  def setBindings( self, record, goalAtts, goalBindings ) :
     if DEBUG :
       print "... running setBindings ..."
-      print "record   = " + str(record)
-      print "goalAtts = " + str(goalAtts)
+      print "record       = " + str(record)
+      print "goalAtts     = " + str(goalAtts)
+      print "goalBindings = " + str(goalBindings)
 
-    # -------------------------------------- #
-    #            SANITY CHECKS               #
-    if len( record ) > len( goalAtts ) :
-      sys.exit( "ERROR: length of record exceeds number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
-    elif len( record ) < len( goalAtts ) :
-      sys.exit( "ERROR: length of record less than number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
-    # -------------------------------------- #
+    if goalBindings :
+      bindings = []
+      for att in goalAtts :
+        for tup in goalBindings :
+          if att == tup[0] :
+            newTup = ( att, tup[1] )
+            bindings.append( newTup )
+
     else :
-      bindings = []  # list of tuples ( att, boundValue )
-      for i in range(0,len(record)) :
-        newTup = ( goalAtts[i], record[i] )
-        bindings.append( newTup )
+      # -------------------------------------- #
+      #            SANITY CHECKS               #
+      if len( record ) > len( goalAtts ) :
+        sys.exit( "ERROR: length of record exceeds number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
+      elif len( record ) < len( goalAtts ) :
+        sys.exit( "ERROR: length of record less than number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
+      # -------------------------------------- #
+      else :
+        bindings = []  # list of tuples ( att, boundValue )
+        for i in range(0,len(record)) :
+          newTup = ( goalAtts[i], record[i] )
+          bindings.append( newTup )
 
-      if DEBUG :
-        print "bindings = " + str(bindings)
+        if DEBUG :
+          print "bindings = " + str(bindings)
 
       return bindings
 
