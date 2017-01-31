@@ -49,6 +49,14 @@ class DerivTree( ) :
     self.generateDerivTree( self.name, self.treeType, self.isNeg, record, results, cursor, arg, bindings )
 
   # ------------------------------------------ #
+
+  ######################
+  #  PRINT DERIV TREE  #
+  ######################
+  def printDerivTree( self ) :
+    self.root.printTree()
+
+  # ------------------------------------------ #
   ##############
   #  GET ROOT  #
   ##############
@@ -100,7 +108,7 @@ class DerivTree( ) :
     # -------------------------------- #
     # set the root of this derivation tree
     if node :
-      root = node
+      self.root = node
     else :
       sys.exit( "DerivTree root assignment failed : \nroot = " + str( self.root ) + "\nname = " + str( self.name ) + "\ntreeType = " + str( self.treeType ) + "\nisNeg = " + str( self.isNeg ) + "\ndescendants = " + str( self.descendants )  )
 

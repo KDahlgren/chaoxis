@@ -30,6 +30,17 @@ class FactNode( ) :
     self.isNeg  = i
     self.record = r
 
+  ################
+  #  PRINT TREE  #
+  ################
+  def printTree( self ) :
+    print "********************************"
+    print "           FACT NODE"
+    print "********************************"
+    print "name   :" + str( self.name   )
+    print "isNeg  :" + str( self.isNeg  )
+    print "record :" + str( self.record )
+
   ##############
   #  GET NAME  #
   ##############

@@ -42,6 +42,20 @@ class RuleNode( ) :
     self.record   = rec
     self.bindings = b
 
+  ################
+  #  PRINT TREE  #
+  ################
+  def printTree( self ) :
+    print "********************************"
+    print "           RULE NODE"
+    print "********************************"
+    print "ruleInfo :" + str( self.ruleInfo )
+    print "record   :" + str( self.record   )
+    print "bindings :" + str( self.bindings )
+    print "[ DESCENDANTS ]"
+    for d in self.descendants :
+      d.printDerivTree()
+
   ########################
   #  GET ORIG RULE DATA  #
   ########################

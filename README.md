@@ -64,6 +64,6 @@ Other Tools :
 
 [Disorderly Labs](https://disorderlylabs.github.io)
 
-pyLDFI is an alternative to Molly, an implementation of LDFI written primarily in Scala.<br />
-Molly is described in a [SIGMOD paper](http://people.ucsc.edu/~palvaro/molly.pdf).<br />
+pyLDFI is an alternative to Molly, an implementation of LDFI written primarily in Scala.<br><br>
+Molly is described in the 2015 [SIGMOD paper](http://people.ucsc.edu/~palvaro/molly.pdf).<br><br>
 Dedalus is described [here](http://www.eecs.berkeley.edu/Pubs/TechRpts/2009/EECS-2009-173.html).

@@ -34,6 +34,20 @@ class GoalNode( ) :
     self.isNeg    = i
     self.record   = r
 
+  ################
+  #  PRINT TREE  #
+  ################
+  def printTree( self ) :
+    print "********************************"
+    print "           GOAL NODE"
+    print "********************************"
+    print "name   :" + str( self.name )
+    print "isNeg  :" + str( self.isNeg )
+    print "record :" + str( self.record )
+    print "[ DESCENDANTS ]"
+    for d in self.descendants :
+      d.printDerivTree()
+
   ##############
   #  GET NAME  #
   ##############

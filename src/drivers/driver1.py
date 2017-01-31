@@ -124,7 +124,9 @@ def driver() :
       provTreeComplete.append( newProvTree )
 
       if DRIVER_DEBUG :
-        print "provTreeComplete :\n" + str(provTreeComplete)
+        print "provTreeComplete :"
+        for tree in provTreeComplete :
+          tree.printDerivTree()
 
     # -------------------------------------------- #
     # cleanUp saved db stuff
