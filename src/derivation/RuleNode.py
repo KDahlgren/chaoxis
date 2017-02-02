@@ -56,6 +56,12 @@ class RuleNode( ) :
     for d in self.descendants :
       d.printDerivTree()
 
+  ################
+  #  PRINT NODE  #
+  ################
+  def printNode( self ) :
+    return "RULENODE: " + str( self.ruleInfo ) + "; \nbindings = " + str( self.bindings )
+
   ########################
   #  GET ORIG RULE DATA  #
   ########################
@@ -81,7 +87,7 @@ class RuleNode( ) :
       attList = sub[2]
 
       # fact descendants
-      if self.isFact( name, cursor ) :
+      if tools.isFact( name, cursor ) :
         newFactNode = DerivTree.DerivTree( name, "fact", isNeg, self.record, results, cursor, None, self.bindings )
         self.descendants.append( newFactNode )
 
@@ -94,27 +100,21 @@ class RuleNode( ) :
   #############
   #  IS FACT  #
   #############
-  def isFact( self, name, cursor ) :
-    attIDsName = None
-    cursor.execute( "SELECT attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name == '" + str(name) + "'" )
-    attIDsNames = cursor.fetchall()
-    attIDsNames = tools.toAscii_multiList( attIDsNames )
+  #def isFact( self, name, cursor ) :
+  #  attIDsName = None
+  #  cursor.execute( "SELECT attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name == '" + str(name) + "'" )
+  #  attIDsNames = cursor.fetchall()
+  #  attIDsNames = tools.toAscii_multiList( attIDsNames )
 
-    if DEBUG :
-      print "in RuleNode isFact:"
-      print "name        = " + name
-      print "attIDsNames = " + str(attIDsNames)
+  #  if DEBUG :
+  #    print "in RuleNode isFact:"
+  #    print "name        = " + name
+  #    print "attIDsNames = " + str(attIDsNames)
 
-    if attIDsNames or (name == "clock") :
-      return True
-    else :
-      return False
-
-  ################
-  #  PRINT NODE  #
-  ################
-  def printNode( self ) :
-    print "RULE NODE: ruleInfo = " + self.ruleInfo + " ; bindings  = " + self.bindings
+  #  if attIDsNames or (name == "clock") :
+  #    return True
+  #  else :
+  #    return False
 
 
 #########

@@ -76,7 +76,14 @@ def dedToIR( filename, cursor ) :
       # extract fact info
       name    = extractors.extractName(    line[1] )
       attList = extractors.extractAttList( line[1] )
+      attList = attList[0].split( "," )
       timeArg = extractors.extractTimeArg( line[1] )
+
+      if True :
+        print "dedt sanity check:"
+        print "fact name    = " + name
+        print "fact attList = " + str(attList)
+        print "fact timeArg = " + str(timeArg)
 
       # save fact data in persistent DB using IR
       newFact = Fact.Fact( fid, cursor )

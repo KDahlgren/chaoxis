@@ -21,7 +21,7 @@ sys.path.append( packagePath )
 
 from dedt       import dedt, dedalusParser
 from derivation import provTree
-from utils      import parseCommandLineInput
+from utils      import parseCommandLineInput, tools
 from evaluators import c4_evaluator
 
 # **************************************** #
@@ -94,8 +94,11 @@ def driver() :
 
   # run through evaluator
   resultsPath = None
-  #resultsPath = c4_evaluator.runC4_directly( datalogProgPath, tableListPath )
+  resultsPath = c4_evaluator.runC4_directly( datalogProgPath, tableListPath )
   #c4_evaluator.runC4_wrapper( datalogProgPath, tableListPath )
+
+  if True :
+    sys.exit( "DRIVER1 forced exit." )
 
   # ----------------------------------------------- #
 
@@ -114,7 +117,7 @@ def driver() :
     print "driver1.py DEV_HACK2 True : resultsPath = " + resultsPath
 
   if resultsPath :
-    parsedResults = provTree.getEvalResults_file( resultsPath )
+    parsedResults = tools.getEvalResults_file_c4( resultsPath )
 
     provTreeComplete = []
     for seedRecord in parsedResults[ "post" ] :
@@ -123,10 +126,12 @@ def driver() :
       newProvTree = provTree.generateProvTree( seedRecord, parsedResults, irCursor )
       provTreeComplete.append( newProvTree )
 
-      if DRIVER_DEBUG :
-        print "provTreeComplete :"
-        for tree in provTreeComplete :
-          tree.printDerivTree()
+    if DRIVER_DEBUG :
+      print "HERE!!! DRIVER_DEBUG = " + str(DRIVER_DEBUG)
+      #print "provTreeComplete :"
+      #for tree in provTreeComplete :
+      #  tree.printDerivTree()
+      provTree.createGraph( provTreeComplete )
 
     # -------------------------------------------- #
     # cleanUp saved db stuff

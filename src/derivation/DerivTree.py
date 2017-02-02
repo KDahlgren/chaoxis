@@ -57,6 +57,26 @@ class DerivTree( ) :
     self.root.printTree()
 
   # ------------------------------------------ #
+
+  ##################
+  #  GET TOPOLOGY  #
+  ##################
+  def getTopology( self, nodes, edges ) :
+    nodes.append( self.root.printNode() )
+
+    if not self.root.treeType == "fact" :
+      for d in self.root.descendants :
+        if not d.treeType == "fact" :
+          edges.append( ( self.root.printNode(), d.root.printNode() ) )
+
+        topo = d.getTopology( [], [] )
+        nodes.extend( topo[0] )
+        edges.extend( topo[1] )
+
+    return ( nodes, edges )
+
+  # ------------------------------------------ #
+
   ##############
   #  GET ROOT  #
   ##############
@@ -255,9 +275,9 @@ class DerivTree( ) :
       # -------------------------------------- #
       #            SANITY CHECKS               #
       if len( record ) > len( goalAtts ) :
-        sys.exit( "ERROR: length of record exceeds number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
+        sys.exit( "*****************************\n*****************************\n>>> ERROR: number of data items in record exceeds number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
       elif len( record ) < len( goalAtts ) :
-        sys.exit( "ERROR: length of record less than number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
+        sys.exit( "*****************************\n*****************************\n>>> ERROR: number of data items in record less than number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
       # -------------------------------------- #
       else :
         bindings = []  # list of tuples ( att, boundValue )

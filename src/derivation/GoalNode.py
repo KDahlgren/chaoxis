@@ -48,6 +48,12 @@ class GoalNode( ) :
     for d in self.descendants :
       d.printDerivTree()
 
+  ################
+  #  PRINT NODE  #
+  ################
+  def printNode( self ) :
+    return "GOAL NODE: \nname = " + str( self.name ) + " ; \nisNeg = " + str( self.isNeg ) + ";\nbindings = " + str(self.bindings)
+
   ##############
   #  GET NAME  #
   ##############
@@ -90,12 +96,6 @@ class GoalNode( ) :
   #####################
   def getDescendants( self ) :
     return self.descendants
-
-  ################
-  #  PRINT NODE  #
-  ################
-  def printNode( self ) :
-    print "GOAL NODE: \nname = " + self.name + " ; \nisNeg = " + self.isNeg + " ; \nrecord = " + self.record + ";\ndescendants = " + self.descendants + ";\nbindings = " + str(self.bindings)
 
 
 #########

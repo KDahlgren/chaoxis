@@ -257,9 +257,6 @@ def rewriteAsynchronous( cursor ) :
   if DEDALUSREWRITER_DEBUG :
     print " ... running asynchronous rewrite ... "
 
-  firstSubgoalAtts = []
-  firstGoalAtt     = ""
-
   # grab all existing next rule ids
   asynchronousRuleIDs = getAsynchronousRuleIDs( cursor )
 
@@ -291,6 +288,7 @@ def rewriteAsynchronous( cursor ) :
       sids = getSubgoalIDs( cursor, rid ) # get all subgoal ids
       sids = tools.toAscii_list(sids)
     
+      firstSubgoalAtts = []
       for s in sids :
         cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
         rawMaxID = cursor.fetchone()
@@ -300,8 +298,9 @@ def rewriteAsynchronous( cursor ) :
         # while we're here, collect the first attribute of this subgoal
         cursor.execute("SELECT attName FROM SubgoalAtt WHERE SubgoalAtt.sid == '" + s + "' AND SubgoalAtt.attID == '" + str(0) + "'")
         firstAtt = cursor.fetchone()
-        firstAtt = tools.toAscii_str( firstAtt )
-        firstSubgoalAtts.append( firstAtt )
+        if firstAtt :
+          firstAtt = tools.toAscii_str( firstAtt )
+          firstSubgoalAtts.append( firstAtt )
   
   
       # add clock subgoal

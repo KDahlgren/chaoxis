@@ -61,6 +61,11 @@ def c4datalog( cursor ) :
     goalName = cursor.fetchone()
     goalName = tools.toAscii_str( goalName )
 
+    provGoalNameOrig = None
+    if "_prov" in goalName :
+      provGoalNameOrig = goalName.split( "_prov" )
+      provGoalNameOrig = provGoalNameOrig[0]
+
     tableListStr += goalName + ","
 
     # prevent duplicates
@@ -76,9 +81,29 @@ def c4datalog( cursor ) :
 
       # populate type list for rule
       typeList = []
-      for att in goalAttList :
+      for k in range(0,len(goalAttList)) :
+        att = goalAttList[ k ]
         if "Time" in att : # TODO: not generalizable. Also does not combine hints from multiple appearances of the same sub/goal to combat underscores.
           typeList.append( "int" )
+        elif tools.isFact( goalName, cursor ) or (provGoalNameOrig and tools.isFact( provGoalNameOrig, cursor )) :
+          # get fact attribs
+          cursor.execute( "SELECT Fact.fid,attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(goalName) + "'")
+          if provGoalNameOrig :
+            cursor.execute( "SELECT Fact.fid,attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(provGoalNameOrig) + "'")
+          attFIDsIDsNames = cursor.fetchall()
+          attFIDsIDsNames = tools.toAscii_multiList( attFIDsIDsNames )
+          if C4_TRANSLATOR_DEBUG_1 :
+            print "****\ngoalName = " + str(goalName)
+            print "attFIDsIDsNames = " + str(attFIDsIDsNames)
+            for att in attFIDsIDsNames :
+              attName = att[2]
+              print "attName = " + str(attName)
+          # if kth fact attrib is int, then append int
+          if attFIDsIDsNames[k][2].isdigit() :
+            print "YES" + "is digit true " + attFIDsIDsNames[k][2]
+            typeList.append( "int" )
+          else :
+            typeList.append( "string" )
         else :
           typeList.append( "string" )
 

@@ -41,6 +41,12 @@ class FactNode( ) :
     print "isNeg  :" + str( self.isNeg  )
     print "record :" + str( self.record )
 
+  ################
+  #  PRINT NODE  #
+  ################
+  def printNode( self ) :
+    return "FACTNODE: " + str( self.name ) + "; \nisNeg " + str( self.isNeg ) + "; \nbindings = " + str( self.record )
+
   ##############
   #  GET NAME  #
   ##############
@@ -58,13 +64,6 @@ class FactNode( ) :
   ################
   def getRecord( self ) :
     return self.record
-
-  ################
-  #  PRINT NODE  #
-  ################
-  def printNode( self ) :
-    print "FACT NODE: name = " + self.name + " ; isNeg = " + self.isNeg + " ; record = " + self.record
-
 
 #########
 #  EOF  #
