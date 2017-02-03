@@ -29,6 +29,7 @@ class RuleNode( ) :
   #  ATTRIBS  #
   #############
   treeType    = "rule"
+  name        = None
   ruleInfo    = None   # dictionary of all data related to the rule
   record      = None
   bindings    = []
@@ -37,10 +38,17 @@ class RuleNode( ) :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, d, rec, b ) :
+  def __init__( self, n, d, rec, b ) :
+    self.name = n
     self.ruleInfo = d
     self.record   = rec
     self.bindings = b
+
+  ##############
+  #  GET NAME  #
+  ##############
+  def getName( self ) :
+    return self.name
 
   ################
   #  PRINT TREE  #
@@ -80,6 +88,7 @@ class RuleNode( ) :
   def setDescendants( self, results, cursor ) :
     if DEBUG :
       print "self.ruleInfo = " + str(self.ruleInfo)
+      #sys.exit( "self.ruleInfo = " + str(self.ruleInfo) )
 
     for sub in self.ruleInfo :
       isNeg   = sub[0]
@@ -88,33 +97,20 @@ class RuleNode( ) :
 
       # fact descendants
       if tools.isFact( name, cursor ) :
-        newFactNode = DerivTree.DerivTree( name, "fact", isNeg, self.record, results, cursor, None, self.bindings )
+        newFactNode = DerivTree.DerivTree( name, "fact", isNeg, self.record, results, cursor, attList, self.bindings )
         self.descendants.append( newFactNode )
+
+        if DEBUG :
+          print "self.descendants = " + str(self.descendants)
+          a = self.descendants
+          for b in a :
+            print "treeType = " + b.root.treeType
+            print b.root.printNode()
 
       # goal descendants
       else :
-        newGoalNode = DerivTree.DerivTree( name, "goal", isNeg, self.record, results, cursor, None, self.bindings )
+        newGoalNode = DerivTree.DerivTree( name, "goal", isNeg, self.record, results, cursor, attList, self.bindings )
         self.descendants.append( newGoalNode )
-
-
-  #############
-  #  IS FACT  #
-  #############
-  #def isFact( self, name, cursor ) :
-  #  attIDsName = None
-  #  cursor.execute( "SELECT attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name == '" + str(name) + "'" )
-  #  attIDsNames = cursor.fetchall()
-  #  attIDsNames = tools.toAscii_multiList( attIDsNames )
-
-  #  if DEBUG :
-  #    print "in RuleNode isFact:"
-  #    print "name        = " + name
-  #    print "attIDsNames = " + str(attIDsNames)
-
-  #  if attIDsNames or (name == "clock") :
-  #    return True
-  #  else :
-  #    return False
 
 
 #########

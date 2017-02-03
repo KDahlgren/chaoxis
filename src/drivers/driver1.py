@@ -91,14 +91,13 @@ def driver() :
     print "datalog program path = " + datalogProgPath
 
   # ----------------------------------------------- #
+  # evaluate
 
-  # run through evaluator
   resultsPath = None
-  resultsPath = c4_evaluator.runC4_directly( datalogProgPath, tableListPath )
-  #c4_evaluator.runC4_wrapper( datalogProgPath, tableListPath )
 
-  if True :
-    sys.exit( "DRIVER1 forced exit." )
+  # c4
+  #resultsPath = c4_evaluator.runC4_directly( datalogProgPath, tableListPath )
+  #c4_evaluator.runC4_wrapper( datalogProgPath, tableListPath )
 
   # ----------------------------------------------- #
 
@@ -113,7 +112,7 @@ def driver() :
     print "driver1.py DEV_HACK1 True : resultsPath = " + resultsPath
 
   if DEV_HACK2 :
-    resultsPath = "/Users/KsComp/projects/pyldfi/tests/provtree_dev/testOutput.txt"
+    resultsPath = "/Users/KsComp/projects/pyldfi/tests/provtree_dev/testOutput_smaller.txt"
     print "driver1.py DEV_HACK2 True : resultsPath = " + resultsPath
 
   if resultsPath :
@@ -125,6 +124,16 @@ def driver() :
         print "seedRecord = " + str( seedRecord )
       newProvTree = provTree.generateProvTree( seedRecord, parsedResults, irCursor )
       provTreeComplete.append( newProvTree )
+
+    for p in provTreeComplete :
+      r1 = p.getRoot()
+      print "******************************************************"
+      print r1.getName() + str( r1.getRecord() ) + "; len(r1.getDescendants()) = " + str(len(r1.getDescendants()))
+      p.printDerivTree()
+      print "******************************************************"
+
+    if True :
+      sys.exit( "driver1 breakpoint: provTreeComplete" )
 
     if DRIVER_DEBUG :
       print "HERE!!! DRIVER_DEBUG = " + str(DRIVER_DEBUG)

@@ -4,16 +4,17 @@
 // initial connections between nodes
 node("a", "b")@1 ;
 node("a", "c")@1 ;
-node("b", "a")@1 ;
-node("b", "c")@1 ;
-node("c", "a")@1 ;
-node("c", "b")@1 ;
+//node("b", "a")@1 ;
+//node("b", "c")@1 ;
+//node("c", "a")@1 ;
+//node("c", "b")@1 ;
 
 // initial stimulus
 //bcast("a", "hello")@1 ;
 
 // each node's vision of the topology does not change over time.
-node(Node, Neighbor)@next :- node(Node, Neighbor) ;
+//node(Node, Neighbor)@next :- node(Node, Neighbor) ;
+node(Node, Neighbor) :- node(Node, Neighbor) ;
 
 // each node's log contents carries over through time.
 //log(Node, Pload)@next :- log(Node, Pload) ;

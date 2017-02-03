@@ -75,21 +75,25 @@ class GoalNode( ) :
   #####################
   #  SET DESCENDANTS  #
   #####################
-  def setDescendants( self, allRules, bindings, results, cursor ) :
+  def setDescendants( self, allSubs, bindings, results, cursor ) :
     self.bindings = bindings
-    for rule in allRules :
-      rid     = rule[0]
-      rname   = rule[1]
-      subinfo = rule[2]
 
-      for rule in allRules :
-        if DEBUG :
-          print "rule = " + str(rule)
+    #sys.exit( "BREAKPOINT: allSubs = " + str( allSubs )  )
 
-        newRuleNode = DerivTree.DerivTree( rname, "rule", False, self.record, results, cursor, rule, bindings )
+    for subDict in allSubs :
+      for sname in subDict :
+        subData  = subDict[ sname ]
+        isNegStr = subData[0]
+        subAtts  = subData[0]
+
+        #sys.exit( "BREAKPOINT: sname = " + sname + ", subAtts = " + str(subAtts) )
+        if "notin" in isNegStr :
+          newRuleNode = DerivTree.DerivTree( sname, "rule", True, self.record, results, cursor, allSubs, bindings )
+        else :
+          newRuleNode = DerivTree.DerivTree( sname, "rule", False, self.record, results, cursor, allSubs, bindings )
+
         self.descendants.append( newRuleNode )
 
-    return None
 
   #####################
   #  GET DESCENDANTS  #

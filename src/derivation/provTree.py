@@ -65,11 +65,13 @@ def createGraph( provTreeList ) :
     edges      = topology[1]
 
   if DEBUG :
-    print "... running createGraph ..."
-    print "nodes :"
-    for n in nodes :
-      print n
-    #print "edges = " + str(edges)
+    print "... in createGraph :" 
+    print "nodes : " + str(len(nodes))
+    for i in range(0,len(nodes)) :
+      print "node#" + str(i) + " : " + str(nodes[i])
+    print "edges : " + str(len(edges))
+    for i in range(0,len(edges)) :
+      print "edge#" + str(i) + " : " + str(edges[i])
 
     #g          = add_nodes( graph(), nodes )
     #g_complete = add_edges( g, edges )

@@ -20,7 +20,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG   = False
+DEBUG   = True
 DEBUG_2 = True
 
 # --------------------------------------------------- #
@@ -62,12 +62,12 @@ class DerivTree( ) :
   #  GET TOPOLOGY  #
   ##################
   def getTopology( self, nodes, edges ) :
-    nodes.append( self.root.printNode() )
+    nodes.append( (self.root.treeType, self.root.getName()) )
 
     if not self.root.treeType == "fact" :
       for d in self.root.descendants :
         if not d.treeType == "fact" :
-          edges.append( ( self.root.printNode(), d.root.printNode() ) )
+          edges.append( ( ( self.root.treeType, self.root.getName()), (d.root.treeType, d.root.getName()) ) )
 
         topo = d.getTopology( [], [] )
         nodes.extend( topo[0] )
@@ -80,14 +80,14 @@ class DerivTree( ) :
   ##############
   #  GET ROOT  #
   ##############
-  def getRoot() :
-    return root
+  def getRoot( self ) :
+    return self.root
 
   # ------------------------------------------ #
   #########################
   #  GENERATE DERIV TREE  #
   #########################
-  # arg          := 
+  # arg          := a list of subgoal dictionaries if creating new rules.
   # goalBindings := dictionary matching atts to values according to goal bindings; None if goal
   def generateDerivTree( self, name, treeType, isNeg, record, results, cursor, arg, goalBindings ) :
     if DEBUG :
@@ -100,7 +100,7 @@ class DerivTree( ) :
       if DEBUG_2 :
         print "HIT GOAL : " + str(name) + ", " + str(record)
         #sys.exit("HIT GOAL : " + str(name) + ", " + str(record))
-      goalInfo = self.getGoalAtts( name, cursor )
+      goalInfo = self.getGoalInfo( name, cursor )
       goalAtts = goalInfo[0]
       goalRids = goalInfo[1]
       bindings = self.setBindings( record, goalAtts, None )
@@ -120,9 +120,8 @@ class DerivTree( ) :
         print "HIT RULE : " + str(name) + ", " + str(record)
         #sys.exit("HIT RULE : " + str(name) + ", " + str(record))
       ruleInfo = self.getRuleInfo( name, cursor, arg )
-      bindings = self.setBindings( record, ruleInfo, goalBindings )
 
-      node     = RuleNode.RuleNode( ruleInfo, record, goalBindings )
+      node     = RuleNode.RuleNode( name, ruleInfo, record, goalBindings )
       node.setDescendants( results, cursor )
 
     # -------------------------------- #
@@ -137,125 +136,65 @@ class DerivTree( ) :
   ###################
   #  GET RULE INFO  #
   ###################
+  # rname = goal/rule name
+  # arg   = [ { 'subgoalName' : ( isNeg bool, subgoalAtt [str] ) } ]
   # returns [ ( isNeg bool, subgoalName str, subgoalAtts [str] ) ]
-  def getRuleInfo( self, rname, cursor, arg ) :
+  def getRuleInfo( self, rname, cursor, allRuleSubs ) :
     ruleInfo = []
 
     if DEBUG :
       print "... running getRuleInfo ..."
 
-    ruleSubsDict = arg[2]
+    #sys.exit( "BREAKPOINT: allSubs = " + str(allRuleSubs) )
 
-    for subgoal in ruleSubsDict :
-      isNeg = False
+    for ruleDict in allRuleSubs :
+      for sub in ruleDict :
+        name    = sub
+        ruleTup = ruleDict[ sub ]
+        isNeg   = ruleTup[0]
+        attList = ruleTup[1]
 
-      if DEBUG :
-        print "subgoal = " + str(subgoal)
+        #sys.exit( "BREAKPOINT: name = " + str(name) + ", isNeg = " + str(isNeg) + ", attList = " + str(attList) )
 
-      info = ruleSubsDict[ subgoal ]
-      extraArgsList = []
-      for arg in info[0] :
-        extraArgsList.extend( arg )
+        ruleInfo.append( (isNeg, name, attList) )
 
-      if DEBUG :
-        print "info          = " + str( info )
-        print "extraArgsList = " + str( extraArgsList )
-
-      # set sign of current subgoal
-      if "notin" in extraArgsList :
-        isNeg = True
-
-      # set subgoal name
-      subName = subgoal
-
-      # get subgoal attribute list
-      subgoalAtts = info[1]
-
-      if DEBUG :
-        print "isNeg       = " + str( isNeg )
-        print "subName     = " + str( subName )
-        print "subgoalAtts = " + str( subgoalAtts )
-
-      ruleInfo.append( (isNeg, subName, subgoalAtts) )
-
-    if DEBUG :
-      print "ruleInfo = " + str( ruleInfo )
-
+    #sys.exit( "BREAKPOINT: ruleInfo = " + str(ruleInfo) )
     return ruleInfo
 
   # ------------------------------------------ #
   ###################
   #  GET GOAL ATTS  #
   ###################
-  # currently does a lot of extra work to generate the full dictionary, but only return the atts associated with the goalName.
-  # return [ ]
-  def getGoalAtts( self, goalName, cursor ) :
+  def getGoalInfo( self, goalName, cursor ) :
 
     if DEBUG :
-      print "... running getGoalAtts ..."
+      print "... running getGoalInfo ..."
 
     # get all rids
-    cursor.execute( 'SELECT rid, goalName FROM Rule' )
-    ridsNames = cursor.fetchall()
-    ridsNames = tools.toAscii_multiList( ridsNames )
+    cursor.execute( "SELECT attID,attName,Rule.rid FROM Rule,GoalAtt WHERE Rule.goalName=='" + str(goalName) + "' AND Rule.rid==GoalAtt.rid" )
+    namesrids = cursor.fetchall()
+    namesrids = tools.toAscii_multiList( namesrids )
 
-    # ------------------------------------------- #
-    # get all rids with goal name as goalName
-    targetDict = {}
+    attList = []
+    ridList = []
+    for r in namesrids :
+      attList.append( r[1] )
+      ridList.append( r[2] )
 
-    # prime dict
-    for arr in ridsNames :
-      goal = arr[1]
-      targetDict[ goal ] = []
-
-    # populate lists
-    for arr in ridsNames :
-      rid  = arr[0]
-      goal = arr[1]
-
-      targetDict[ goal ].append( rid )
-
-    # ------------------------------------------- #
-    # get goal atts
-
-    cursor.execute( 'SELECT rid, attID, attName FROM GoalAtt' )
-    goalAtts = cursor.fetchall()
-    goalAtts = tools.toAscii_multiList( goalAtts )
-
-    goalAttsDict = {}   # 'goal' : [ 'att0', ..., 'attN' ]
-
-    # initialize goalAttsDict
-    for g in targetDict :
-      goalAttsDict[ g ] = []
-
-    # populate goal att lists
-    for g in targetDict :
-      goal    = g
-      ridList = targetDict[g]
-
-      for r in ridList :
-        for row in goalAtts :
-          rid     = row[0]
-          attID   = row[1]
-          attName = row[2]
-
-          if r == rid :
-            goalAttsDict[ g ].append( attName )
-
-    # ------------------------------------------- #
-    if DEBUG :
-      print "rids = " + str( ridsNames )
-      print "targetDict = " + str( targetDict )
-      print "goalAttsDict = " + str( goalAttsDict )
+    # make sure ridList is a set
+    ridList = set( ridList )
 
     # return the attribute list for the goal and
     # the list of rids for the goal
-    return [ goalAttsDict[ goalName ], targetDict[ goalName ] ]
+    return [ attList, ridList ]
 
 
   ##################
   #  GET BINDINGS  #
   ##################
+  # record       = array of strings from evaluator results
+  # goalAtts     = array of all attributes for the goal, including duplicates
+  # goalBindings = array of tuples with existing maps from atts to values.
   def setBindings( self, record, goalAtts, goalBindings ) :
     if DEBUG :
       print "... running setBindings ..."
@@ -263,8 +202,8 @@ class DerivTree( ) :
       print "goalAtts     = " + str(goalAtts)
       print "goalBindings = " + str(goalBindings)
 
+    bindings = []  # list of tuples ( att, boundValue )
     if goalBindings :
-      bindings = []
       for att in goalAtts :
         for tup in goalBindings :
           if att == tup[0] :
@@ -280,7 +219,6 @@ class DerivTree( ) :
         sys.exit( "*****************************\n*****************************\n>>> ERROR: number of data items in record less than number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
       # -------------------------------------- #
       else :
-        bindings = []  # list of tuples ( att, boundValue )
         for i in range(0,len(record)) :
           newTup = ( goalAtts[i], record[i] )
           bindings.append( newTup )
@@ -288,68 +226,60 @@ class DerivTree( ) :
         if DEBUG :
           print "bindings = " + str(bindings)
 
-      return bindings
+    return bindings
 
 
   ####################
   #  GET GOAL RULES  #
   ####################
-  # returns a list of rule id-rule detail tuples:
-  #    [ (rid0, rule name, { 'att0' : (isNegBool?, [subAtt0, ... , subattN]), ..., 'attN' : (isNegBool?, [subAtt0, ... , subattN]) }), 
-  #      ..., 
-  #      (ridN, rule name, { 'att0' : (isNegBool?, [subAtt0, ... , subattN]), ..., 'attN' : (isNegBool?, [subAtt0, ... , subattN]) }) ]
+  # returns a list of dictionaries connecting rule subgoals with associated atts
+  # [ { 'subName0' : (isNegBool?, [subAtt0, ... , subattN]) }, 
+  #     ..., 
+  #   { 'subNameN' : (isNegBool?, [subAtt0, ... , subattN]) } ]
   def getGoalRules( self, ruleIDs, cursor ) :
     if DEBUG :
       print "... running getGoalRules ..."
       print "ruleIDs = " + str(ruleIDs)
 
-    cursor.execute( 'SELECT rid,sid,subgoalName FROM Subgoals' )
-    subgoal = cursor.fetchall()
-    subgoal = tools.toAscii_multiList( subgoal )
-
-    allRules = []
-
-    # populate allRules
+    allSubs = []
+    # populate allSubs
     for i in ruleIDs :
       currDict   = {}
       currSubIDs = []
 
-      # initialize this rule dictionary
-      for row in subgoal :
-        rid         = row[0]
-        sid         = row[1]
-        subgoalName = row[2]
+      # get all sub names and all sub atts per name
+      cursor.execute( "SELECT subgoalName,attID,attName FROM Subgoals,SubgoalAtt WHERE Subgoals.rid=='" + str(i) +  "' AND Subgoals.rid==SubgoalAtt.rid AND Subgoals.sid==SubgoalAtt.sid" )
+      info = cursor.fetchall()
+      info = tools.toAscii_multiList( info )
 
-        if i == rid :
-          newData = [ None, [] ]
+      print "info = " + str(info)
 
-          # subgoal atts
-          cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid == '" + str(i) + "' AND sid == '" + sid + "'" )
-          info = cursor.fetchall()
-          info = tools.toAscii_multiList( info )
+      for arr in info :
+        name    = arr[0]
+        attid   = arr[1]
+        attName = arr[2]
 
-          for att in info :
-            newData[1].append( att[1] )
+        # get isNeg info
+        cursor.execute( "SELECT argName FROM Subgoals,SubgoalAddArgs WHERE Subgoals.rid=='" + str(i) + "' AND Subgoals.subgoalName=='" + str(name) + "' AND Subgoals.rid==SubgoalAddArgs.rid"  )
+        addInfo = cursor.fetchall()
+        addInfo = tools.toAscii_multiList( addInfo )
 
-          # get subgoal neg bools
-          cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + str(i) + "' AND sid == '" + sid + "'" )
-          info2 = cursor.fetchall()
-          info2 = tools.toAscii_multiList( info2 )
-          newData[0] = info2
+        isNeg = addInfo[0][0]
 
-          currDict[ subgoalName ] = newData
+        # populate currDict
+        try :
+          currDict[name][1].append( attName )
+        except :
+          currDict[name] = ( isNeg, [] )
+          currDict[name][1].append( attName )
 
-          if DEBUG :
-            print "currDict = " + str(currDict)
-            print "info     = " + str( info )
-            print "info2    = " + str( info2 )
-
-      allRules.append( (i,self.name,currDict) )
+      subInfo = currDict
+      allSubs.append( subInfo )
 
     if DEBUG :
-      print "allRules = " + str(allRules)
+      print "allSubs = " + str(allSubs)
 
-    return allRules
+    return allSubs
 
 
 #########
