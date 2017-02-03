@@ -21,6 +21,7 @@ import dumpers
 #############
 TOOLS_DEBUG = False
 
+
 ############
 #  GET ID  #
 ############
@@ -28,6 +29,74 @@ TOOLS_DEBUG = False
 # output random 16 char alphanumeric id
 def getID() :
   return "".join( random.choice('abcdefghijklmnopqrstuvwxyz') for i in range(16) )
+
+
+#########################
+#  GET EVAL RESULTS C4  #
+#########################
+# get results from c4 output file
+# input path to c4 results file
+# output clean dictionary of results:
+#     table names are keys, 
+#     values are a list of rows split into lists on commas
+#     { 'tableName' : [ ['a1', ..., 'aN'], ..., ['b1', ..., 'bN'] ] }
+def getEvalResults_file_c4( path ) :
+
+  if os.path.exists( path ) :
+    fo = open( path )
+
+    prevLine = None
+    currRel  = None
+
+    resultsDict = {}
+    save        = False
+    tupleList   = []
+
+    for line in fo :
+
+      if line == "\n" :
+        resultsDict[ currRel ] = tupleList
+        currRel = None
+        tupleList = []
+        save = False
+
+      elif prevLine == "---------------------------" :
+        currRel = line.rstrip()
+        save    = True
+
+      elif save == True :
+        tupleList.append( line.rstrip() )
+
+
+      prevLine = line.rstrip()
+
+    fo.close()
+
+  else :
+    sys.exit( "Cannot open file : " + path )
+
+  if TOOLS_DEBUG :
+    print "resultsDict : "
+    for key in resultsDict :
+      print "key = " + str(key) + " : "
+      print resultsDict[ key ]
+
+  cleanResultsDict = {}
+  for key in resultsDict :
+    tupList = []
+    for tup in resultsDict[ key ] :
+      tup = tup.split( "," )
+      tupList.append( tup )
+    cleanResultsDict[ key ] = tupList
+
+  if TOOLS_DEBUG :
+    print "cleanResultsDict : "
+    for key in cleanResultsDict :
+      print "key = " + str(key) + " : "
+      print cleanResultsDict[ key ]
+
+  return cleanResultsDict
+
 
 ################################
 #  CHECK IF REWRITTEN ALREADY  #
@@ -95,12 +164,18 @@ def toAscii_multiList( tupleList ) :
       print "TOOLS tup = " + str(tup)
     cleanTup = []
     for item in tup :
+      if TOOLS_DEBUG :
+        print "TOOLS tup item  = "
+        print item
       if isinstance(item, numbers.Real) :
         cleanTup.append( item )
       else :
         # cleanse the unicode
-        if not item[0] == None :
-          asciiResult = item[0].encode('utf-8')
+        #if not item[0] == None :
+        #  asciiResult = item[0].encode('utf-8')
+        #  cleanTup.append( asciiResult )
+        if not item == None :
+          asciiResult = item.encode('utf-8')
           cleanTup.append( asciiResult )
     cleanResults.append( cleanTup )
 
@@ -229,6 +304,24 @@ def attSearchPass2( pydatalogRule ) :
 
   return wildList
 
+#############
+#  IS FACT  #
+#############
+def isFact( goalName, cursor ) :
+    attIDsName = None
+    cursor.execute( "SELECT attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name == '" + str(goalName) + "'" )
+    attIDsNames = cursor.fetchall()
+    attIDsNames = toAscii_multiList( attIDsNames )
+
+    if TOOLS_DEBUG :
+      print "in RuleNode isFact:"
+      print "name        = " + name
+      print "attIDsNames = " + str(attIDsNames)
+
+    if attIDsNames or (goalName == "clock") :
+      return True
+    else :
+      return False
 
 #########
 #  EOF  #

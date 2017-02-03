@@ -4,6 +4,7 @@ import os, sys
 
 from ctypes import *
 lib = cdll.LoadLibrary('../../../lib/c4/build/src/libc4/libc4.dylib')
+lib.c4_make.restype = POINTER(c_char)
 
 C4_WRAPPER_DEBUG = True
 
@@ -52,7 +53,7 @@ class C4Wrapper( object ) :
       print "... loading prog ..."
 
     c_prog = bytes(fullprog)
-    #lib.c4_install_str( self.c4_obj, c_prog )
+    lib.c4_install_str( self.c4_obj, c_prog )
 
     # ---------------------------------------- #
     # loading clock facts
@@ -64,10 +65,14 @@ class C4Wrapper( object ) :
         print "Clock fact = " + str( f )
 
       c_str_fact = None
-      #lib.c4_install_str( self.c4_obj, c_str_fact )
+      lib.c4_install_str( self.c4_obj, c_str_fact )
 
     # ---------------------------------------- #
     # dump program results
+    if C4_WRAPPER_DEBUG :
+      print "... dumping program ..."
+
+    print lib.c4_dump_table( self.c4_obj, "post" )
 
     # ---------------------------------------- #
     # close prog
@@ -75,7 +80,7 @@ class C4Wrapper( object ) :
       print "... closing C4 ..."
 
     lib.c4_destroy( self.c4_obj )
-    #lib.c4_terminate( )
+    lib.c4_terminate( )
 
     # ---------------------------------------- #
     return None

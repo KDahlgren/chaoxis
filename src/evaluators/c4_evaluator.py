@@ -12,7 +12,7 @@ import os, sys
 
 C4_EVALUATOR_DEBUG = True
 C4_EXEC_PATH       = os.path.dirname(os.path.abspath( __file__ )) + "/../../lib/c4/build/src/c4i/c4i"
-C4_SAVE_PATH       = os.path.dirname(os.path.abspath( __file__ )) + "/programFiles/c4_run_out.txt"
+C4_SAVE_PATH       = os.path.dirname(os.path.abspath( __file__ )) + "/programFiles/c4_run_output.txt"
 
 
 #####################
@@ -54,7 +54,7 @@ def getTables( table_path ) :
 ############
 # runs c4 on generated overlog program
 # posts the results to standard out while capturing in a file for future processing.
-def runC4( c4_file_path, table_path ) :
+def runC4_directly( c4_file_path, table_path ) :
 
   if C4_EVALUATOR_DEBUG :
     print "c4_file_path = " + c4_file_path
@@ -69,7 +69,11 @@ def runC4( c4_file_path, table_path ) :
         print "tableListStr = " + tableListStr
 
       #os.system( "(" + C4_EXEC_PATH + " " + c4_file_path + tableListStr + ") 2>&1 | tee " + C4_SAVE_PATH )
+      #os.system( C4_EXEC_PATH + " " + c4_file_path + ' "' + tableListStr + '"' + " 2>&1 " + C4_SAVE_PATH )
+      #os.system( C4_EXEC_PATH + " " + c4_file_path + ' "' + tableListStr + '"' + " > " + C4_SAVE_PATH )
       os.system( C4_EXEC_PATH + " " + c4_file_path + ' "' + tableListStr + '"' )
+
+      return C4_SAVE_PATH
 
     else :
       sys.exit( "C4 Overlog input file for pyLDFI program not found at : " + c4_file_path + "\nAborting..." )

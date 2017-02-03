@@ -20,12 +20,15 @@ packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
 from dedt       import dedt, dedalusParser
-from utils      import parseCommandLineInput
+from derivation import provTree
+from utils      import parseCommandLineInput, tools
 from evaluators import c4_evaluator
 
 # **************************************** #
 
 DRIVER_DEBUG = True
+DEV_HACK1    = False
+DEV_HACK2    = True
 
 ################
 #  PARSE ARGS  #
@@ -67,32 +70,95 @@ def driver() :
     print "No arguments provided. Please run 'python " + sys.argv[0] + " -h' for assistance."
     sys.exit()
 
+  # ----------------------------------------------- #
+
   # pass list to parse args, get dict of args
   argDict = parseArgs( )
   print argDict
 
+  # ----------------------------------------------- #
+
   # translate all input dedalus files into a single datalog program
-  outpaths        = dedt.translateDedalus( argDict )
-  tableListPath   = outpaths[0]
-  datalogProgPath = outpaths[1]
+  outputs         = dedt.translateDedalus( argDict )
+  tableListPath   = outputs[0] # string of table names
+  datalogProgPath = outputs[1] # path to datalog program
+  irCursor        = outputs[2] # ir db cursor
+  saveDB          = outputs[3] # ir db save file
+
   if DRIVER_DEBUG :
-    print "outpaths             = " + str( outpaths )
+    print "outputs              = " + str( outputs )
     print "table   list    path = " + tableListPath
     print "datalog program path = " + datalogProgPath
 
-  # run through pydatalog, collect bindings ~= provenance
-  c4_evaluator.runC4( datalogProgPath, tableListPath )
+  # ----------------------------------------------- #
+  # evaluate
+
+  resultsPath = None
+
+  # c4
+  #resultsPath = c4_evaluator.runC4_directly( datalogProgPath, tableListPath )
+  #c4_evaluator.runC4_wrapper( datalogProgPath, tableListPath )
+
+  # ----------------------------------------------- #
 
   # if buggy => output results
   # else => ...
 
-  print "PROGRAM EXITED SUCCESSFULLY" # needed for simpleLog in tests/
-                                      # TODO: create more robust testing framework
+  # ----------------------------------------------- #
+  # get provenance trees
+
+  if DEV_HACK1 :
+    resultsPath = "/Users/KsComp/projects/pyldfi/src/derivation/testData.txt"
+    print "driver1.py DEV_HACK1 True : resultsPath = " + resultsPath
+
+  if DEV_HACK2 :
+    resultsPath = "/Users/KsComp/projects/pyldfi/tests/provtree_dev/testOutput_smaller.txt"
+    print "driver1.py DEV_HACK2 True : resultsPath = " + resultsPath
+
+  if resultsPath :
+    parsedResults = tools.getEvalResults_file_c4( resultsPath )
+
+    provTreeComplete = []
+    for seedRecord in parsedResults[ "post" ] :
+      if DRIVER_DEBUG :
+        print "seedRecord = " + str( seedRecord )
+      newProvTree = provTree.generateProvTree( seedRecord, parsedResults, irCursor )
+      provTreeComplete.append( newProvTree )
+
+    for p in provTreeComplete :
+      r1 = p.getRoot()
+      print "******************************************************"
+      print r1.getName() + str( r1.getRecord() ) + "; len(r1.getDescendants()) = " + str(len(r1.getDescendants()))
+      p.printDerivTree()
+      print "******************************************************"
+
+    if True :
+      sys.exit( "driver1 breakpoint: provTreeComplete" )
+
+    if DRIVER_DEBUG :
+      print "HERE!!! DRIVER_DEBUG = " + str(DRIVER_DEBUG)
+      #print "provTreeComplete :"
+      #for tree in provTreeComplete :
+      #  tree.printDerivTree()
+      provTree.createGraph( provTreeComplete )
+
+    # -------------------------------------------- #
+    # cleanUp saved db stuff
+    dedt.cleanUp( irCursor, saveDB )
+
+    # -------------------------------------------- #
+    # sanity check
+    print "PROGRAM EXITED SUCCESSFULLY"
+
+  else :
+    sys.exit( "SHIT GOT BUGGY" ) # sanity check
+
 
 #########################
 #  THREAD OF EXECUTION  #
 #########################
 driver()
+
 
 #########
 #  EOF  #
