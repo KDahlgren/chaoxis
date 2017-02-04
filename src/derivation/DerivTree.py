@@ -61,15 +61,26 @@ class DerivTree( ) :
   ##################
   #  GET TOPOLOGY  #
   ##################
-  def getTopology( self, nodes, edges ) :
-    nodes.append( (self.root.treeType, self.root.getName()) )
+  def getTopology( self ) :
+    nodes = []
+    edges = []
 
+    # add node
+    if self.root.treeType == "goal" :
+      nodes.append( (self.root.treeType, self.root.getName()+str(self.root.record)) )
+    elif (self.root.treeType == "rule") or (self.root.treeType == "fact") :
+      nodes.append( (self.root.treeType, self.root.getName()+str(self.root.bindings) ) )
+
+    # add edge
     if not self.root.treeType == "fact" :
       for d in self.root.descendants :
-        if not d.treeType == "fact" :
-          edges.append( ( ( self.root.treeType, self.root.getName()), (d.root.treeType, d.root.getName()) ) )
+        #edges.append( ( ( self.root.treeType, self.root.getName()), (d.root.treeType, d.root.getName()) ) )
+        if self.root.treeType == "goal" :
+          edges.append( ( (self.root.treeType, self.root.getName()+str(d.root.record)), (d.root.treeType, d.root.getName()+str(d.root.bindings)) ) )
+        elif self.root.treeType == "rule" :
+          edges.append( ( (self.root.treeType, self.root.getName()+str(d.root.bindings)), (d.root.treeType, d.root.getName()+str(d.root.bindings)) ) )
 
-        topo = d.getTopology( [], [] )
+        topo = d.getTopology( )
         nodes.extend( topo[0] )
         edges.extend( topo[1] )
 
@@ -107,21 +118,25 @@ class DerivTree( ) :
       allRules = self.getGoalRules( goalRids, cursor )
 
       node     = GoalNode.GoalNode( name, isNeg, record )
+      node.clearDescendants() # needed explicitly for some reason? >.>
       node.setDescendants( allRules, bindings, results, cursor )
 
     elif self.treeType == "fact" :
       if DEBUG_2 :
         print "HIT FACT : " + str(name) + ", " + str(record)
         #sys.exit("HIT FACT : " + str(name) + ", " + str(record))
-      node     = FactNode.FactNode( name, isNeg, record )
+      node     = FactNode.FactNode( name, isNeg, record, goalBindings )
 
     elif self.treeType == "rule" :
       if DEBUG_2 :
-        print "HIT RULE : " + str(name) + ", " + str(record)
+        print "HIT RULE : " + str(name) + ", " + str(record) + ", " + str(arg)
         #sys.exit("HIT RULE : " + str(name) + ", " + str(record))
       ruleInfo = self.getRuleInfo( name, cursor, arg )
 
       node     = RuleNode.RuleNode( name, ruleInfo, record, goalBindings )
+      node.clearDescendants() # needed explicitly for some reason? >.>
+      if DEBUG :
+        print "node.getDescendants = " + str( node.getDescendants() )
       node.setDescendants( results, cursor )
 
     # -------------------------------- #

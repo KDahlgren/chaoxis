@@ -72,27 +72,35 @@ class GoalNode( ) :
   def getRecord( self ) :
     return self.record
 
+  #######################
+  #  CLEAR DESCENDANTS  #
+  #######################
+  def clearDescendants( self ) :
+    self.descendants = []
+
   #####################
   #  SET DESCENDANTS  #
   #####################
-  def setDescendants( self, allSubs, bindings, results, cursor ) :
+  def setDescendants( self, allRulesSubs, bindings, results, cursor ) :
     self.bindings = bindings
 
-    #sys.exit( "BREAKPOINT: allSubs = " + str( allSubs )  )
+    if DEBUG :
+      print ">>> ... setting descendants ... <<<"
+      print "   allRulesSubs  = " + str( allRulesSubs )
+      print "   bindings = " + str( bindings )
+      print "   results  = " + str( results )
 
-    for subDict in allSubs :
-      for sname in subDict :
-        subData  = subDict[ sname ]
-        isNegStr = subData[0]
-        subAtts  = subData[0]
+    #sys.exit( "BREAKPOINT: allRulesSubs = " + str( allRulesSubs )  )
 
-        #sys.exit( "BREAKPOINT: sname = " + sname + ", subAtts = " + str(subAtts) )
-        if "notin" in isNegStr :
-          newRuleNode = DerivTree.DerivTree( sname, "rule", True, self.record, results, cursor, allSubs, bindings )
-        else :
-          newRuleNode = DerivTree.DerivTree( sname, "rule", False, self.record, results, cursor, allSubs, bindings )
+    for subDict in allRulesSubs :
+      if DEBUG :
+        print "GOALNODE : " + self.name + " processing rule expression from " + str(subDict)
+      newRuleNode = DerivTree.DerivTree( self.name, "rule", False, self.record, results, cursor, allRulesSubs, bindings )
+      self.descendants.append( newRuleNode )
 
-        self.descendants.append( newRuleNode )
+    if DEBUG :
+      print "GOALNODE : " + self.name + " has " + str(len(self.descendants)) + " descendants."
+      print ">>> ... done setting descendants ... <<<"
 
 
   #####################

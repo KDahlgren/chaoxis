@@ -17,18 +17,20 @@ class FactNode( ) :
   #############
   #  ATTRIBS  #
   #############
-  treeType  = "fact"
-  name      = None  # name of relation identifier
-  isNeg     = False # is goal negative? assume positive
-  record    = []
+  treeType = "fact"
+  name     = None  # name of relation identifier
+  isNeg    = False # is goal negative? assume positive
+  record   = []
+  bindings = []
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, n, i, r ) :
-    self.name   = n
-    self.isNeg  = i
-    self.record = r
+  def __init__( self, n, i, r , b ) :
+    self.name     = n
+    self.isNeg    = i
+    self.record   = r
+    self.bindings = b
 
   ################
   #  PRINT TREE  #

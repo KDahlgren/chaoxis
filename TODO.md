@@ -2,6 +2,8 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+* Add CMAKE check in makefile/setup.py as an installation predicate.
+
 * Support negative subgoals in prov tree derivation.
 
 * Support wildcards in prov tree derivation.

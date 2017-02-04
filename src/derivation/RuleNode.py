@@ -50,6 +50,18 @@ class RuleNode( ) :
   def getName( self ) :
     return self.name
 
+  #######################
+  #  CLEAR DESCENDANTS  #
+  #######################
+  def clearDescendants( self ) :
+    self.descendants = []
+
+  #####################
+  #  GET DESCENDANTS  #
+  #####################
+  def getDescendants( self ) :
+    return self.descendants
+
   ################
   #  PRINT TREE  #
   ################
@@ -95,23 +107,31 @@ class RuleNode( ) :
       name    = sub[1]
       attList = sub[2]
 
+      if DEBUG :
+        print "sub              = " + str(sub)
+        print "self.descendants = " + str(self.descendants)
+
       # fact descendants
       if tools.isFact( name, cursor ) :
         newFactNode = DerivTree.DerivTree( name, "fact", isNeg, self.record, results, cursor, attList, self.bindings )
         self.descendants.append( newFactNode )
-
-        if DEBUG :
-          print "self.descendants = " + str(self.descendants)
-          a = self.descendants
-          for b in a :
-            print "treeType = " + b.root.treeType
-            print b.root.printNode()
 
       # goal descendants
       else :
         newGoalNode = DerivTree.DerivTree( name, "goal", isNeg, self.record, results, cursor, attList, self.bindings )
         self.descendants.append( newGoalNode )
 
+    if DEBUG :
+      print ">>> DEBUGGING RULE INFO <<<"
+      print "RULE : name = " + self.name + ", record = " + str(self.record)
+      print "self.descendants = " + str(self.descendants)
+      descList = self.descendants
+      for desc in descList :
+        print "treeType = " + desc.root.treeType
+        print desc.root.printNode()
+      print "********************************"
+
+    #sys.exit( "BREAKPOINT" )
 
 #########
 #  EOF  #

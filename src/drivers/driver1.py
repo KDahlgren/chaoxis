@@ -121,25 +121,14 @@ def driver() :
     provTreeComplete = []
     for seedRecord in parsedResults[ "post" ] :
       if DRIVER_DEBUG :
+        print " ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        print "           NEW POST RECORD "
         print "seedRecord = " + str( seedRecord )
       newProvTree = provTree.generateProvTree( seedRecord, parsedResults, irCursor )
       provTreeComplete.append( newProvTree )
 
-    for p in provTreeComplete :
-      r1 = p.getRoot()
-      print "******************************************************"
-      print r1.getName() + str( r1.getRecord() ) + "; len(r1.getDescendants()) = " + str(len(r1.getDescendants()))
-      p.printDerivTree()
-      print "******************************************************"
-
-    if True :
-      sys.exit( "driver1 breakpoint: provTreeComplete" )
-
     if DRIVER_DEBUG :
-      print "HERE!!! DRIVER_DEBUG = " + str(DRIVER_DEBUG)
-      #print "provTreeComplete :"
-      #for tree in provTreeComplete :
-      #  tree.printDerivTree()
+      print "provTreeComplete :"
       provTree.createGraph( provTreeComplete )
 
     # -------------------------------------------- #
