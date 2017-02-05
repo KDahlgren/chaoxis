@@ -8,29 +8,27 @@
 # standard python packages
 import os, sys
 
+packagePath1  = os.path.abspath( __file__ + "/.." )
+sys.path.append( packagePath1 )
+from Node import Node
+
 # **************************************** #
 
 DEBUG = True
 
-class FactNode( ) :
+class FactNode( Node ) :
 
-  #############
-  #  ATTRIBS  #
-  #############
-  treeType = "fact"
-  name     = None  # name of relation identifier
+  #####################
+  #  SPECIAL ATTRIBS  #
+  #####################
   isNeg    = False # is goal negative? assume positive
-  record   = []
-  bindings = []
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, n, i, r , b ) :
-    self.name     = n
-    self.isNeg    = i
-    self.record   = r
-    self.bindings = b
+  def __init__( self, name, isNeg, record , bindings ) :
+    Node.__init__( self, "fact", name, record, bindings )
+    self.isNeg    = isNeg
 
   ################
   #  PRINT TREE  #
@@ -50,22 +48,10 @@ class FactNode( ) :
     return "FACTNODE: " + str( self.name ) + "; \nisNeg " + str( self.isNeg ) + "; \nbindings = " + str( self.record )
 
   ##############
-  #  GET NAME  #
-  ##############
-  def getName( self ) :
-    return self.name
-
-  ##############
   #  GET SIGN  #
   ##############
   def getSign( self ) :
     return self.isNeg
-
-  ################
-  #  GET RECORD  #
-  ################
-  def getRecord( self ) :
-    return self.record
 
 #########
 #  EOF  #

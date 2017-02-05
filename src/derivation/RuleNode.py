@@ -11,8 +11,8 @@ import os, sys
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/.." )
 sys.path.append( packagePath )
-
 import DerivTree
+from Node import Node
 
 packagePath1  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath1 )
@@ -23,32 +23,20 @@ from utils import tools
 
 DEBUG = True
 
-class RuleNode( ) :
+class RuleNode( Node ) :
 
-  #############
-  #  ATTRIBS  #
-  #############
-  treeType    = "rule"
-  name        = None
+  #####################
+  #  SPECIAL ATTRIBS  #
+  #####################
   ruleInfo    = None   # dictionary of all data related to the rule
-  record      = None
-  bindings    = []
   descendants = []
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, n, d, rec, b ) :
-    self.name = n
-    self.ruleInfo = d
-    self.record   = rec
-    self.bindings = b
-
-  ##############
-  #  GET NAME  #
-  ##############
-  def getName( self ) :
-    return self.name
+  def __init__( self, name, ruleInfo, record , bindings ) :
+    Node.__init__( self, "rule", name, record, bindings )
+    self.ruleInfo = ruleInfo
 
   #######################
   #  CLEAR DESCENDANTS  #
@@ -87,12 +75,6 @@ class RuleNode( ) :
   ########################
   def getRuleInfo( self ) :
     return self.ruleInfo
-
-  ##################
-  #  GET BINDINGS  #
-  ##################
-  def getBindings( self ) :
-    return self.bindings
 
   #####################
   #  SET DESCENDANTS  #

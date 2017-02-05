@@ -10,29 +10,28 @@ import os, sys
 
 import DerivTree
 
+packagePath1  = os.path.abspath( __file__ + "/.." )
+sys.path.append( packagePath1 )
+from Node import Node
+
 # **************************************** #
 
 DEBUG = True
 
-class GoalNode( ) :
+class GoalNode( Node ) :
 
-  #############
-  #  ATTRIBS  #
-  #############
-  treeType    = "goal"
-  name        = None  # name of relation identifier
+  #####################
+  #  SPECIAL ATTRIBS  #
+  #####################
   isNeg       = False # is goal negative? assume positive
-  record      = []
   descendants = []
-  bindings    = None
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, n, i, r ) :
-    self.name     = n
-    self.isNeg    = i
-    self.record   = r
+  def __init__( self, name, isNeg, record ) :
+    Node.__init__( self, "goal", name, record, None )
+    self.isNeg    = isNeg
 
   ################
   #  PRINT TREE  #
@@ -55,22 +54,10 @@ class GoalNode( ) :
     return "GOAL NODE: \nname = " + str( self.name ) + " ; \nisNeg = " + str( self.isNeg ) + ";\nbindings = " + str(self.bindings)
 
   ##############
-  #  GET NAME  #
-  ##############
-  def getName( self ) :
-    return self.name
-
-  ##############
   #  GET SIGN  #
   ##############
   def getSign( self ) :
     return self.isNeg
-
-  ################
-  #  GET RECORD  #
-  ################
-  def getRecord( self ) :
-    return self.record
 
   #######################
   #  CLEAR DESCENDANTS  #
