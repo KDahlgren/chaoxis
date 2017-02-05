@@ -81,7 +81,7 @@ class GoalNode( ) :
   #####################
   #  SET DESCENDANTS  #
   #####################
-  def setDescendants( self, allRulesSubs, bindings, results, cursor ) :
+  def setDescendants( self, provRuleName, allRulesSubs, bindings, results, cursor ) :
     self.bindings = bindings
 
     if DEBUG :
@@ -94,12 +94,12 @@ class GoalNode( ) :
 
     for subDict in allRulesSubs :
       if DEBUG :
-        print "GOALNODE : " + self.name + " processing rule expression from " + str(subDict)
-      newRuleNode = DerivTree.DerivTree( self.name, "rule", False, self.record, results, cursor, allRulesSubs, bindings )
+        print "GOALNODE : " + provRuleName + " processing rule expression from " + str(subDict)
+      newRuleNode = DerivTree.DerivTree( provRuleName, "rule", False, self.record, results, cursor, allRulesSubs, bindings )
       self.descendants.append( newRuleNode )
 
     if DEBUG :
-      print "GOALNODE : " + self.name + " has " + str(len(self.descendants)) + " descendants."
+      print "GOALNODE : " + provRuleName + " has " + str(len(self.descendants)) + " descendants."
       print ">>> ... done setting descendants ... <<<"
 
 

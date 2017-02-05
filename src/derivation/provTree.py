@@ -29,6 +29,8 @@ IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data" )
 def generateProvTree( seedRecord, fullResults, cursor ) :
   return DerivTree.DerivTree( "post", "goal", False, seedRecord, fullResults, cursor, None, None )
 
+
+# --------------------------------------------------- #
 # --------------------------------------------------- #
 
 # add_nodes and add_edges borrowed from tutorial: http://matthiaseisen.com/articles/graphviz/
@@ -47,6 +49,10 @@ def add_edges(graph, edges):
         else:
             graph.edge(*e)
     return graph
+
+# --------------------------------------------------- #
+# --------------------------------------------------- #
+
 
 ##################
 #  CREATE GRAPH  #
