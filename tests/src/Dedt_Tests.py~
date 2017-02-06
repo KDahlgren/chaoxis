@@ -19,8 +19,8 @@ sys.path.append( packagePath )
 testPath = os.path.abspath(__file__+"/../../../tests")
 
 
-from dedt import dedt, Rule, Fact, dedalusParser, clockRelation, dedalusRewriter
-from utils import dumpers, extractors, tools, parseCommandLineInput
+from dedt import dedt, dedalusParser, clockRelation, dedalusRewriter
+
 # ------------------------------------------------------ #
 
 
@@ -238,6 +238,7 @@ class Dedt_Tests( unittest.TestCase ) :
 ###########################
 #  DEDALUSREWRITER TESTS  #
 ###########################
+   #TODO: clean up and add more specific testcases
 
   #testing for the helper functions: getdeductiveRuleIDs,
   #getInductiveRuleIDs and getAsynchronousRuleIDs
@@ -265,32 +266,9 @@ class Dedt_Tests( unittest.TestCase ) :
 
     
   def test_getSubgoalsIDs_dedalusRewriter(self):
-     #testing set up. Dependencies listed below.
-    testDB = testPath + "/IR.db"
-    IRDB    = sqlite3.connect( testDB ) 
-    cursor  = IRDB.cursor()
-    inputfile = testPath+"/testfiles/testFullProgram.ded"
-   
-    #dependency
-    dedt.createDedalusIRTables(cursor)
-    dedt.dedToIR(inputfile,cursor)
-    iruleID = dedalusRewriter.getInductiveRuleIDs(cursor)
-    druleID = dedalusRewriter.getDeductiveRuleIDs(cursor)
-    aruleID = dedalusRewriter.getAsynchronousRuleIDs(cursor)
-    
-    #runs through function to make sure it finishes without error
-    self.assertFalse(dedalusRewriter.getSubgoalIDs(cursor,iruleID[0])==None)
-    #runs through function to make sure it finishes without error
-    self.assertFalse(dedalusRewriter.getSubgoalIDs(cursor,druleID[0])==None)
-    #runs through function to make sure it finishes without error
-    self.assertFalse(dedalusRewriter.getSubgoalIDs(cursor,aruleID[0])==None)
-    
-    
-    #clean up testing
-    IRDB.close()
-    os.remove( testDB )  
+    return None   
 
-  def test_getSubgoalAtts_dedalusRewriter(self): 
+  def test_getSubgoalAtts_dedalusRewriter(self):
     return None
     
   def test_rewriteDeductive_dedalusRewriter(self):
@@ -348,157 +326,21 @@ class Dedt_Tests( unittest.TestCase ) :
     os.remove( testDB ) 
     
   def test_rewriteDedalus_dedalusRewriter(self):
-    #testing set up. Dependencies listed below.
-    testDB = testPath + "/IR.db"
-    IRDB    = sqlite3.connect( testDB ) 
-    cursor  = IRDB.cursor()
-    inputfile = testPath+"/testfiles/testFullProgram.ded"	  
+    return None
     
-     #dependency
-    dedt.createDedalusIRTables(cursor)
-    dedt.dedToIR(inputfile,cursor)
+##############################
+#  PROVENANCEREWRITER TESTS  #
+##############################
+  def test_aggRuleProv_provenanceRewriter(self):
+    return None 
     
-     #runs through function to make sure it finishes without error
-    self.assertTrue(dedalusRewriter.rewriteDeductive(cursor)==None)
+  def test_getProv_provenanceRewriter(self):
+    return None  
+    
+  def test_rewriteProvenance_provenanceRewriter(self):
+    return None  
     
     
-    #clean up testing
-    IRDB.close()
-    os.remove( testDB ) 
-
-
-###################
-#  RULE TESTS  #
-###################
-
-
-  #tests the creation of a new rule including the following helper functions
-  # setGoalInfo(),setGoalAttList()
-  # getGoalName(), getGoalAttList(), getGoalTimeArg()
-  def test_getGoalName_Rule(self):
-    testDB = testPath + "/IR.db"
-    IRDB    = sqlite3.connect( testDB ) 
-    cursor  = IRDB.cursor()
-    dedt.createDedalusIRTables(cursor)
-    ruleTestA = ['node', '(', 'Node', 'Neighbor', ')', '@', 'next', ':-', 'node', '(', 'Node', 'Neighbor', ')']
-    ruleTestB = ['log', '(', 'Node', 'Pload', ')', '@', 'next', ':-', 'log', '(', 'Node', 'Pload', ')']
-    ruleTestC = ['post', '(', 'X', 'Pl', ')', ':-', 'log', '(', 'X', 'Pl', ')', ',', '___notin___missing_log', '(', '_', 'Pl', ')']
-    ruleTest = [ruleTestA, ruleTestB, ruleTestC]
-    
-    for rule in ruleTest:
-	#dependency
-        rid = tools.getID()
-	    # extract goal info
-	goal          = extractors.extractGoal(rule)
-	goalName      = extractors.extractName( goal )
-	goalAttList   = extractors.extractAttList( goal)
-	goalTimeArg   = extractors.extractTimeArg( goal)
-	rewrittenFlag = 0 
-	    
-	newRule = Rule.Rule(rid, cursor  )
-	    #testing
-	self.assertTrue(newRule.setGoalInfo( goalName, goalTimeArg, rewrittenFlag )==None)
-	self.assertTrue(newRule.setGoalAttList(goalAttList)==None)
-	    
-	self.assertTrue(goalName==str(newRule.getGoalName()))
-	self.assertTrue(str(goalAttList)==str(newRule.getGoalAttList()))
-	self.assertTrue(str(goalTimeArg)==str(newRule.getGoalTimeArg()))
-     
-   #clean up testing
-    IRDB.close()
-    os.remove( testDB )   
-   
-  def test_getSubgoalListStr_Rule(self):
-    testDB = testPath + "/IR.db"
-    IRDB    = sqlite3.connect( testDB ) 
-    cursor  = IRDB.cursor()
-    dedt.createDedalusIRTables(cursor)
-    ruleTestA = ['node', '(', 'Node', 'Neighbor', ')', '@', 'next', ':-', 'node', '(', 'Node', 'Neighbor', ')']
-    ruleTestB = ['log', '(', 'Node', 'Pload', ')', '@', 'next', ':-', 'log', '(', 'Node', 'Pload', ')']
-    ruleTest = [ruleTestA, ruleTestB]
-    
-    for rule in ruleTest:
-    	#dependency
-        subgoalList = extractors.extractSubgoalList( rule )
-        for sub in subgoalList:
-		sid = tools.getID()
-		rid = tools.getID()
-		subgoalName    = extractors.extractSubgoalName( sub )
-		subgoalAttList = extractors.extractAttList( sub ) # returns list
-		subgoalTimeArg = extractors.extractTimeArg(  sub )
-		subgoalAddArgs = extractors.extractAdditionalArgs( sub ) # returns list
-		newRule = Rule.Rule(rid, cursor  )
-		
-		#testing
-		self.assertTrue(newRule.setSingleSubgoalInfo( sid, subgoalName, subgoalTimeArg )==None)
-		self.assertTrue(newRule.setSingleSubgoalAttList( sid, subgoalAttList )==None)
-		self.assertTrue(newRule.setSingleSubgoalAddArgs( sid, subgoalAddArgs )==None)
-
-	        testCheck = subgoalName+'('
-	        for att in subgoalAttList[:-1]:
-	            testCheck +=att+','
-	        else:
-	            testCheck +=subgoalAttList[-1]+')'
-	        
-                self.assertTrue(testCheck==newRule.getSubgoalListStr())
-
-    #clean up testing
-    IRDB.close()
-    os.remove( testDB ) 
-    
-  def test_getEquationListStr_Rule(self):
-    testDB = testPath + "/IR.db"
-    IRDB    = sqlite3.connect( testDB ) 
-    cursor  = IRDB.cursor()
-    dedt.createDedalusIRTables(cursor)
-    ruleTestA = ['node', '(', 'Node', 'Neighbor', ')', '@', 'next', ':-', 'node', '(', 'Node', 'Neighbor', ')']
-    ruleTestB = ['log', '(', 'Node', 'Pload', ')', '@', 'next', ':-', 'log', '(', 'Node', 'Pload', ')']
-    ruleTestC = ['post', '(', 'X', 'Pl', ')', ':-', 'log', '(', 'X', 'Pl', ')', ',', '___notin___missing_log', '(', '_', 'Pl', ')']
-    ruleTest = [ruleTestA, ruleTestB, ruleTestC]
-    
-    eqnList = extractors.extractEqnList( ruleTestA )
-
-    for eqn in eqnList :
-        # generate random ID for eqn
-        eid = tools.getID()
-
-        print eqn
-    #clean up testing
-    IRDB.close()
-    os.remove( testDB ) 
-    
-###################
-#  FACT TESTS  #
-###################
-   #test fact creation and functions
-  def test_Fact_Fact(self):
-       testDB = testPath + "/IR.db"
-       IRDB    = sqlite3.connect( testDB ) 
-       cursor  = IRDB.cursor()
-       dedt.createDedalusIRTables(cursor)
-       factTestA =  ['node', '(', '"a","b"', ')', '@', '1']
-       factTestB = ['node', '(', '"a","c"', ')', '@', '1']
-       factTestC = ['bcast', '(', '"a","hello"', ')', '@', '1']
-       factTest = [factTestA, factTestB, factTestC]
-       for fact in factTest:
-       	   # dependency
-           fid = tools.getID()
-           # extract fact info
-           name    = extractors.extractName( fact)
-           attList = extractors.extractAttList( fact )
-           attList = attList[0].split( "," )
-           timeArg = extractors.extractTimeArg( fact )
-           
-           newFact = Fact.Fact( fid, cursor )
-           self.assertTrue(newFact.setFactInfo( name, timeArg )==None)
-           self.assertTrue(newFact.setAttList(  attList )==None)
-           self.assertTrue( name==str( newFact.getName() ))
-           self.assertTrue(str(attList)== str( newFact.getAttList() ))
-           self.assertTrue(str(timeArg == str( newFact.getTimeArg() )))
-
-      #clean up testing
-       IRDB.close()
-       os.remove( testDB )
 #########################
 #  THREAD OF EXECUTION  #
 #########################

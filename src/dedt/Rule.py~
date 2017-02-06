@@ -47,7 +47,7 @@ class Rule :
       if len(nameList) == 1 :
         return nameList[0]
       else :
-        sys.exit( "ERROR: Rule possesses more than one goal : " + str(nameList) )
+        sys.exit( "ERROR: Rule possesses more than one goal : " + nameList )
 
   ###################
   #  GET REWRITTEN  #
