@@ -312,6 +312,7 @@ def translateDedalus( argDict ) :
   fileDict = tools.getAllIncludedFiles( fileDict )
 
   # translate all input dedalus files into a single datalog program
+  outpaths = []
   evaluator = argDict[ 'evaluator' ]
   for dedfilename, status in fileDict.items() :
     outpaths = runTranslator( cursor, dedfilename, argDict, datalogProgPath, evaluator )

@@ -26,9 +26,10 @@ from evaluators import c4_evaluator
 
 # **************************************** #
 
-DRIVER_DEBUG = True
-DEV_HACK1    = False
-DEV_HACK2    = True
+DRIVER_DEBUG  = True
+DEV_HACK1     = False
+DEV_HACK2     = True
+PROV_TREES_ON = False
 
 ################
 #  PARSE ARGS  #
@@ -106,41 +107,41 @@ def driver() :
 
   # ----------------------------------------------- #
   # get provenance trees
+  if PROV_TREES_ON :
+    if DEV_HACK1 :
+      resultsPath = "/Users/KsComp/projects/pyldfi/src/derivation/testData.txt"
+      print "driver1.py DEV_HACK1 True : resultsPath = " + resultsPath
 
-  if DEV_HACK1 :
-    resultsPath = "/Users/KsComp/projects/pyldfi/src/derivation/testData.txt"
-    print "driver1.py DEV_HACK1 True : resultsPath = " + resultsPath
+    if DEV_HACK2 :
+      resultsPath = "/Users/KsComp/projects/pyldfi/tests/provtree_dev/testOutput_smaller.txt"
+      print "driver1.py DEV_HACK2 True : resultsPath = " + resultsPath
 
-  if DEV_HACK2 :
-    resultsPath = "/Users/KsComp/projects/pyldfi/tests/provtree_dev/testOutput_smaller.txt"
-    print "driver1.py DEV_HACK2 True : resultsPath = " + resultsPath
+    if resultsPath :
+      parsedResults = tools.getEvalResults_file_c4( resultsPath )
 
-  if resultsPath :
-    parsedResults = tools.getEvalResults_file_c4( resultsPath )
+      provTreeComplete = []
+      for seedRecord in parsedResults[ "post" ] :
+        if DRIVER_DEBUG :
+          print " ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+          print "           NEW POST RECORD "
+          print "seedRecord = " + str( seedRecord )
+        newProvTree = provTree.generateProvTree( seedRecord, parsedResults, irCursor )
+        provTreeComplete.append( newProvTree )
 
-    provTreeComplete = []
-    for seedRecord in parsedResults[ "post" ] :
       if DRIVER_DEBUG :
-        print " ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-        print "           NEW POST RECORD "
-        print "seedRecord = " + str( seedRecord )
-      newProvTree = provTree.generateProvTree( seedRecord, parsedResults, irCursor )
-      provTreeComplete.append( newProvTree )
+        print "provTreeComplete :"
+        provTree.createGraph( provTreeComplete )
 
-    if DRIVER_DEBUG :
-      print "provTreeComplete :"
-      provTree.createGraph( provTreeComplete )
+    else :
+      sys.exit( "ERROR: No path to c4 results file.\nAborting..." ) # sanity check
 
-    # -------------------------------------------- #
-    # cleanUp saved db stuff
-    dedt.cleanUp( irCursor, saveDB )
+  # -------------------------------------------- #
+  # cleanUp saved db stuff
+  dedt.cleanUp( irCursor, saveDB )
 
-    # -------------------------------------------- #
-    # sanity check
-    print "PROGRAM EXITED SUCCESSFULLY"
-
-  else :
-    sys.exit( "SHIT GOT BUGGY" ) # sanity check
+  # -------------------------------------------- #
+  # sanity check
+  print "PROGRAM EXITED SUCCESSFULLY"
 
 
 #########################
