@@ -29,6 +29,8 @@ IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data" )
 def generateProvTree( seedRecord, fullResults, cursor ) :
   return DerivTree.DerivTree( "post", "goal", False, seedRecord, fullResults, cursor, None, None )
 
+
+# --------------------------------------------------- #
 # --------------------------------------------------- #
 
 # add_nodes and add_edges borrowed from tutorial: http://matthiaseisen.com/articles/graphviz/
@@ -48,6 +50,10 @@ def add_edges(graph, edges):
             graph.edge(*e)
     return graph
 
+# --------------------------------------------------- #
+# --------------------------------------------------- #
+
+
 ##################
 #  CREATE GRAPH  #
 ##################
@@ -56,13 +62,17 @@ def add_edges(graph, edges):
 def createGraph( provTreeList ) :
   if DEBUG :
     print "... running createGraph ..."
+    print "provTreeList = " + str( provTreeList )
 
   graph = functools.partial( graphviz.Graph, format='jpg' )
-  path = IMGSAVEPATH + "/provtree_render_" + str(time.strftime("%d-%m-%Y")) + "_" + str(time.strftime("%H-%M-%S"))
+  path  = IMGSAVEPATH + "/provtree_render_" + str(time.strftime("%d-%m-%Y")) + "_" + str(time.strftime("%H-%M-%S"))
+  nodes = []
+  edges = []
   for tree in provTreeList :
-    topology   = tree.getTopology( [], [] )
-    nodes      = topology[0]
-    edges      = topology[1]
+    topology   = tree.getTopology( )
+    nodes.extend( topology[0] )
+    edges.extend( topology[1] )
+
 
   if DEBUG :
     print "... in createGraph :" 
@@ -73,10 +83,25 @@ def createGraph( provTreeList ) :
     for i in range(0,len(edges)) :
       print "edge#" + str(i) + " : " + str(edges[i])
 
-    #g          = add_nodes( graph(), nodes )
-    #g_complete = add_edges( g, edges )
-    #print "Saving prov tree render to " + str(path)
-    #g_complete.render( path )
+  # convert tuples to strings
+  nodes_str = []
+  for n in nodes :
+    nodes_str.append( n[0] + ", "  + n[1] )
+  print "nodes_str = " + str(nodes_str)
+
+  edges_str = []
+  for edge in edges :
+    print "edge = " + str(edge)
+    edge_str_0 = edge[0][0] + ", " + edge[0][1]
+    edge_str_1 = edge[1][0] + ", " + edge[1][1]
+    edges_str.append( (edge_str_0, edge_str_1) )
+  print "edges_str = " + str(edges_str)
+
+  # create graph
+  g          = add_nodes( graph(), nodes_str )
+  g_complete = add_edges( g, edges_str )
+  print "Saving prov tree render to " + str(path)
+  g_complete.render( path )
 
 # --------------------------------------------------- #
 

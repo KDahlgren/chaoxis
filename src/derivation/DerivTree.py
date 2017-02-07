@@ -61,15 +61,26 @@ class DerivTree( ) :
   ##################
   #  GET TOPOLOGY  #
   ##################
-  def getTopology( self, nodes, edges ) :
-    nodes.append( (self.root.treeType, self.root.getName()) )
+  def getTopology( self ) :
+    nodes = []
+    edges = []
 
+    # add node
+    if self.root.treeType == "goal" :
+      nodes.append( (self.root.treeType, self.root.getName()+str(self.root.record)) )
+    elif (self.root.treeType == "rule") or (self.root.treeType == "fact") :
+      nodes.append( (self.root.treeType, self.root.getName()+str(self.root.bindings) ) )
+
+    # add edge
     if not self.root.treeType == "fact" :
       for d in self.root.descendants :
-        if not d.treeType == "fact" :
-          edges.append( ( ( self.root.treeType, self.root.getName()), (d.root.treeType, d.root.getName()) ) )
+        #edges.append( ( ( self.root.treeType, self.root.getName()), (d.root.treeType, d.root.getName()) ) )
+        if self.root.treeType == "goal" :
+          edges.append( ( (self.root.treeType, self.root.getName()+str(d.root.record)), (d.root.treeType, d.root.getName()+str(d.root.bindings)) ) )
+        elif self.root.treeType == "rule" :
+          edges.append( ( (self.root.treeType, self.root.getName()+str(d.root.bindings)), (d.root.treeType, d.root.getName()+str(d.root.bindings)) ) )
 
-        topo = d.getTopology( [], [] )
+        topo = d.getTopology( )
         nodes.extend( topo[0] )
         edges.extend( topo[1] )
 
@@ -100,28 +111,34 @@ class DerivTree( ) :
       if DEBUG_2 :
         print "HIT GOAL : " + str(name) + ", " + str(record)
         #sys.exit("HIT GOAL : " + str(name) + ", " + str(record))
-      goalInfo = self.getGoalInfo( name, cursor )
-      goalAtts = goalInfo[0]
-      goalRids = goalInfo[1]
-      bindings = self.setBindings( record, goalAtts, None )
-      allRules = self.getGoalRules( goalRids, cursor )
+      goalInfo     = self.getGoalInfo( name, cursor )
+      goalAtts     = goalInfo[0]
+      goalRids     = goalInfo[1]
+      fullInfo     = self.setBindings( name, record, goalAtts, cursor )
+      provRuleName = fullInfo[0]
+      fullBindings = fullInfo[1]
+      allRules     = self.getGoalRules( goalRids, cursor )
 
       node     = GoalNode.GoalNode( name, isNeg, record )
-      node.setDescendants( allRules, bindings, results, cursor )
+      node.clearDescendants() # needed explicitly for some reason? >.>
+      node.setDescendants( provRuleName, allRules, fullBindings, results, cursor )
 
     elif self.treeType == "fact" :
       if DEBUG_2 :
         print "HIT FACT : " + str(name) + ", " + str(record)
         #sys.exit("HIT FACT : " + str(name) + ", " + str(record))
-      node     = FactNode.FactNode( name, isNeg, record )
+      node     = FactNode.FactNode( name, isNeg, record, goalBindings )
 
     elif self.treeType == "rule" :
       if DEBUG_2 :
-        print "HIT RULE : " + str(name) + ", " + str(record)
+        print "HIT RULE : " + str(name) + ", " + str(record) + ", " + str(arg)
         #sys.exit("HIT RULE : " + str(name) + ", " + str(record))
       ruleInfo = self.getRuleInfo( name, cursor, arg )
 
       node     = RuleNode.RuleNode( name, ruleInfo, record, goalBindings )
+      node.clearDescendants() # needed explicitly for some reason? >.>
+      if DEBUG :
+        print "node.getDescendants = " + str( node.getDescendants() )
       node.setDescendants( results, cursor )
 
     # -------------------------------- #
@@ -190,43 +207,65 @@ class DerivTree( ) :
 
 
   ##################
-  #  GET BINDINGS  #
+  #  SET BINDINGS  #
   ##################
   # record       = array of strings from evaluator results
   # goalAtts     = array of all attributes for the goal, including duplicates
   # goalBindings = array of tuples with existing maps from atts to values.
-  def setBindings( self, record, goalAtts, goalBindings ) :
+  def setBindings( self, name, record, goalAtts, cursor ) :
     if DEBUG :
       print "... running setBindings ..."
       print "record       = " + str(record)
-      print "goalAtts     = " + str(goalAtts)
-      print "goalBindings = " + str(goalBindings)
 
     bindings = []  # list of tuples ( att, boundValue )
-    if goalBindings :
-      for att in goalAtts :
-        for tup in goalBindings :
-          if att == tup[0] :
-            newTup = ( att, tup[1] )
-            bindings.append( newTup )
 
+    # get prov rule name
+    cursor.execute( "SELECT goalName FROM Rule" )
+    nameList = cursor.fetchall()
+    nameList = tools.toAscii_multiList( nameList )
+
+    realProvName = []
+    for n in nameList :
+      if DEBUG :
+        print "n = " + str(n)
+      if (name in n[0]) and ("_prov" in n[0]) :
+        realProvName.append( n[0] )
+
+    # sanity check
+    if len(realProvName) > 1 :
+      sys.exit( "ERROR: more than one provenance rule for " +str(name) + " : " + str(realProvName) )
+    elif len(realProvName) < 1 :
+      sys.exit( "ERROR: no provenance rule for " +str(name) )
     else :
-      # -------------------------------------- #
-      #            SANITY CHECKS               #
-      if len( record ) > len( goalAtts ) :
-        sys.exit( "*****************************\n*****************************\n>>> ERROR: number of data items in record exceeds number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
-      elif len( record ) < len( goalAtts ) :
-        sys.exit( "*****************************\n*****************************\n>>> ERROR: number of data items in record less than number of attributes for the current goal : " + "\ngoalName = " + str(self.name) + "\nrecord = " + str(record) + "\ngoalAtts = " + str(goalAtts) )
-      # -------------------------------------- #
-      else :
-        for i in range(0,len(record)) :
-          newTup = ( goalAtts[i], record[i] )
-          bindings.append( newTup )
+      realProvName = realProvName[0]
 
-        if DEBUG :
-          print "bindings = " + str(bindings)
+    # get all goal bindings
+    cursor.execute( "SELECT attName,attID FROM Rule,GoalAtt WHERE Rule.goalName=='" + realProvName + "' AND Rule.rid==GoalAtt.rid" )
+    provAtts = cursor.fetchall()
+    provAtts = tools.toAscii_multiList( provAtts )
 
-    return bindings
+    if DEBUG :
+      print "goalAtts = " + str( goalAtts )
+      print "provAtts = " + str( provAtts )
+      print "record   = " + str( record )
+
+    # collect atts in order of appearance in the prov rule head
+    attList = []
+    for att in provAtts :
+       attName = att[0]
+       attList.append( attName )
+
+    # assign atts to record values in left-to-right order.
+    bindings = []
+    for i in range(0,len(record)) :
+      att  = attList[i]
+      data = record[i]
+      bindings.append( (att,data) )
+
+    if DEBUG :
+      print "bindings = " + str(bindings)
+
+    return ( realProvName, bindings )
 
 
   ####################

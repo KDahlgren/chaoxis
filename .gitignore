@@ -5,6 +5,9 @@ src/evaluators/programFiles/*.olg
 src/evaluators/programFiles/*.data
 src/evaluators/programFiles/*.py
 
+save_data/*
+!save_data/README.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

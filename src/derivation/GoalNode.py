@@ -10,29 +10,28 @@ import os, sys
 
 import DerivTree
 
+packagePath1  = os.path.abspath( __file__ + "/.." )
+sys.path.append( packagePath1 )
+from Node import Node
+
 # **************************************** #
 
 DEBUG = True
 
-class GoalNode( ) :
+class GoalNode( Node ) :
 
-  #############
-  #  ATTRIBS  #
-  #############
-  treeType    = "goal"
-  name        = None  # name of relation identifier
+  #####################
+  #  SPECIAL ATTRIBS  #
+  #####################
   isNeg       = False # is goal negative? assume positive
-  record      = []
   descendants = []
-  bindings    = None
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, n, i, r ) :
-    self.name     = n
-    self.isNeg    = i
-    self.record   = r
+  def __init__( self, name, isNeg, record ) :
+    Node.__init__( self, "goal", name, record, None )
+    self.isNeg    = isNeg
 
   ################
   #  PRINT TREE  #
@@ -55,44 +54,40 @@ class GoalNode( ) :
     return "GOAL NODE: \nname = " + str( self.name ) + " ; \nisNeg = " + str( self.isNeg ) + ";\nbindings = " + str(self.bindings)
 
   ##############
-  #  GET NAME  #
-  ##############
-  def getName( self ) :
-    return self.name
-
-  ##############
   #  GET SIGN  #
   ##############
   def getSign( self ) :
     return self.isNeg
 
-  ################
-  #  GET RECORD  #
-  ################
-  def getRecord( self ) :
-    return self.record
+  #######################
+  #  CLEAR DESCENDANTS  #
+  #######################
+  def clearDescendants( self ) :
+    self.descendants = []
 
   #####################
   #  SET DESCENDANTS  #
   #####################
-  def setDescendants( self, allSubs, bindings, results, cursor ) :
+  def setDescendants( self, provRuleName, allRulesSubs, bindings, results, cursor ) :
     self.bindings = bindings
 
-    #sys.exit( "BREAKPOINT: allSubs = " + str( allSubs )  )
+    if DEBUG :
+      print ">>> ... setting descendants ... <<<"
+      print "   allRulesSubs  = " + str( allRulesSubs )
+      print "   bindings = " + str( bindings )
+      print "   results  = " + str( results )
 
-    for subDict in allSubs :
-      for sname in subDict :
-        subData  = subDict[ sname ]
-        isNegStr = subData[0]
-        subAtts  = subData[0]
+    #sys.exit( "BREAKPOINT: allRulesSubs = " + str( allRulesSubs )  )
 
-        #sys.exit( "BREAKPOINT: sname = " + sname + ", subAtts = " + str(subAtts) )
-        if "notin" in isNegStr :
-          newRuleNode = DerivTree.DerivTree( sname, "rule", True, self.record, results, cursor, allSubs, bindings )
-        else :
-          newRuleNode = DerivTree.DerivTree( sname, "rule", False, self.record, results, cursor, allSubs, bindings )
+    for subDict in allRulesSubs :
+      if DEBUG :
+        print "GOALNODE : " + provRuleName + " processing rule expression from " + str(subDict)
+      newRuleNode = DerivTree.DerivTree( provRuleName, "rule", False, self.record, results, cursor, allRulesSubs, bindings )
+      self.descendants.append( newRuleNode )
 
-        self.descendants.append( newRuleNode )
+    if DEBUG :
+      print "GOALNODE : " + provRuleName + " has " + str(len(self.descendants)) + " descendants."
+      print ">>> ... done setting descendants ... <<<"
 
 
   #####################

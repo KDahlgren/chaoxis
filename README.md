@@ -58,6 +58,7 @@ Python Packages (not automatically installed with pyLDFI) :
   * [graphviz](https://pypi.python.org/pypi/graphviz)
 
 Other Tools :
+  * [cmake](http://brewformulas.org/Cmake)
   * [C4 Overlog Runtime](https://github.com/bloom-lang/c4) (installed locally automatically)
   * [Z3 Theorem Prover](https://github.com/Z3Prover/z3) (installed locally automatically)
 
