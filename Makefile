@@ -6,6 +6,12 @@ clean:
 	rm -r lib/c4/build
 	rm -r lib/z3/build
 
+cleanc4:
+	rm -r lib/c4/build
+
+cleanz3:
+	rm -r lib/z3/build
+
 c4: lib/c4/build/src/libc4/libc4.dylib
 
 z3: lib/z3/build/z3-dist

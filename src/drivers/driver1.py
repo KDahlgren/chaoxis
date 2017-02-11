@@ -20,7 +20,7 @@ packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
 from dedt       import dedt, dedalusParser
-from derivation import provTree
+from derivation import ProvTree
 from utils      import parseCommandLineInput, tools
 from evaluators import c4_evaluator
 
@@ -28,8 +28,8 @@ from evaluators import c4_evaluator
 
 DRIVER_DEBUG  = True
 DEV_HACK1     = False
-DEV_HACK2     = True
-PROV_TREES_ON = False
+DEV_HACK2     = False
+PROV_TREES_ON = True
 
 ################
 #  PARSE ARGS  #
@@ -97,7 +97,8 @@ def driver() :
   resultsPath = None
 
   # c4
-  #resultsPath = c4_evaluator.runC4_directly( datalogProgPath, tableListPath )
+  savepath = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
+  resultsPath = c4_evaluator.runC4_directly( datalogProgPath, tableListPath, savepath )
   #c4_evaluator.runC4_wrapper( datalogProgPath, tableListPath )
 
   # ----------------------------------------------- #
@@ -117,20 +118,21 @@ def driver() :
       print "driver1.py DEV_HACK2 True : resultsPath = " + resultsPath
 
     if resultsPath :
+      print "Using c4 results from : " + resultsPath
       parsedResults = tools.getEvalResults_file_c4( resultsPath )
 
-      provTreeComplete = []
+      provTreeComplete = ProvTree.ProvTree( "UltimateGoal", parsedResults, irCursor )
       for seedRecord in parsedResults[ "post" ] :
         if DRIVER_DEBUG :
           print " ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
           print "           NEW POST RECORD "
           print "seedRecord = " + str( seedRecord )
-        newProvTree = provTree.generateProvTree( seedRecord, parsedResults, irCursor )
-        provTreeComplete.append( newProvTree )
+        newProvTree = provTreeComplete.generateProvTree( seedRecord )
+        provTreeComplete.subtrees.append( newProvTree )
 
       if DRIVER_DEBUG :
         print "provTreeComplete :"
-        provTree.createGraph( provTreeComplete )
+        provTreeComplete.createGraph( )
 
     else :
       sys.exit( "ERROR: No path to c4 results file.\nAborting..." ) # sanity check

@@ -9,7 +9,7 @@
 import os, sys
 
 # ------------------------------------------------------ #
-import provTree, GoalNode, RuleNode, FactNode
+import ProvTree, GoalNode, RuleNode, FactNode
 
 # ------------------------------------------------------ #
 
@@ -224,20 +224,25 @@ class DerivTree( ) :
     nameList = cursor.fetchall()
     nameList = tools.toAscii_multiList( nameList )
 
-    realProvName = []
+    realProvNames = []
     for n in nameList :
       if DEBUG :
         print "n = " + str(n)
-      if (name in n[0]) and ("_prov" in n[0]) :
-        realProvName.append( n[0] )
+      if n[0].startswith( name+"_prov" ) :
+        realProvNames.append( n[0] )
 
-    # sanity check
-    if len(realProvName) > 1 :
-      sys.exit( "ERROR: more than one provenance rule for " +str(name) + " : " + str(realProvName) )
-    elif len(realProvName) < 1 :
+    # match rule names to provenance rule names
+    if len( realProvNames ) > 1 : # need to branch
+      if DEBUG :
+        print "realProvNames = " + str( realProvNames )
+        print "name          = " + str( name )
+        print "record        = " + str( record )
+        print "goalAtts      = " + str( goalAtts )
+      sys.exit( "ERROR: more than one provenance rule for " +str(name) + " : " + str(realProvNames) )
+    elif len( realProvNames ) < 1 : # sanity check
       sys.exit( "ERROR: no provenance rule for " +str(name) )
-    else :
-      realProvName = realProvName[0]
+    else : # one rule definition
+      realProvName = realProvNames[0]
 
     # get all goal bindings
     cursor.execute( "SELECT attName,attID FROM Rule,GoalAtt WHERE Rule.goalName=='" + realProvName + "' AND Rule.rid==GoalAtt.rid" )

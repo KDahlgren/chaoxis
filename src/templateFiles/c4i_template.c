@@ -17,6 +17,7 @@ static void usage(void);
 static C4Client *setup_c4(apr_pool_t *pool, apr_int16_t port,
                           const char *srcfile);
 static void printDump( C4Client * c, const char * tableListStr ) ;
+static void printDump_file( C4Client * c, const char * tableListStr, const char * SAVEPATH ) ;
 char ** splitStr( char * origStr ) ;
 
 int
@@ -87,7 +88,7 @@ main(int argc, const char *argv[])
      * source file).
      */
     //if (opt->ind + 1 != argc)
-    if (opt->ind + 2 != argc)
+    if (opt->ind + 3 != argc)
         usage();
 
     c = setup_c4(pool, (apr_int16_t) port, argv[opt->ind]);
@@ -95,15 +96,22 @@ main(int argc, const char *argv[])
     for (i = 0; i < num_strings; i++)
         c4_install_str(c, src_strings[i]) ;
 
-    // dump table
+    // *************************************** //
+    //              OUTPUT DUMPS               //
+    // *************************************** //
+    const char * tableListStr = argv[2] ;
+    const char * SAVEPATH     = argv[3] ;
     if( argc > 2 )
     {
-      const char * tableListStr = argv[2] ;
-      printDump( c, tableListStr ) ;
+      // dump table to file
+      printDump_file( c, tableListStr, SAVEPATH ) ;
+      // dump table to stdout
+      //printDump( c, tableListStr ) ;
     }
+    // *************************************** //
 
-    while (true)
-        sleep(1);
+    //while (true)
+    //    sleep(1);
 
     apr_pool_destroy(pool);
     c4_terminate();
@@ -113,7 +121,7 @@ main(int argc, const char *argv[])
 static void
 usage(void)
 {
-    printf("Usage: c4i [ -h | -p port | -s srctext ] srcfile [ list of tables in srcfile ]\n");
+    printf("Usage: c4i [ -h | -p port | -s srctext ] srcfile [ list of tables in srcfile ] [path to dump save file]\n");
     exit(1);
 }
 
@@ -179,4 +187,41 @@ static void printDump( C4Client * c, const char * tableListStr )
     printf( "---------------------------\n%s\n%s\n", currTable, result ) ;
   }
 
+}
+
+static void printDump_file( C4Client * c, const char * tableListStr, const char * SAVEPATH )
+{
+  FILE *outfile = fopen( SAVEPATH, "w") ;
+  if (outfile == NULL)
+  {
+    system( "pwd" ) ;
+    perror( "ERROR" ) ;
+    printf( "C4 ERROR: Cannot open file for writing: %s \nAborting...\n", SAVEPATH ) ;
+    exit( 1 ) ;
+  }
+
+  printf( ">>> Saving c4 evaluator output dump to  %s\n", SAVEPATH ) ;
+
+  /* print some text */
+  //const char *text = "Write this to the file" ;
+  //fprintf(outfile, "Some text: %s\n", text) ;
+
+  // parse table list and iterate
+  fprintf( outfile, "tableListStr = %s\n", tableListStr) ;
+
+  char ** res = splitStr( tableListStr ) ;
+
+  fprintf( outfile, "TABLE LIST:\n" ) ;
+  for( int i = 0 ; i < LENGTH_RES ; i = i + 1 )
+    fprintf( outfile, "res[%d] = %s\n", i, res[i] ) ;
+
+  fprintf( outfile, "TABLE CONTENTS\n" ) ;
+  for( int i = 0 ; i < LENGTH_RES ; i = i + 1 )
+  {
+    const char * currTable = res[i] ;
+    const char * result = c4_dump_table( c, currTable ) ;
+    fprintf( outfile, "---------------------------\n%s\n%s\n", currTable, result ) ;
+  }
+
+  fclose( outfile ) ;
 }

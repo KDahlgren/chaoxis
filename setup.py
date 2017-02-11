@@ -33,7 +33,7 @@ def getAPR_list() :
 ########################
 #  DE DUPLICATE SETUP  #
 ########################
-def deDuplicateSetup() :
+def deduplicateSetup() :
   # http://stackoverflow.com/questions/4710067/deleting-a-specific-line-in-a-file-python
   # protect against multiple runs of setup
   f = open( C4_FINDAPR_PATH, "r+" )
@@ -55,6 +55,7 @@ def setAPR( path ) :
   #cmd = "echo '" + newCmd + "' | cat - " + C4_FINDAPR_PATH + " > temp && mv temp " + C4_FINDAPR_PATH
   cmd = "(head -48 " + C4_FINDAPR_PATH + "; " + "echo '" + newCmd + "'; " + "tail -n +49 " + C4_FINDAPR_PATH + ")" + " > temp ; mv temp " + C4_FINDAPR_PATH + ";"
   os.system( cmd )
+#  os.system( "make deps" )
   os.system( "make c4" )
 
 
@@ -74,6 +75,7 @@ def checkForMakeError( path ) :
     os.system( "rm ./c4_out.txt" ) # clean up
   return flag
 
+
 ##########
 #  MAIN  #
 ##########
@@ -88,7 +90,7 @@ def main() :
   # set correct apr location
   flag    = True
   for path in apr_path_cands :
-    deDuplicateSetup()
+    deduplicateSetup()
     setAPR( path )
     try :
       flag = checkForMakeError( path )
