@@ -55,7 +55,7 @@ def setAPR( path ) :
   #cmd = "echo '" + newCmd + "' | cat - " + C4_FINDAPR_PATH + " > temp && mv temp " + C4_FINDAPR_PATH
   cmd = "(head -48 " + C4_FINDAPR_PATH + "; " + "echo '" + newCmd + "'; " + "tail -n +49 " + C4_FINDAPR_PATH + ")" + " > temp ; mv temp " + C4_FINDAPR_PATH + ";"
   os.system( cmd )
-#  os.system( "make deps" )
+  os.system( "make deps" )
   os.system( "make c4" )
 
 
@@ -81,6 +81,9 @@ def checkForMakeError( path ) :
 ##########
 def main() :
   print "Running pyLDFI setup with : \n" + str(sys.argv)
+
+  # clean libs
+  os.system( "make clean" )
   
   # ---------------------------------------------- #
   # run make for c4
@@ -90,8 +93,13 @@ def main() :
   # set correct apr location
   flag    = True
   for path in apr_path_cands :
-    deduplicateSetup()
+    try :
+      deduplicateSetup()
+    except IOError :
+      setAPR( path )
+
     setAPR( path )
+
     try :
       flag = checkForMakeError( path )
     except IOError :
