@@ -33,6 +33,10 @@ def getAPR_list() :
 ########################
 #  DE DUPLICATE SETUP  #
 ########################
+# this script modifies the contents of FindAPR.cmake in the c4 submodule
+# prior to compilation.
+# need to ensure only one SET command exists in FindAPR.cmake after discovering
+# a valid apr library.
 def deduplicateSetup() :
   # http://stackoverflow.com/questions/4710067/deleting-a-specific-line-in-a-file-python
   # protect against multiple runs of setup
@@ -80,9 +84,9 @@ def checkForMakeError( path ) :
 #  MAIN  #
 ##########
 def main() :
-  print "Running pyLDFI setup with : \n" + str(sys.argv)
+  print "Running pyLDFI setup with args : \n" + str(sys.argv)
 
-  # clean libs
+  # clean any existing libs
   os.system( "make clean" )
   
   # ---------------------------------------------- #
