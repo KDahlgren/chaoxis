@@ -27,8 +27,6 @@ from evaluators import c4_evaluator
 # **************************************** #
 
 DRIVER_DEBUG  = True
-DEV_HACK1     = False
-DEV_HACK2     = False
 PROV_TREES_ON = True
 
 ################
@@ -109,14 +107,6 @@ def driver() :
   # ----------------------------------------------- #
   # get provenance trees
   if PROV_TREES_ON :
-    if DEV_HACK1 :
-      resultsPath = "/Users/KsComp/projects/pyldfi/src/derivation/testData.txt"
-      print "driver1.py DEV_HACK1 True : resultsPath = " + resultsPath
-
-    if DEV_HACK2 :
-      resultsPath = "/Users/KsComp/projects/pyldfi/tests/provtree_dev/testOutput_smaller.txt"
-      print "driver1.py DEV_HACK2 True : resultsPath = " + resultsPath
-
     if resultsPath :
       print "Using c4 results from : " + resultsPath
       parsedResults = tools.getEvalResults_file_c4( resultsPath )
