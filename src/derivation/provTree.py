@@ -19,7 +19,7 @@ import DerivTree, GoalNode, RuleNode, FactNode
 # **************************************** #
 
 DEBUG       = True
-IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data" )
+IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data/graphvizOutput" )
 
 # --------------------------------------------------- #
 
@@ -63,6 +63,7 @@ class ProvTree() :
     nodes = []
     edges = []
     for tree in self.subtrees :
+      #edges.append( ( self.rootname, tree.root ) )
       topology   = tree.getTopology( )
       nodes.extend( topology[0] )
       edges.extend( topology[1] )
@@ -79,6 +80,7 @@ class ProvTree() :
   
     # convert tuples to strings
     nodes_str = []
+    nodes_str.append( self.rootname )
     for n in nodes :
       nodes_str.append( n[0] + ", "  + n[1] )
     print "nodes_str = " + str(nodes_str)
@@ -89,6 +91,9 @@ class ProvTree() :
       edge_str_0 = edge[0][0] + ", " + edge[0][1]
       edge_str_1 = edge[1][0] + ", " + edge[1][1]
       edges_str.append( (edge_str_0, edge_str_1) )
+      # add edges from ultimate goal to post goals for aesthetics
+      if ( edge[0][0] == "goal" ) and ( edge[0][1].startswith( "post[" ) ) :
+        edges_str.append( ( self.rootname, edge_str_0 ) )
     print "edges_str = " + str(edges_str)
   
     # create graph

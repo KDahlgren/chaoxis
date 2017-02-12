@@ -26,8 +26,9 @@ from evaluators import c4_evaluator
 
 # **************************************** #
 
-DRIVER_DEBUG  = True
-PROV_TREES_ON = True
+DRIVER_DEBUG    = True
+RUN_C4_DIRECTLY = True
+PROV_TREES_ON   = True
 
 ################
 #  PARSE ARGS  #
@@ -96,8 +97,10 @@ def driver() :
 
   # c4
   savepath = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
-  resultsPath = c4_evaluator.runC4_directly( datalogProgPath, tableListPath, savepath )
-  #c4_evaluator.runC4_wrapper( datalogProgPath, tableListPath )
+  if RUN_C4_DIRECTLY :
+    resultsPath = c4_evaluator.runC4_directly( datalogProgPath, tableListPath, savepath )
+  else :
+    c4_evaluator.runC4_wrapper( datalogProgPath, tableListPath )
 
   # ----------------------------------------------- #
 
