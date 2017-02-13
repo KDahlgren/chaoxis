@@ -58,6 +58,23 @@ class DerivTree( ) :
 
   # ------------------------------------------ #
 
+  ####################
+  #  CLEAN BINDINGS  #
+  ####################
+  def cleanBindings( self, bindings ) :
+    cleanList = []
+    for tup in bindings :
+      cleanList.append( tup[1] )
+    return cleanList
+
+  #######################
+  #  DEDUPLICATE EDGES  #
+  #######################
+  def deduplicate_edges( self, edges ) :
+    return list( set( edges ) )
+
+  # ------------------------------------------ #
+
   ##################
   #  GET TOPOLOGY  #
   ##################
@@ -65,35 +82,59 @@ class DerivTree( ) :
     nodes = []
     edges = []
 
+    # clean bindings for graph aesthetics
+    cleanBinds_self = self.cleanBindings( self.root.bindings )
+
+    #if self.name.startswith( "clock" ) :
+    #  sys.exit( "BREAKPOINT: self.name = " + self.name + ", self.root.schemaBindings = " + str(self.root.schemaBindings) )
+
     # add node
     if self.root.treeType == "goal" :
-      nodes.append( (self.root.treeType, self.root.getName()+str(self.root.record)) )
-    elif (self.root.treeType == "rule") or (self.root.treeType == "fact") :
-      nodes.append( (self.root.treeType, self.root.getName()+str(self.root.bindings) ) )
+      #nodes.append( (self.root.treeType, self.root.getName()+str(self.root.record)) )
+      #nodes.append( (self.root.treeType, self.root.getName()+str(self.root.bindings)) )
+      #nodes.append( (self.root.treeType, self.root.name+str(cleanBinds_self)) )
+      nodes.append( (self.root.treeType, self.root.name+str(self.root.schemaBindings)) )
+    elif self.root.treeType == "rule" :
+      #nodes.append( (self.root.treeType, self.root.getName()+str(self.root.bindings) ) )
+      #nodes.append( (self.root.treeType, self.root.name+str(cleanBinds_self) ) )
+      nodes.append( (self.root.treeType, self.root.name+str(self.root.schemaBindings) ) )
+    elif self.root.treeType == "fact" :
+      #nodes.append( (self.root.treeType, self.root.getName()+str(self.root.bindings) ) )
+      #nodes.append( (self.root.treeType, self.root.name+str(cleanBinds_self) ) )
+      nodes.append( (self.root.treeType, self.root.name+str(self.root.record) ) )
 
     # add edge
+    # edges between rules and facts added when considering rule descendants
     if not self.root.treeType == "fact" :
       for d in self.root.descendants :
-        #edges.append( ( ( self.root.treeType, self.root.getName()), (d.root.treeType, d.root.getName()) ) )
+
+        # clean bindings for graph aesthetics
+        cleanBinds      = self.cleanBindings( d.root.bindings )
+
+        # case goal
         if self.root.treeType == "goal" :
-          edges.append( ( (self.root.treeType, self.root.getName()+str(d.root.record)), (d.root.treeType, d.root.getName()+str(d.root.bindings)) ) )
+          #edges.append( ( (self.root.treeType, self.root.getName()+str(d.root.record)), (d.root.treeType, d.root.getName()+str(d.root.bindings)) ) )
+          #edges.append( ( (self.root.treeType, self.root.name+str(cleanBinds_self)), (d.root.treeType, d.root.name+str(cleanBinds)) ) )
+          edges.append( ( (self.root.treeType, self.root.name+str(self.root.schemaBindings)), (d.root.treeType, d.root.name+str(d.root.schemaBindings)) ) )
+
+        # case rule
         elif self.root.treeType == "rule" :
-          edges.append( ( (self.root.treeType, self.root.getName()+str(d.root.bindings)), (d.root.treeType, d.root.getName()+str(d.root.bindings)) ) )
+          #edges.append( ( (self.root.treeType, self.root.name+str(cleanBinds_self)), (d.root.treeType, d.root.name+str(cleanBinds)) ) )
+          if d.root.treeType == "fact" :
+            edges.append( ( (self.root.treeType, self.root.name+str(self.root.schemaBindings)), (d.root.treeType, d.root.name+str(d.root.record)) ) )
+          else :
+            edges.append( ( (self.root.treeType, self.root.name+str(self.root.schemaBindings)), (d.root.treeType, d.root.name+str(d.root.schemaBindings)) ) )
 
         topo = d.getTopology( )
         nodes.extend( topo[0] )
         edges.extend( topo[1] )
 
+        # remove duplicate edges for aesthetics
+        edges = self.deduplicate_edges( edges )
+
     return ( nodes, edges )
 
   # ------------------------------------------ #
-
-  ##############
-  #  GET ROOT  #
-  ##############
-  def getRoot( self ) :
-    return self.root
-
   # ------------------------------------------ #
   #########################
   #  GENERATE DERIV TREE  #
@@ -111,23 +152,41 @@ class DerivTree( ) :
       if DEBUG_2 :
         print "HIT GOAL : " + str(name) + ", " + str(record)
         #sys.exit("HIT GOAL : " + str(name) + ", " + str(record))
+
+      # ========================================= #
       goalInfo     = self.getGoalInfo( name, cursor )
       goalAtts     = goalInfo[0]
       goalRids     = goalInfo[1]
-      fullInfo     = self.setBindings( name, record, goalAtts, cursor )
-      provRuleName = fullInfo[0]
-      fullBindings = fullInfo[1]
       allRules     = self.getGoalRules( goalRids, cursor )
 
-      node     = GoalNode.GoalNode( name, isNeg, record )
+      # ========================================= #
+      # initialize new node
+      node     = GoalNode.GoalNode( name, isNeg, record, cursor )
+
+      # ========================================= #
+      # set node descendants
+      fullBindings = self.setBindings( name, record, goalAtts, cursor )
+
+      # fullBindingsInfo will contain multiple lists if multiple prov rules exist
+      # if multiple prov rules exist, then collapse the provenance rule into a single rule.
+      # punt collapsing process to Goal setDescendants
+      provRuleName = name + "_prov"
       node.clearDescendants() # needed explicitly for some reason? >.>
       node.setDescendants( provRuleName, allRules, fullBindings, results, cursor )
+
+      # ========================================= #
+      # set the root of this derivation tree
+      self.setThisRoot( node )
+
+      # ========================================= #
+      # ========================================= #
 
     elif self.treeType == "fact" :
       if DEBUG_2 :
         print "HIT FACT : " + str(name) + ", " + str(record)
         #sys.exit("HIT FACT : " + str(name) + ", " + str(record))
-      node     = FactNode.FactNode( name, isNeg, record, goalBindings )
+      node     = FactNode.FactNode( name, isNeg, record, goalBindings, cursor )
+      self.setThisRoot( node )
 
     elif self.treeType == "rule" :
       if DEBUG_2 :
@@ -135,18 +194,12 @@ class DerivTree( ) :
         #sys.exit("HIT RULE : " + str(name) + ", " + str(record))
       ruleInfo = self.getRuleInfo( name, cursor, arg )
 
-      node     = RuleNode.RuleNode( name, ruleInfo, record, goalBindings )
+      node     = RuleNode.RuleNode( name, ruleInfo, record, goalBindings, cursor )
       node.clearDescendants() # needed explicitly for some reason? >.>
       if DEBUG :
-        print "node.getDescendants = " + str( node.getDescendants() )
+        print "node.descendants = " + str( node.descendants )
       node.setDescendants( results, cursor )
-
-    # -------------------------------- #
-    # set the root of this derivation tree
-    if node :
-      self.root = node
-    else :
-      sys.exit( "DerivTree root assignment failed : \nroot = " + str( self.root ) + "\nname = " + str( self.name ) + "\ntreeType = " + str( self.treeType ) + "\nisNeg = " + str( self.isNeg ) + "\ndescendants = " + str( self.descendants )  )
+      self.setThisRoot( node )
 
   # ------------------------------------------ #
   # ------------------------------------------ #
@@ -206,6 +259,7 @@ class DerivTree( ) :
     return [ attList, ridList ]
 
 
+  # ------------------------------------------ #
   ##################
   #  SET BINDINGS  #
   ##################
@@ -216,8 +270,6 @@ class DerivTree( ) :
     if DEBUG :
       print "... running setBindings ..."
       print "record       = " + str(record)
-
-    bindings = []  # list of tuples ( att, boundValue )
 
     # get prov rule name
     cursor.execute( "SELECT goalName FROM Rule" )
@@ -231,34 +283,46 @@ class DerivTree( ) :
       if n[0].startswith( name+"_prov" ) :
         realProvNames.append( n[0] )
 
+    if DEBUG :
+      print "realProvNames = " + str( realProvNames )
+      print "name          = " + str( name )
+      print "record        = " + str( record )
+      print "goalAtts      = " + str( goalAtts )
+
     # match rule names to provenance rule names
-    if len( realProvNames ) > 1 : # need to branch
-      if DEBUG :
-        print "realProvNames = " + str( realProvNames )
-        print "name          = " + str( name )
-        print "record        = " + str( record )
-        print "goalAtts      = " + str( goalAtts )
-      sys.exit( "ERROR: more than one provenance rule for " +str(name) + " : " + str(realProvNames) )
+    if len( realProvNames ) >= 1 :
+      allBindings = []  # list of tuples of the form ( provRuleName, provRuleBindings )
+                        # one tuple per prov rule for this rule name
+      for realName in realProvNames :
+        # collect the binding list
+        allBindings.append( ( realName, self.getBindings( realName, record, cursor ) )  )
+
+      return allBindings
+
     elif len( realProvNames ) < 1 : # sanity check
       sys.exit( "ERROR: no provenance rule for " +str(name) )
-    else : # one rule definition
-      realProvName = realProvNames[0]
+
+
+  ##################
+  #  GET BINDINGS  #
+  ##################
+  def getBindings( self, ruleName, record, cursor ) :
+    bindings = []
 
     # get all goal bindings
-    cursor.execute( "SELECT attName,attID FROM Rule,GoalAtt WHERE Rule.goalName=='" + realProvName + "' AND Rule.rid==GoalAtt.rid" )
+    cursor.execute( "SELECT attName,attID FROM Rule,GoalAtt WHERE Rule.goalName=='" + ruleName + "' AND Rule.rid==GoalAtt.rid" )
     provAtts = cursor.fetchall()
     provAtts = tools.toAscii_multiList( provAtts )
 
     if DEBUG :
-      print "goalAtts = " + str( goalAtts )
       print "provAtts = " + str( provAtts )
       print "record   = " + str( record )
 
     # collect atts in order of appearance in the prov rule head
     attList = []
     for att in provAtts :
-       attName = att[0]
-       attList.append( attName )
+      attName = att[0]
+      attList.append( attName )
 
     # assign atts to record values in left-to-right order.
     bindings = []
@@ -270,8 +334,42 @@ class DerivTree( ) :
     if DEBUG :
       print "bindings = " + str(bindings)
 
-    return ( realProvName, bindings )
+    return bindings
 
+  # ------------------------------------------ #
+  ##########################
+  #  CHECK RULE RECURSION  #
+  ##########################
+  # check if the current rule possesses any recursive definitions.
+  def checkRuleRecursion( self, rname, allRuleSubs ) :
+    for d in allRuleSubs :
+      for key in d :
+        if key == rname :
+          return True
+    return False
+
+
+  # ------------------------------------------ #
+  ###################
+  #  COLLAPSE RULE  #
+  ###################
+  # remove recursion tuples
+  def collapseRule( self, rname, allRuleInfo ) :
+    newAllRuleInfo = []
+    for subarr in allRuleInfo :
+      newsubarr = []
+      for tup in subarr :
+        if tup[1] == rname :
+          pass
+        else :
+          newsubarr.append( tup )
+      newAllRuleInfo.append( newsubarr )
+
+    return newAllRuleInfo
+
+
+  # ------------------------------------------ #
+  # ------------------------------------------ #
 
   ####################
   #  GET GOAL RULES  #
@@ -325,6 +423,17 @@ class DerivTree( ) :
 
     return allSubs
 
+
+  ###################
+  #  SET THIS ROOT  #
+  ###################
+  def setThisRoot( self, node ) :
+    # -------------------------------- #
+    # set the root of this derivation tree
+    if node :
+      self.root = node
+    else :
+      sys.exit( "DerivTree root assignment failed : \nroot = " + str( self.root ) + "\nname = " + str( self.name ) + "\ntreeType = " + str( self.treeType ) + "\nisNeg = " + str( self.isNeg ) )
 
 #########
 #  EOF  #

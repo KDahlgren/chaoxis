@@ -63,7 +63,6 @@ class ProvTree() :
     nodes = []
     edges = []
     for tree in self.subtrees :
-      #edges.append( ( self.rootname, tree.root ) )
       topology   = tree.getTopology( )
       nodes.extend( topology[0] )
       edges.extend( topology[1] )

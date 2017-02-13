@@ -26,8 +26,8 @@ class FactNode( Node ) :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, name, isNeg, record , bindings ) :
-    Node.__init__( self, "fact", name, record, bindings )
+  def __init__( self, name, isNeg, record , bindings, cursor ) :
+    Node.__init__( self, "fact", name, record, bindings, cursor )
     self.isNeg    = isNeg
 
   ################

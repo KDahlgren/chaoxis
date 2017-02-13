@@ -34,21 +34,53 @@ class RuleNode( Node ) :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, name, ruleInfo, record , bindings ) :
-    Node.__init__( self, "rule", name, record, bindings )
+  def __init__( self, name, ruleInfo, record , bindings, cursor ) :
+    Node.__init__( self, "rule", name, record, bindings, cursor )
     self.ruleInfo = ruleInfo
+    self.schemaBindings = []
+    self.setBindings( bindings )
+    #sys.exit( "BREAKPOINT: schemaBindings = " + str(self.schemaBindings) )
+
+  ##################
+  #  SET BINDINGS  #
+  ##################
+  def setBindings( self, allBindings ) :
+    #sys.exit( "BREAKPOINT: \nschema = " + str(self.schema) + "\nallBindings = " + str(allBindings) )
+
+    print "self.schema = " + str(self.schema)
+    print "allBindings = " + str(allBindings)
+    thisSchema = self.schema
+    for attS in thisSchema :
+      print "attS = " + attS
+      for attTup in allBindings :
+        print "attTup = " + str(attTup)
+        attName = attTup[0]
+        attVal  = attTup[1]
+        if attName in attS :
+          self.schemaBindings.append( ( attS, attVal ) )
+
+    self.schemaBindings = self.deduplicate_bindings( self.schemaBindings )
+    #self.schemaBindings = list( set(self.schemaBindings) ) # ??? why needed ???
+    #if self.name.startswith( "log_prov" ) :
+    #  sys.exit( "BREAKPOINT: schemaBindings = " + str(self.schemaBindings) )
+
+
+  ##########################
+  #  DEDUPLICATE BINDINGS  #
+  ##########################
+  def deduplicate_bindings( self, schemaBinds ) :
+    cleanList = []
+    for bind in schemaBinds :
+      if not bind in cleanList :
+        cleanList.append( bind )
+    return cleanList
+
 
   #######################
   #  CLEAR DESCENDANTS  #
   #######################
   def clearDescendants( self ) :
     self.descendants = []
-
-  #####################
-  #  GET DESCENDANTS  #
-  #####################
-  def getDescendants( self ) :
-    return self.descendants
 
   ################
   #  PRINT TREE  #
@@ -70,12 +102,6 @@ class RuleNode( Node ) :
   def printNode( self ) :
     return "RULENODE: " + str( self.ruleInfo ) + "; \nbindings = " + str( self.bindings )
 
-  ########################
-  #  GET ORIG RULE DATA  #
-  ########################
-  def getRuleInfo( self ) :
-    return self.ruleInfo
-
   #####################
   #  SET DESCENDANTS  #
   #####################
@@ -88,6 +114,11 @@ class RuleNode( Node ) :
       isNeg   = sub[0]
       name    = sub[1]
       attList = sub[2]
+
+      # clean name if necessary
+      if "-makeunique-" in name :
+        n = name.split( "-makeunique-" )
+        name = n[0]
 
       if DEBUG :
         print "sub              = " + str(sub)
