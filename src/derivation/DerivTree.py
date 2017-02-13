@@ -90,38 +90,39 @@ class DerivTree( ) :
 
     # add node
     if self.root.treeType == "goal" :
-      #nodes.append( (self.root.treeType, self.root.getName()+str(self.root.record)) )
-      #nodes.append( (self.root.treeType, self.root.getName()+str(self.root.bindings)) )
-      #nodes.append( (self.root.treeType, self.root.name+str(cleanBinds_self)) )
-      nodes.append( (self.root.treeType, self.root.name+str(self.root.schemaBindings)) )
+      if self.root.isNeg :
+        nodes.append( (self.root.treeType, "notin "+self.root.name+str(self.root.schemaBindings)) )
+      else :
+        nodes.append( (self.root.treeType, self.root.name+str(self.root.schemaBindings)) )
     elif self.root.treeType == "rule" :
-      #nodes.append( (self.root.treeType, self.root.getName()+str(self.root.bindings) ) )
-      #nodes.append( (self.root.treeType, self.root.name+str(cleanBinds_self) ) )
       nodes.append( (self.root.treeType, self.root.name+str(self.root.schemaBindings) ) )
     elif self.root.treeType == "fact" :
-      #nodes.append( (self.root.treeType, self.root.getName()+str(self.root.bindings) ) )
-      #nodes.append( (self.root.treeType, self.root.name+str(cleanBinds_self) ) )
       nodes.append( (self.root.treeType, self.root.name+str(self.root.record) ) )
 
     # add edge
-    # edges between rules and facts added when considering rule descendants
+    # edges between rules and facts are added when considering rule descendants
     if not self.root.treeType == "fact" :
-      for d in self.root.descendants :
 
+      for d in self.root.descendants :
         # clean bindings for graph aesthetics
         cleanBinds      = self.cleanBindings( d.root.bindings )
 
         # case goal
         if self.root.treeType == "goal" :
-          #edges.append( ( (self.root.treeType, self.root.getName()+str(d.root.record)), (d.root.treeType, d.root.getName()+str(d.root.bindings)) ) )
-          #edges.append( ( (self.root.treeType, self.root.name+str(cleanBinds_self)), (d.root.treeType, d.root.name+str(cleanBinds)) ) )
-          edges.append( ( (self.root.treeType, self.root.name+str(self.root.schemaBindings)), (d.root.treeType, d.root.name+str(d.root.schemaBindings)) ) )
+          if self.root.isNeg :
+            edges.append( ( (self.root.treeType, "notin "+self.root.name+str(self.root.schemaBindings)), (d.root.treeType, d.root.name+str(d.root.schemaBindings)) ) )
+          else :
+            edges.append( ( (self.root.treeType, self.root.name+str(self.root.schemaBindings)), (d.root.treeType, d.root.name+str(d.root.schemaBindings)) ) )
 
         # case rule
         elif self.root.treeType == "rule" :
-          #edges.append( ( (self.root.treeType, self.root.name+str(cleanBinds_self)), (d.root.treeType, d.root.name+str(cleanBinds)) ) )
           if d.root.treeType == "fact" :
             edges.append( ( (self.root.treeType, self.root.name+str(self.root.schemaBindings)), (d.root.treeType, d.root.name+str(d.root.record)) ) )
+          elif d.root.treeType == "goal" :
+            if d.root.isNeg :
+              edges.append( ( (self.root.treeType, self.root.name+str(self.root.schemaBindings)), (d.root.treeType, "notin "+d.root.name+str(d.root.schemaBindings)) ) )
+            else :
+              edges.append( ( (self.root.treeType, self.root.name+str(self.root.schemaBindings)), (d.root.treeType, d.root.name+str(d.root.schemaBindings)) ) )
           else :
             edges.append( ( (self.root.treeType, self.root.name+str(self.root.schemaBindings)), (d.root.treeType, d.root.name+str(d.root.schemaBindings)) ) )
 
@@ -209,15 +210,15 @@ class DerivTree( ) :
   # rname = goal/rule name
   # arg   = [ { 'subgoalName' : ( isNeg bool, subgoalAtt [str] ) } ]
   # returns [ ( isNeg bool, subgoalName str, subgoalAtts [str] ) ]
-  def getRuleInfo( self, rname, cursor, allRuleSubs ) :
+  def getRuleInfo( self, rname, cursor, allRulesSubs ) :
     ruleInfo = []
 
     if DEBUG :
       print "... running getRuleInfo ..."
 
-    #sys.exit( "BREAKPOINT: allSubs = " + str(allRuleSubs) )
+    #sys.exit( "BREAKPOINT: allRulesSubs = " + str(allRulesSubs) )
 
-    for ruleDict in allRuleSubs :
+    for ruleDict in allRulesSubs :
       for sub in ruleDict :
         name    = sub
         ruleTup = ruleDict[ sub ]
@@ -383,6 +384,8 @@ class DerivTree( ) :
       print "... running getGoalRules ..."
       print "ruleIDs = " + str(ruleIDs)
 
+    ruleIDs = list( ruleIDs )
+
     allSubs = []
     # populate allSubs
     for i in ruleIDs :
@@ -396,17 +399,32 @@ class DerivTree( ) :
 
       print "info = " + str(info)
 
-      for arr in info :
-        name    = arr[0]
-        attid   = arr[1]
-        attName = arr[2]
+      for sub in info :
+        name    = sub[0]
+        attid   = sub[1]
+        attName = sub[2]
+
+        # get subgoal id
+        cursor.execute( "SELECT sid FROM Subgoals WHERE Subgoals.rid=='" + str(i) + "' AND Subgoals.subgoalName=='" + str(name) + "'" )
+        subid = cursor.fetchall()
+        subid = tools.toAscii_multiList( subid )
+        subid = subid[0][0]
 
         # get isNeg info
-        cursor.execute( "SELECT argName FROM Subgoals,SubgoalAddArgs WHERE Subgoals.rid=='" + str(i) + "' AND Subgoals.subgoalName=='" + str(name) + "' AND Subgoals.rid==SubgoalAddArgs.rid"  )
+        # clocks are maintained separately.
+        addInfo = []
+        cursor.execute( "SELECT argName FROM Subgoals,SubgoalAddArgs WHERE Subgoals.rid=='" + str(i) + "' AND Subgoals.subgoalName=='" + str(name) + "' AND Subgoals.rid==SubgoalAddArgs.rid AND Subgoals.sid=='" + str(subid) + "' AND Subgoals.sid==SubgoalAddArgs.sid"  )
         addInfo = cursor.fetchall()
         addInfo = tools.toAscii_multiList( addInfo )
 
-        isNeg = addInfo[0][0]
+        #if name == "missing_log" :
+        #  sys.exit( "BREAKPOINT: name = " + name + ", addInfo = " + str(addInfo) )
+        #sys.exit( "BREAKPOINT: name = " + name + ", addInfo = " + str(addInfo) )
+        isNeg = ''
+        if (len(addInfo) > 0 ) and not (addInfo[0][0] == ''):
+          for arr in addInfo :
+            print "arr = " + str(arr)
+            isNeg = arr[0][0] # assume one add arg per subgoal
 
         # populate currDict
         try :

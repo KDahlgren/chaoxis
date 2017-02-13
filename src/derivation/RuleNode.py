@@ -41,6 +41,7 @@ class RuleNode( Node ) :
     self.setBindings( bindings )
     #sys.exit( "BREAKPOINT: schemaBindings = " + str(self.schemaBindings) )
 
+
   ##################
   #  SET BINDINGS  #
   ##################
@@ -114,6 +115,8 @@ class RuleNode( Node ) :
       isNeg   = sub[0]
       name    = sub[1]
       attList = sub[2]
+
+      print "HERE isNeg = " +str(isNeg)
 
       # clean name if necessary
       if "-makeunique-" in name :
