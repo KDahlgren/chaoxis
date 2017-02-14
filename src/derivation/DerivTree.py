@@ -140,11 +140,14 @@ class DerivTree( ) :
   #########################
   #  GENERATE DERIV TREE  #
   #########################
-  # arg          := a list of subgoal dictionaries if creating new rules.
+  # allRulesSubs := a list of subgoal dictionaries if creating new rules.
   # goalBindings := dictionary matching atts to values according to goal bindings; None if goal
-  def generateDerivTree( self, name, treeType, isNeg, record, results, cursor, arg, goalBindings ) :
+  def generateDerivTree( self, name, treeType, isNeg, record, results, cursor, allRulesSubs, goalBindings ) :
     if DEBUG :
       print "... running generateDerivTree ..."
+
+    #if name == "log_prov" :
+    #  sys.exit( "BREAKPOINT: name = " + name )
 
     # -------------------------------- #
     # set root
@@ -158,7 +161,7 @@ class DerivTree( ) :
       goalInfo     = self.getGoalInfo( name, cursor )
       goalAtts     = goalInfo[0]
       goalRids     = goalInfo[1]
-      allRules     = self.getGoalRules( goalRids, cursor )
+      allRules     = self.getGoalRules( goalRids, cursor, name )
 
       # ========================================= #
       # initialize new node
@@ -173,6 +176,10 @@ class DerivTree( ) :
       # punt collapsing process to Goal setDescendants
       provRuleName = name + "_prov"
       node.clearDescendants() # needed explicitly for some reason? >.>
+
+      #if provRuleName == "missing_log_prov" :
+      #  sys.exit( "BREAKPOINT : allRules = " + str(allRules) )
+
       node.setDescendants( provRuleName, allRules, fullBindings, results, cursor )
 
       # ========================================= #
@@ -191,9 +198,9 @@ class DerivTree( ) :
 
     elif self.treeType == "rule" :
       if DEBUG_2 :
-        print "HIT RULE : " + str(name) + ", " + str(record) + ", " + str(arg)
+        print "HIT RULE : " + str(name) + ", " + str(record) + ", " + str(allRulesSubs)
         #sys.exit("HIT RULE : " + str(name) + ", " + str(record))
-      ruleInfo = self.getRuleInfo( name, cursor, arg )
+      ruleInfo = self.getRuleInfo( name, cursor, allRulesSubs )
 
       node     = RuleNode.RuleNode( name, ruleInfo, record, goalBindings, cursor )
       node.clearDescendants() # needed explicitly for some reason? >.>
@@ -207,11 +214,14 @@ class DerivTree( ) :
   ###################
   #  GET RULE INFO  #
   ###################
-  # rname = goal/rule name
+  # rname = rule head name
   # arg   = [ { 'subgoalName' : ( isNeg bool, subgoalAtt [str] ) } ]
   # returns [ ( isNeg bool, subgoalName str, subgoalAtts [str] ) ]
   def getRuleInfo( self, rname, cursor, allRulesSubs ) :
     ruleInfo = []
+
+    #if rname == "log_prov" :
+    #  sys.exit( "BREAKPOINT : \nrname = " + rname + "\nallRulesSubs = " + str(allRulesSubs) )
 
     if DEBUG :
       print "... running getRuleInfo ..."
@@ -229,7 +239,8 @@ class DerivTree( ) :
 
         ruleInfo.append( (isNeg, name, attList) )
 
-    #sys.exit( "BREAKPOINT: ruleInfo = " + str(ruleInfo) )
+    #if rname == "log_prov" :
+    #  sys.exit( "BREAKPOINT: ruleInfo = " + str(ruleInfo) )
     return ruleInfo
 
   # ------------------------------------------ #
@@ -376,10 +387,10 @@ class DerivTree( ) :
   #  GET GOAL RULES  #
   ####################
   # returns a list of dictionaries connecting rule subgoals with associated atts
-  # [ { 'subName0' : (isNegBool?, [subAtt0, ... , subattN]) }, 
+  # [ { ('subName0', random identifier) : (isNegBool?, [subAtt0, ... , subattN]) }, 
   #     ..., 
-  #   { 'subNameN' : (isNegBool?, [subAtt0, ... , subattN]) } ]
-  def getGoalRules( self, ruleIDs, cursor ) :
+  #   { ('subNameN', random identifier) : (isNegBool?, [subAtt0, ... , subattN]) } ]
+  def getGoalRules( self, ruleIDs, cursor, rname ) :
     if DEBUG :
       print "... running getGoalRules ..."
       print "ruleIDs = " + str(ruleIDs)
@@ -390,51 +401,128 @@ class DerivTree( ) :
     # populate allSubs
     for i in ruleIDs :
       currDict   = {}
-      currSubIDs = []
 
+      # ------------------------------------------ #
       # get all sub names and all sub atts per name
-      cursor.execute( "SELECT subgoalName,attID,attName FROM Subgoals,SubgoalAtt WHERE Subgoals.rid=='" + str(i) +  "' AND Subgoals.rid==SubgoalAtt.rid AND Subgoals.sid==SubgoalAtt.sid" )
-      info = cursor.fetchall()
-      info = tools.toAscii_multiList( info )
 
-      print "info = " + str(info)
+      #cursor.execute( "SELECT subgoalName,attID,attName FROM Subgoals,SubgoalAtt,SubgoalAddArgs WHERE Subgoals.rid=='" + str(i) +  "' AND Subgoals.rid==SubgoalAtt.rid AND Subgoals.sid==SubgoalAtt.sid" )
+      #allInfo = cursor.fetchall()
+      #allInfo = tools.toAscii_multiList( allInfo )
 
-      for sub in info :
-        name    = sub[0]
-        attid   = sub[1]
-        attName = sub[2]
+      cursor.execute( "SELECT sid FROM Subgoals WHERE Subgoals.rid=='" + str(i) +  "'" )
+      currSubIDs_all = cursor.fetchall()
+      currSubIDs_all = tools.toAscii_list( currSubIDs_all )
+      #sys.exit( "BREAKPOINT: currSubIDs_all = " + str(currSubIDs_all) )
+      print "currSubIDs_all = " + str(currSubIDs_all)
+
+      cursor.execute( "SELECT sid FROM SubgoalAddArgs WHERE SubgoalAddArgs.rid=='" + str(i) +  "'" )
+      currSubIDs_adds = cursor.fetchall()
+      currSubIDs_adds = tools.toAscii_list( currSubIDs_adds )
+      print "currSubIDs_adds = " + str(currSubIDs_adds)
+
+      temp = []
+      for ID in currSubIDs_all :
+        if not ID in currSubIDs_adds :
+          temp.append( ID )
+      currSubIDs_all = temp
+
+      if DEBUG :
+        print "currSubIDs_all = " + str( currSubIDs_all )
+
+      allInfo = []
+      for ID in currSubIDs_all :
+        cursor.execute( "SELECT subgoalName,attID,attName FROM Subgoals,SubgoalAtt WHERE Subgoals.rid=='" + str(i) +  "' AND Subgoals.sid=='" + str(ID) + "' AND Subgoals.rid==SubgoalAtt.rid AND Subgoals.sid==SubgoalAtt.sid" )
+        info = cursor.fetchall()
+        info = tools.toAscii_multiList( info )
+        allInfo.extend( info )
+
+      cursor.execute( "SELECT argName,subgoalName,attID,attName FROM Subgoals,SubgoalAtt,SubgoalAddArgs WHERE Subgoals.rid=='" + str(i) +  "' AND Subgoals.rid==SubgoalAtt.rid AND Subgoals.sid==SubgoalAtt.sid AND SubgoalAddArgs.rid==Subgoals.rid AND SubgoalAddArgs.sid==Subgoals.sid" )
+      argInfo = cursor.fetchall()
+      argInfo = tools.toAscii_multiList( argInfo )
+
+      #sys.exit( "BREAKPOINT: \nallInfo = " + str(allInfo) + "\nargInfo = " + str(argInfo) )
+
+      # ------------------------------------------ #
+
+      if DEBUG :
+        print "pre-merge allInfo = " + str(allInfo)
+
+      # --------------------------------- #
+      # merge lists
+      temp = []
+      for arr in allInfo :
+        t = [ '' ] + arr
+        temp.append( t )
+      allInfo = temp
+
+      temp_new = allInfo
+      arity = len( temp_new[0] )
+      for arr in argInfo :
+        if not arr in temp_new :
+          temp_new.append( arr )
+      allInfo = temp_new
+      # --------------------------------- #
+
+      if DEBUG :
+        print "post-merge allInfo = " + str(allInfo)
+        print "argInfo            = " + str(argInfo)
+
+      #if rname == "missing_log" :
+      #  sys.exit( "BREAKPOINT: allInfo = " + str(allInfo) )
+      subid     = None
+      prevattid = None
+      for subTup in allInfo :
+        isNeg   = subTup[0]
+        name    = subTup[1]
+        attid   = subTup[2]
+        attName = subTup[3]
+        #print "******************"
+        #print "HERE! isNeg = "  + str(isNeg) + "\nname = " + name + "\nattid = " + str(attid) + "\nattName = " + str(attName) 
 
         # get subgoal id
-        cursor.execute( "SELECT sid FROM Subgoals WHERE Subgoals.rid=='" + str(i) + "' AND Subgoals.subgoalName=='" + str(name) + "'" )
-        subid = cursor.fetchall()
-        subid = tools.toAscii_multiList( subid )
-        subid = subid[0][0]
+        #cursor.execute( "SELECT sid FROM Subgoals WHERE Subgoals.rid=='" + str(i) + "' AND Subgoals.subgoalName=='" + str(name) + "'" )
+        #subid = cursor.fetchall()
+        #subid = tools.toAscii_multiList( subid )
+        #subid = subid[0][0]
 
         # get isNeg info
         # clocks are maintained separately.
-        addInfo = []
-        cursor.execute( "SELECT argName FROM Subgoals,SubgoalAddArgs WHERE Subgoals.rid=='" + str(i) + "' AND Subgoals.subgoalName=='" + str(name) + "' AND Subgoals.rid==SubgoalAddArgs.rid AND Subgoals.sid=='" + str(subid) + "' AND Subgoals.sid==SubgoalAddArgs.sid"  )
-        addInfo = cursor.fetchall()
-        addInfo = tools.toAscii_multiList( addInfo )
+        #addInfo = []
+        #cursor.execute( "SELECT argName FROM Subgoals,SubgoalAddArgs WHERE Subgoals.rid=='" + str(i) + "' AND Subgoals.subgoalName=='" + str(name) + "' AND Subgoals.rid==SubgoalAddArgs.rid AND Subgoals.sid=='" + str(subid) + "' AND Subgoals.sid==SubgoalAddArgs.sid"  )
+        #addInfo = cursor.fetchall()
+        #addInfo = tools.toAscii_multiList( addInfo )
 
-        #if name == "missing_log" :
+        #if rname == "missing_log" :
         #  sys.exit( "BREAKPOINT: name = " + name + ", addInfo = " + str(addInfo) )
         #sys.exit( "BREAKPOINT: name = " + name + ", addInfo = " + str(addInfo) )
-        isNeg = ''
-        if (len(addInfo) > 0 ) and not (addInfo[0][0] == ''):
-          for arr in addInfo :
-            print "arr = " + str(arr)
-            isNeg = arr[0][0] # assume one add arg per subgoal
+        #isNeg = ''
+        #if (len(addInfo) > 0 ) and not (addInfo[0][0] == ''):
+        #  for arr in addInfo :
+        #    print "arr = " + str(arr)
+        #    isNeg = arr[0][0] # assume one add arg per subgoal
 
         # populate currDict
-        try :
-          currDict[name][1].append( attName )
+        try : # check if already exists in dict
+          currDict[ (name,subid) ][1].append( attName )
+          prevattid = attid
         except :
-          currDict[name] = ( isNeg, [] )
-          currDict[name][1].append( attName )
+          if attid <= prevattid :
+            subid = tools.getID()
+
+          key = ( name, subid )
+          currDict[ key ] = ( isNeg, [] ) # add isNeg first, then an empty list
+          currDict[ key ][1].append( attName ) # append atts to the empty list
+
+          if rname == "missing_log" :
+            print "isNeg   = " + str(isNeg)
+            print "name    = " + str(name)
+            print "attName = " + str(attName)
 
       subInfo = currDict
       allSubs.append( subInfo )
+
+    #if rname == "log" :
+    #  sys.exit( "BREAKPOINT: allSubs = " + str(allSubs) )
 
     if DEBUG :
       print "allSubs = " + str(allSubs)

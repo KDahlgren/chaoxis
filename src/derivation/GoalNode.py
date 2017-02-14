@@ -77,6 +77,9 @@ class GoalNode( Node ) :
       print "   fullBindings = " + str( fullBindings )
       print "   results      = " + str( results )
 
+    #if provRuleName == "log_prov" :
+    #  sys.exit( "BREAKPOINT: allRulesSubs = " + str(allRulesSubs) )
+
     if len( fullBindings ) < 1 :
       sys.exit( "ERROR: no bindings for provenance rule " + provRuleName + ", given allRuleSubs = " + str( allRuleSubs ) )
     elif len( fullBindings ) > 1 :
@@ -140,20 +143,31 @@ class GoalNode( Node ) :
   ##################
   # allRulesSubs := [ { ruleName : ( isNeg, [ (att,valbinding) ] ) } ]
   def setOneDesc( self, provRuleName, allRulesSubs, results, cursor ) :
-    if not len( allRulesSubs ) == 1 :
-      sys.exit( "ERROR: more than one dictionary of subgoal for rule " + provRuleName + "\nallRulesSubs = " + str(allRulesSubs) )
 
-    for subDict in allRulesSubs :
+    #if provRuleName == "missing_log_prov" : 
+    #  sys.exit( "BREAKPOINT : provRuleName = " + str(provRuleName) )
+
+    #if provRuleName == "log_prov" : 
+    #  sys.exit( "BREAKPOINT : provRuleName = " + str(provRuleName) + "\nallRulesSubs = " + str(allRulesSubs) )
+
+    # sanity check
+    if len( allRulesSubs ) > 1 :
+      sys.exit( "ERROR: more than one dictionary of subgoals for rule " + provRuleName + "\nallRulesSubs = " + str(allRulesSubs) )
+    elif len( allRulesSubs ) < 1 or ( {} in allRulesSubs ):
+      sys.exit( "ERROR: zero subgoal dictionaries for rule " + provRuleName + "\nallRulesSubs = " + str(allRulesSubs) )
+
+    else :
+      for subDict in allRulesSubs :
+        if DEBUG :
+          print "provRuleName = " + str( provRuleName )
+          print "GOALNODE : " + provRuleName + " processing rule expression from " + str(subDict)
+        newRuleNode = DerivTree.DerivTree( provRuleName, "rule", False, self.record, results, cursor, allRulesSubs, self.bindings )
+        self.descendants.append( newRuleNode )
+
       if DEBUG :
-        print "provRuleName = " + str( provRuleName )
-        print "GOALNODE : " + provRuleName + " processing rule expression from " + str(subDict)
-      newRuleNode = DerivTree.DerivTree( provRuleName, "rule", False, self.record, results, cursor, allRulesSubs, self.bindings )
-      self.descendants.append( newRuleNode )
-
-    if DEBUG :
-      print "provRuleName = " + str(provRuleName)
-      print "GOALNODE : " + provRuleName + " has " + str(len(self.descendants)) + " descendants."
-      print ">>> ... done setting descendants ... <<<"
+        print "provRuleName = " + str(provRuleName)
+        print "GOALNODE : " + provRuleName + " has " + str(len(self.descendants)) + " descendants."
+        print ">>> ... done setting descendants ... <<<"
 
 
   ###################
@@ -168,6 +182,9 @@ class GoalNode( Node ) :
     if DEBUG :
       print "allRulesSubs = " + str( allRulesSubs)
 
+    #if rname == "log" :
+    #  sys.exit( "BREAKPOINT1: rname = " + rname + ", allRulesSubs = " + str(allRulesSubs) )
+
     # create a single list of bindings
     bindingsComplete = []
     for tup in fullBindings :
@@ -180,6 +197,7 @@ class GoalNode( Node ) :
     newSubs = []
     if self.checkRuleRecursion( rname, allRulesSubs ) :
       for ruleSubs in allRulesSubs :
+        #sys.exit( "BREAKPOINT ruleSubs = " + str(ruleSubs) )
         newDict = {}
         for sub in ruleSubs :
           if sub == rname :
@@ -194,15 +212,26 @@ class GoalNode( Node ) :
     for d in newSubs :
       print "d = " + str(d)
       for key in d :
-        if key in newDict :
-          newkey = key+"-makeunique-"+tools.getID()
-          while newkey in newDict :
-            newkey = key+"-"+tools.getID()
-          newDict[newkey] = d[key] 
-        else :
-          newDict[key] = d[key]
+        if type(key) is tuple :
+          if key in newDict :
+            newkey = key[0]+"-makeunique-"+tools.getID()
+            while newkey in newDict :
+              newkey = key[0]+"-"+tools.getID()
+            newDict[newkey] = d[key] 
+          else :
+            newDict[key] = d[key]
+        elif type(key) is str :
+          if key in newDict :
+            newkey = key+"-makeunique-"+tools.getID()
+            while newkey in newDict :
+              newkey = key+"-"+tools.getID()
+            newDict[newkey] = d[key] 
+          else :
+            newDict[key] = d[key]
 
-    #sys.exit( "BREAKPOINT: \nbindingsComplete = " + str(bindingsComplete) + "\nnewSubs = " + str(newSubs) )
+    #if rname == "log" :
+    #  sys.exit( "BREAKPOINT: newDict = " + str(newDict) )
+
     return ( [ ( rname+"_prov", bindingsComplete ) ], [ newDict ] )
 
 
@@ -213,7 +242,7 @@ class GoalNode( Node ) :
   def checkRuleRecursion( self, rname, allRulesSubs ) :
     for d in allRulesSubs :
       for key in d :
-        if key == rname :
+        if key[0] == rname :
           return True
     return False
 

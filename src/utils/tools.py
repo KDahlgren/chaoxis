@@ -309,7 +309,7 @@ def attSearchPass2( pydatalogRule ) :
 #############
 def isFact( goalName, cursor ) :
     attIDsName = None
-    cursor.execute( "SELECT attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name == '" + str(goalName) + "'" )
+    cursor.execute( "SELECT attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(goalName) + "'" )
     attIDsNames = cursor.fetchall()
     attIDsNames = toAscii_multiList( attIDsNames )
 

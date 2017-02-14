@@ -103,8 +103,12 @@ def regProv( regRule, nameAppend, cursor ) :
   if PROVENANCEREWRITE_DEBUG :
     print " ... running regProv ..."
 
+  #sys.exit( "BREAKPOINT: regRule = " + str(regRule.getSubgoalListStr()) )
+
   # parse rule
   parsedRule = dedalusParser.parse( regRule.display() )
+
+  #sys.exit( "BREAKPOINT: regRule.display() = " + str( regRule.display() ) + "\nparsedRule = " + str(parsedRule) )
 
   # generate random ID for new rule
   rid = tools.getID()
@@ -127,6 +131,8 @@ def regProv( regRule, nameAppend, cursor ) :
 
   # get subgoal array
   subgoalArray = extractors.extractSubgoalList( parsedRule[1] )
+
+  #sys.exit( "BREAKPOINT: subgoalArray = " + str(subgoalArray) )
 
   # check for bugs
   if PROVENANCEREWRITE_DEBUG :
@@ -206,6 +212,7 @@ def regProv( regRule, nameAppend, cursor ) :
   firingsRule.setGoalInfo(     goalName, goalTimeArg, rewrittenFlag  )
   firingsRule.setGoalAttList(  goalAttList                           )
 
+  #sys.exit( "BREAKPOINT: firingsRule = " + str(firingsRule.display()) )
   return firingsRule
 
 

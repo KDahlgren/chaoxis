@@ -65,7 +65,8 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   # save subgoal attributes
   cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
   rawMaxID = cursor.fetchone()
-  newAttID = int(rawMaxID[0]) + 1
+  #newAttID = int(rawMaxID[0]) + 1
+  newAttID = 0
   for attName in subgoalAttList :
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
@@ -125,7 +126,8 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   # save subgoal attributes
   cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
   rawMaxID = cursor.fetchone()
-  newAttID = int(rawMaxID[0]) + 1
+  #newAttID = int(rawMaxID[0]) + 1
+  newAttID = 0
   for attName in subgoalAttList :
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
@@ -180,7 +182,8 @@ def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAt
   # save subgoal attributes
   cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
   rawMaxID = cursor.fetchone()
-  newAttID = int(rawMaxID[0]) + 1
+  #newAttID = int(rawMaxID[0]) + 1
+  newAttID = 0
   for attName in subgoalAttList :
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName

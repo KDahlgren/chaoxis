@@ -165,6 +165,8 @@ def dedToIR( filename, cursor ) :
         newRule.setSingleSubgoalAttList( sid, subgoalAttList )
         newRule.setSingleSubgoalAddArgs( sid, subgoalAddArgs )
 
+      #sys.exit( "BREAKPOINT: newRule.getSubgoalListStr() = " + str( newRule.getSubgoalListStr() ) )
+
       # check for bugs
       if DEDT_DEBUG :
         print "newRule.getSubgoalList = " + str( newRule.getSubgoalListStr() )
@@ -272,7 +274,7 @@ def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Equation  (rid text, eid text, eqn text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime int, delivTime int)''')
-  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique
+  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock rows unique
 
 
 ##############

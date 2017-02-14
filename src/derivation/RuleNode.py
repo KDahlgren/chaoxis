@@ -111,31 +111,47 @@ class RuleNode( Node ) :
       print "self.ruleInfo = " + str(self.ruleInfo)
       #sys.exit( "self.ruleInfo = " + str(self.ruleInfo) )
 
+    #if self.name == "log_prov" :
+    #  sys.exit( "BREAKPOINT: ruleInfo = " + str(self.ruleInfo) )
+
     for sub in self.ruleInfo :
       isNeg   = sub[0]
-      name    = sub[1]
+      if type( sub[1] ) is tuple :
+        subname    = sub[1][0]
+      else :
+        subname = sub[1]
       attList = sub[2]
 
-      print "HERE isNeg = " +str(isNeg)
-
-      # clean name if necessary
-      if "-makeunique-" in name :
-        n = name.split( "-makeunique-" )
-        name = n[0]
-
       if DEBUG :
+        print "******** START DEBUG ********"
         print "sub              = " + str(sub)
         print "self.descendants = " + str(self.descendants)
+        print "isNeg   = " + str(isNeg )
+        print "subname = " + str(subname )
+        print "attList = " + str(attList )
+        print "******** END   DEBUG ********"
+
+      # clean name if necessary
+      if "-makeunique-" in subname :
+        n = subname.split( "-makeunique-" )
+        subname = n[0]
+
 
       # fact descendants
-      if tools.isFact( name, cursor ) :
-        newFactNode = DerivTree.DerivTree( name, "fact", isNeg, self.record, results, cursor, attList, self.bindings )
+      if tools.isFact( subname, cursor ) :
+        newFactNode = DerivTree.DerivTree( subname, "fact", isNeg, self.record, results, cursor, attList, self.bindings )
         self.descendants.append( newFactNode )
 
       # goal descendants
       else :
-        newGoalNode = DerivTree.DerivTree( name, "goal", isNeg, self.record, results, cursor, attList, self.bindings )
-        self.descendants.append( newGoalNode )
+        #if self.name == "log_prov" :
+        #  sys.exit( "BREAKPOINT : setting new goal for Rule " + self.name + " : isNeg = " + str(isNeg) + ", name = " + name + ", attList = " + str(attList)   )
+        if self.name.startswith( subname ) :
+          #sys.exit( "BREAKPOINT : subname = " + subname )
+          pass
+        else :
+          newGoalNode = DerivTree.DerivTree( subname, "goal", isNeg, self.record, results, cursor, attList, self.bindings )
+          self.descendants.append( newGoalNode )
 
     if DEBUG :
       print ">>> DEBUGGING RULE INFO <<<"

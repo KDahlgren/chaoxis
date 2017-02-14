@@ -141,7 +141,9 @@ def parse( dedLine ) :
 
         if DEDALUSPARSER_DEBUG :
           print "*** finalParsed = " + str(finalParsed)
+
         return ("rule", finalParsed)
+
       except :
         sys.exit( "\nERROR: Invalid syntax in rule line : \n      " + dedLine + "\n     Note rule attributes cannot have quotes.\n")
 
