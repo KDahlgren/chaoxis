@@ -43,6 +43,13 @@ class RuleNode( Node ) :
 
 
   ##################
+  #  NODE DISPLAY  #
+  ##################
+  def nodeDisplay( self ) :
+    return None
+
+
+  ##################
   #  SET BINDINGS  #
   ##################
   def setBindings( self, allBindings ) :
@@ -150,8 +157,9 @@ class RuleNode( Node ) :
           #sys.exit( "BREAKPOINT : subname = " + subname )
           pass
         else :
-          newGoalNode = DerivTree.DerivTree( subname, "goal", isNeg, self.record, results, cursor, attList, self.bindings )
-          self.descendants.append( newGoalNode )
+          if not isNeg : # truncates neg nodes TBC
+            newGoalNode = DerivTree.DerivTree( subname, "goal", isNeg, self.record, results, cursor, attList, self.bindings )
+            self.descendants.append( newGoalNode )
 
     if DEBUG :
       print ">>> DEBUGGING RULE INFO <<<"

@@ -57,6 +57,13 @@ class GoalNode( Node ) :
   def printNode( self ) :
     return "GOAL NODE: \nname = " + str( self.name ) + " ; \nisNeg = " + str( self.isNeg ) + ";\nbindings = " + str(self.bindings)
 
+
+  ##################
+  #  NODE DISPLAY  #
+  ##################
+  def nodeDisplay( self ) :
+    return None
+
   #######################
   #  CLEAR DESCENDANTS  #
   #######################

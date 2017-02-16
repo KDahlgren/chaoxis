@@ -30,6 +30,14 @@ class FactNode( Node ) :
     Node.__init__( self, "fact", name, record, bindings, cursor )
     self.isNeg    = isNeg
 
+
+  ##################
+  #  NODE DISPLAY  #
+  ##################
+  def nodeDisplay( self ) :
+    return None
+
+
   ################
   #  PRINT TREE  #
   ################
