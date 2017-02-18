@@ -6,17 +6,16 @@
 #  IMPORTS  #
 #############
 # standard python packages
-import os, sys
+import inspect, os, sys
 
-# import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/.." )
-sys.path.append( packagePath )
-import DerivTree
+import DerivTree, provTools, GoalNode, FactNode
+
+packagePath1  = os.path.abspath( __file__ + "/.." )
+sys.path.append( packagePath1 )
 from Node import Node
 
-packagePath1  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath1 )
-
+packagePath2  = os.path.abspath( __file__ + "/../.." )
+sys.path.append( packagePath2 )
 from utils import tools
 
 # **************************************** #
@@ -25,153 +24,130 @@ DEBUG = True
 
 class RuleNode( Node ) :
 
+  # --------------------------------- #
+
   #####################
   #  SPECIAL ATTRIBS  #
   #####################
-  ruleInfo    = None   # dictionary of all data related to the rule
   descendants = []
+
+  # the rule identifier (rid/RID) of this instance of the rule.
+  thisProvRID  = None
+  thisProvName = None
+
+  # the string representation of the original rule (not the provenance version)
+  thisFullRuleStr = None
+
+  # --------------------------------- #
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, name, ruleInfo, record , bindings, cursor ) :
-    Node.__init__( self, "rule", name, record, bindings, cursor )
-    self.ruleInfo = ruleInfo
-    self.schemaBindings = []
-    self.setBindings( bindings )
-    #sys.exit( "BREAKPOINT: schemaBindings = " + str(self.schemaBindings) )
+  def __init__( self, name, record, results, cursor ) :
+    # NODE CONSTRUCTOR: treeType, name, isNeg, record, program results, db cursor
+    Node.__init__( self, "rule", name, False, record, results, cursor )
 
+    self.descendants = [] # needed for some reason??? <.<
 
-  ##################
-  #  NODE DISPLAY  #
-  ##################
-  def nodeDisplay( self ) :
-    return None
+    if DEBUG :
+      print "*************************************"
+      print "    RULE NODE INIT DATA"
+      print "  name   = " + str( name )
+      print "  record = " + str( record )
+      print "*************************************"
 
+    prov_rid_info = provTools.get_prov_rid_info( self.name, self.record, self.results, self.cursor )
+    #sys.exit( "BREKAPOINT : provRID = " + str(self.provRID) )
+    self.thisProvRID  = prov_rid_info[0]
+    self.thisProvName = prov_rid_info[1]
 
-  ##################
-  #  SET BINDINGS  #
-  ##################
-  def setBindings( self, allBindings ) :
-    #sys.exit( "BREAKPOINT: \nschema = " + str(self.schema) + "\nallBindings = " + str(allBindings) )
+    self.setDescendants( )
 
-    print "self.schema = " + str(self.schema)
-    print "allBindings = " + str(allBindings)
-    thisSchema = self.schema
-    for attS in thisSchema :
-      print "attS = " + attS
-      for attTup in allBindings :
-        print "attTup = " + str(attTup)
-        attName = attTup[0]
-        attVal  = attTup[1]
-        if attName in attS :
-          self.schemaBindings.append( ( attS, attVal ) )
+    if DEBUG :
+      print "RULE NODE " + str( self.name ) + str(self.record) + " has " + str( len( self.descendants ) ) + " descendants.>"
+      for d in self.descendants :
+        print "   d = " + str( d.root )
 
-    self.schemaBindings = self.deduplicate_bindings( self.schemaBindings )
-    #self.schemaBindings = list( set(self.schemaBindings) ) # ??? why needed ???
-    #if self.name.startswith( "log_prov" ) :
-    #  sys.exit( "BREAKPOINT: schemaBindings = " + str(self.schemaBindings) )
+  #############
+  #  __STR__  #
+  #############
+  # the string representation of a RuleNode
+  def __str__( self ) :
 
+    # get original rule name
+    tmp = self.thisProvName.split( "_prov" )
+    origRuleName = tmp[0]
+    #self.thisFullRuleStr = provTools.getFullRuleStr( thisProvRID, origRuleName )
 
-  ##########################
-  #  DEDUPLICATE BINDINGS  #
-  ##########################
-  def deduplicate_bindings( self, schemaBinds ) :
-    cleanList = []
-    for bind in schemaBinds :
-      if not bind in cleanList :
-        cleanList.append( bind )
-    return cleanList
+    #return self.thisFullRuleStr
+    return "rule-> "+ origRuleName + "(" + str(self.record) + ")"
 
-
-  #######################
-  #  CLEAR DESCENDANTS  #
-  #######################
-  def clearDescendants( self ) :
-    self.descendants = []
-
-  ################
-  #  PRINT TREE  #
-  ################
-  def printTree( self ) :
-    print "********************************"
-    print "           RULE NODE"
-    print "********************************"
-    print "ruleInfo :" + str( self.ruleInfo )
-    print "record   :" + str( self.record   )
-    print "bindings :" + str( self.bindings )
-    print "[ DESCENDANTS ]"
-    for d in self.descendants :
-      d.printDerivTree()
-
-  ################
-  #  PRINT NODE  #
-  ################
-  def printNode( self ) :
-    return "RULENODE: " + str( self.ruleInfo ) + "; \nbindings = " + str( self.bindings )
 
   #####################
   #  SET DESCENDANTS  #
   #####################
-  def setDescendants( self, results, cursor ) :
-    if DEBUG :
-      print "self.ruleInfo = " + str(self.ruleInfo)
-      #sys.exit( "self.ruleInfo = " + str(self.ruleInfo) )
+  # rule nodes have one or more descendants.
+  # all descendants are goal nodes.
+  def setDescendants( self ) :
 
-    #if self.name == "log_prov" :
-    #  sys.exit( "BREAKPOINT: ruleInfo = " + str(self.ruleInfo) )
+    goalAttMap = provTools.getGoalAttMap( self.thisProvRID, self.thisProvName, self.record, self.results, self.cursor )
+    #sys.exit( "BREAKPOINT2 : goalAttMap = " + str(goalAttMap) )
+    subgoals   = provTools.getSubgoals( self.thisProvRID, self.cursor )
+    #sys.exit( "BREAKPOINT2 : subgoals = " + str(subgoals) )
 
-    for sub in self.ruleInfo :
-      isNeg   = sub[0]
-      if type( sub[1] ) is tuple :
-        subname    = sub[1][0]
-      else :
-        subname = sub[1]
+    collectedSubMaps = []
+    for sub in subgoals :
+      subName = sub[0]
+      isNeg   = sub[1]
       attList = sub[2]
 
-      if DEBUG :
-        print "******** START DEBUG ********"
-        print "sub              = " + str(sub)
-        print "self.descendants = " + str(self.descendants)
-        print "isNeg   = " + str(isNeg )
-        print "subname = " + str(subname )
-        print "attList = " + str(attList )
-        print "******** END   DEBUG ********"
+      # get sub att map
+      subAttMap = provTools.getSubAttMap( subName, attList, goalAttMap )
+      collectedSubMaps.append( (subName, isNeg, subAttMap) )
 
-      # clean name if necessary
-      if "-makeunique-" in subname :
-        n = subname.split( "-makeunique-" )
-        subname = n[0]
+    #if self.thisProvName.startswith( "post_prov" ) :
+    #  tools.bp( __name__, inspect.stack()[0][3], "collectedSubMaps = " + str(collectedSubMaps) )
 
+    if not provTools.checkAttValsPerRule( collectedSubMaps ) : # sanity check
+      sys.exit( "**** FATAL ERROR ****\nAttribute mappings across the subgoals in a rule do not match up.\nsubgoal value maps:\n" + str(collectedSubMaps) )
 
-      # fact descendants
-      if tools.isFact( subname, cursor ) :
-        newFactNode = DerivTree.DerivTree( subname, "fact", isNeg, self.record, results, cursor, attList, self.bindings )
-        self.descendants.append( newFactNode )
+    else :
+      for subMap in collectedSubMaps :
+        subName       = subMap[0]
 
-      # goal descendants
-      else :
-        #if self.name == "log_prov" :
-        #  sys.exit( "BREAKPOINT : setting new goal for Rule " + self.name + " : isNeg = " + str(isNeg) + ", name = " + name + ", attList = " + str(attList)   )
-        if self.name.startswith( subname ) :
-          #sys.exit( "BREAKPOINT : subname = " + subname )
-          pass
+        # handle isNeg
+        isNeg_str     = subMap[1]
+        if isNeg_str == "notin" :
+          isNeg = True
         else :
-          if not isNeg : # truncates neg nodes TBC
-            newGoalNode = DerivTree.DerivTree( subname, "goal", isNeg, self.record, results, cursor, attList, self.bindings )
-            self.descendants.append( newGoalNode )
+          isNeg = False
+
+        subAttMapping = subMap[2]
+        firing  = provTools.getFiring( subAttMapping )
+
+        #if subName == "missing_log" :
+        #  sys.exit( "BREAKPOINT " + __name__+ " : subName = " + subName + ", isNeg = " + str(isNeg) )
+
+        self.spawnNode( subName, isNeg, firing )
+
+  ################
+  #  SPAWN NODE  #
+  ################
+  def spawnNode( self, subName, isNeg, firing ) :
 
     if DEBUG :
-      print ">>> DEBUGGING RULE INFO <<<"
-      print "RULE : name = " + self.name + ", record = " + str(self.record)
-      print "self.descendants = " + str(self.descendants)
-      descList = self.descendants
-      for desc in descList :
-        print "treeType = " + desc.root.treeType
-        print desc.root.printNode()
-      print "********************************"
+      print "++++++++++++++++++++++++++++++++++++++++++"
+      print "        CREATING SPAWN NODE"
+      print "self.name     = " + str( self.name )
+      print "self.treeType = " + str( self.treeType )
+      print "self.record   = " + str( self.record )
+      print "subName       = " + str( subName )
+      print "isNeg         = " + str( isNeg )
+      print "firing        = " + str( firing )
+      print "++++++++++++++++++++++++++++++++++++++++++"
 
-    #sys.exit( "BREAKPOINT" )
+    self.descendants.append( DerivTree.DerivTree( subName, "goal", isNeg, firing, self.results, self.cursor ) )
+
 
 #########
 #  EOF  #

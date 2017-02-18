@@ -22,6 +22,12 @@ import dumpers
 TOOLS_DEBUG = False
 
 
+#####################
+#  BREAKPOINT (bp)  #
+#####################
+def bp( filename, funcname, msg ) :
+  sys.exit( "BREAKPOINT in file " + filename + " at function " + funcname + " :\n>>> " + msg )
+
 ############
 #  GET ID  #
 ############

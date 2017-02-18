@@ -55,7 +55,7 @@ Python Packages (not automatically installed with pyLDFI) :
   * [pyparsing](http://pyparsing.wikispaces.com/Download+and+Installation)
   * [sqlite3](https://docs.python.org/2/library/sqlite3.html)
   * [pyDatalog](https://sites.google.com/site/pydatalog/installation)
-  * [graphviz](https://pypi.python.org/pypi/graphviz)
+  * [pyDot](https://pypi.python.org/pypi/pydot)
 
 Other Tools :
   * [cmake](http://brewformulas.org/Cmake)
