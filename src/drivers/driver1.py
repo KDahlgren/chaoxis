@@ -130,6 +130,22 @@ def driver() :
     else :
       sys.exit( "ERROR: No path to c4 results file.\nAborting..." ) # sanity check
 
+
+  # -------------------------------------------- #
+  # graphs to CNF
+  # magic code here...
+  # fmla = //.convertToCNF( provTreeComplete )
+
+  # -------------------------------------------- #
+  # solve CNF
+  # magic code here...
+  # solns = //.solveCNF( fmla )
+
+  # -------------------------------------------- #
+  # new datalog prog
+  # magic code here...
+  # newProg = //.generateNewClock( solns )
+
   # -------------------------------------------- #
   # cleanUp saved db stuff
   dedt.cleanUp( irCursor, saveDB )
