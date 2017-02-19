@@ -7,11 +7,11 @@ src/evaluators/programFiles/*.py
 
 save_data/*
 save_data/c4Output/*
-save_data/graphvizOutput/*
+save_data/graphOutput/*
 
 !save_data/README.md
 !save_data/c4Output/README.md
-!save_data/graphvizOutput/
+!save_data/graphOutput/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
