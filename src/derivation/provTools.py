@@ -18,6 +18,49 @@ DEBUG = True
 C4_RESULTS_PATH = os.path.abspath( __file__ + "/../../../save_data/c4Output/c4dump.txt" )
 
 
+#########################
+#  GET PARTIAL MATCHES  #
+#########################
+# get the set of tuples from the 'name' relation
+# satisfying the wildcard.
+def getPartialMatches( name, record, results ) :
+  partialMatches = []
+
+  # get results for this goal name
+  res = results[ name ]
+
+  # iterate over all relation tuples in results
+  for tup in res :
+
+    yesValidPatrialMatch = True # be optimisitc! ^.^
+
+    for i in range(0,len(tup)) :
+      currTupData = tup[i]
+      currRecData = record[i]
+
+      # (explicitly defining cases for clarity)
+      # case match
+      if currTupData == currRecData :
+        pass
+
+      # case wildcard in record
+      elif currRecData == "__WILDCARD__" :
+        pass
+
+      # case invalidating partial match
+      elif (not currTupData == currRecData) and (not currRecData == "__WILDCARD__"):
+        yesValidPatrialMatch = False
+
+      # something weird happened. maybe someone tried to change the __WILDCARD__ constant...
+      else :
+        sys.exit( "********************\n********************\nFATAL ERROR in file " + __name__ + " in function " + inspect.stack()[0][3] + " :\n>>> " + " Attempting to find partial matches for wilcard record, where wildcards are defined as '__WILDCARD__', but encoutered a case in which aligned data are (1) not equal, (2) the aligned data item in record is not a wildcard, and (3) the data items are equal or the aligned data item in record is a wildcard. \nPlease see the alignment record and attempted result match :\nrecord = " + str(record) + "\nattempted partial match = " + str(tup) )
+
+    if yesValidPatrialMatch :
+      partialMatches.append( tup )
+
+  return partialMatches
+
+
 #################
 #  CREATE NODE  #
 #################

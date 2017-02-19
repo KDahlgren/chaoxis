@@ -59,7 +59,6 @@ class DerivTree( ) :
       print " self.isNeg    = " + str( self.isNeg )
       print "=================================="
 
-
     self.generateDerivTree( record )
 
   # ------------------------------------------ #
@@ -100,23 +99,33 @@ class DerivTree( ) :
     # recursively ask for all descendant nodes.
     if not self.root.treeType == "fact" : # facts have no descendants
 
+      # ----------------------------------- #
+      # case goal
       if self.root.treeType == "goal" :
 
         if self.root.descendant :
           desc = [ self.root.descendant ] # goals only have one descendant
 
+        elif not self.root.descendants == [] :
+          desc = self.root.descendants
+
         else :
           return ( nodes, edges ) # this goal node has no descendants ( change when supporting negation )
 
+      # ----------------------------------- #
+      # case rule
       elif self.root.treeType == "rule" :
         desc = self.root.descendants    # rules have one or many descendants
 
+      # ----------------------------------- #
       if DEBUG :
         print "desc = " + str(desc)
         for d in desc :
           print "d.root.name     = " + str( d.root.name )
           print "d.root.treeType = " + str( d.root.treeType )
 
+      # ----------------------------------- #
+      # iterate over descendants
       for d in desc :
         # prepare the node 
         # (kind of redundant since it will be created again in the next recursive step)

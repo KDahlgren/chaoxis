@@ -8,7 +8,7 @@
 # standard python packages
 import inspect, os, sys
 
-import DerivTree, RuleNode, FactNode
+import DerivTree, RuleNode, FactNode, provTools
 
 packagePath1  = os.path.abspath( __file__ + "/.." )
 sys.path.append( packagePath1 )
@@ -27,6 +27,7 @@ class GoalNode( Node ) :
   #####################
   #  SPECIAL ATTRIBS  #
   #####################
+  descendants = []
   descendant = None
 
 
@@ -46,8 +47,18 @@ class GoalNode( Node ) :
       print "  self.record = " + str( self.record )
       print "<><><><><><><><><><><><><><><><><><><>"
 
+    self.descendants = [] # needed or else creates WAAAAAY too many edges for some reason??? <.<
     self.setDescendant( )
 
+    if DEBUG :
+      print "---------------------------------------"
+      print "IN GOAL NODE " + str(self.name) + ", PRINTING " + str(len(self.descendants)) + " DESCENDANTS"
+      for d in self.descendants :
+        print "d.root.treeType = " + str(d.root.treeType)
+        print "d.root.name     = " + str(d.root.name)
+        print "d.root.isNeg    = " + str(d.root.isNeg)
+        print "d.root.record   = " + str(d.root.record)
+      print "---------------------------------------"
 
   #############
   #  __STR__  #
@@ -89,11 +100,61 @@ class GoalNode( Node ) :
       print "tools.isFact( self.name, self.cursor ) = " + str( tools.isFact( self.name, self.cursor ) )
 
     if tools.isFact( self.name, self.cursor ) :
-      self.descendant = DerivTree.DerivTree( self.name, "fact", self.isNeg, self.record, self.results, self.cursor )
+      # ------------------------------------ #
+      # handle wildcards in fact goals here
+
+      if "__WILDCARD__" in self.record :
+
+        # grab all partially matching records
+        allPartialMatches = provTools.getPartialMatches( self.name, self.record, self.results )
+        #tools.bp( __name__, inspect.stack()[0][3], " allPartialMatches = " + str(allPartialMatches) )
+
+        for rec in allPartialMatches :
+          self.spawnFact( rec )
+
+      else :
+        self.spawnFact( self.record )
+      # ------------------------------------ #
 
     else :
+
+      # ===================================================== #
+      # handle negative goals here
       if not self.isNeg :
-        self.descendant = DerivTree.DerivTree( self.name, "rule", False, self.record, self.results, self.cursor )
+
+        # ------------------------------------ #
+        # handle wildcards in non-fact goals here
+        if "__WILDCARD__" in self.record :
+
+          # grab all partially matching records
+          allPartialMatches = provTools.getPartialMatches( self.name, self.record, self.results )
+          #tools.bp( __name__, inspect.stack()[0][3], " allPartialMatches = " + str(allPartialMatches) )
+
+          for rec in allPartialMatches :
+            self.spawnRule( rec )
+          #tools.bp( __name__, inspect.stack()[0][3], " HANLDING WILDCARD BREAKPOINT " )
+
+        else :
+          self.spawnRule( self.record )
+        # ------------------------------------ #
+
+      else :
+        if DEBUG :
+          print ">>> hit negative goal <<<"
+      # ===================================================== #
+
+  ################
+  #  SPAWN FACT  #
+  ################
+  def spawnFact( self, seedRecord ) :
+    #self.descendant = DerivTree.DerivTree( self.name, "fact", self.isNeg, seedRecord, self.results, self.cursor )
+    self.descendants.append( DerivTree.DerivTree( self.name, "fact", self.isNeg, seedRecord, self.results, self.cursor ) )
+
+  ################
+  #  SPAWN RULE  #
+  ################
+  def spawnRule( self, seedRecord ) :
+    self.descendant = DerivTree.DerivTree( self.name, "rule", False, seedRecord, self.results, self.cursor )
 
 
 #########
