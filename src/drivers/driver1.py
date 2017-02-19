@@ -23,6 +23,7 @@ from dedt       import dedt, dedalusParser
 from derivation import ProvTree
 from utils      import parseCommandLineInput, tools
 from evaluators import c4_evaluator, evalTools
+from solvers    import CNF_tools
 
 # **************************************** #
 
@@ -147,11 +148,6 @@ def LDFICore( argDict ) :
     c4_evaluator.runC4_wrapper( datalogProgPath, tableListPath )
 
   # ----------------------------------------------- #
-
-  # if buggy => output results
-  # else => ...
-
-  # ----------------------------------------------- #
   # get provenance trees
   if PROV_TREES_ON :
     if resultsPath :
@@ -177,8 +173,7 @@ def LDFICore( argDict ) :
 
   # -------------------------------------------- #
   # graphs to CNF
-  # magic code here...
-  # fmla = //.convertToCNF( provTreeComplete )
+  fmla = CNF_tools.convertToCNF( provTreeComplete )
 
   # -------------------------------------------- #
   # solve CNF
