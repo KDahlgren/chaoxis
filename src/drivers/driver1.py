@@ -12,7 +12,7 @@ driver1.py
 #  IMPORTS  #
 #############
 # standard python packages
-import os, sys
+import inspect, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -22,13 +22,14 @@ sys.path.append( packagePath )
 from dedt       import dedt, dedalusParser
 from derivation import ProvTree
 from utils      import parseCommandLineInput, tools
-from evaluators import c4_evaluator
+from evaluators import c4_evaluator, evalTools
 
 # **************************************** #
 
-DRIVER_DEBUG    = True
-RUN_C4_DIRECTLY = True
-PROV_TREES_ON   = True
+DRIVER_DEBUG     = True
+RUN_C4_DIRECTLY  = True
+PROV_TREES_ON    = True
+ONEITERATIONONLY = True
 
 ################
 #  PARSE ARGS  #
@@ -65,10 +66,9 @@ def driver() :
   argList = sys.argv[1:]
 
   # print help if no args provided
-  if( len(argList) < 1 ) :
+  if len(argList) < 1 :
     thisFilename = os.path.basename(__file__)     # name of this file
-    print "No arguments provided. Please run 'python " + sys.argv[0] + " -h' for assistance."
-    sys.exit()
+    sys.exit( "No arguments provided. Please run 'python " + sys.argv[0] + " -h' for assistance." )
 
   # ----------------------------------------------- #
 
@@ -76,6 +76,50 @@ def driver() :
   argDict = parseArgs( )
   print argDict
 
+  # =================================================================== #
+  # loop until find a bug.
+
+  while True :
+
+    executionData = LDFICore( argDict )
+    parsedResults = executionData[0] 
+    irCursor      = executionData[1]
+    saveDB        = executionData[2]
+
+    if ONEITERATIONONLY : # only run a single iteration of LDFI
+      break
+
+    else :
+      # sanity check
+      if not "pre" in parsedResults :
+        dedt.cleanUp( irCursor, saveDB )
+        tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining pre" )
+      elif not "post" in parsedResults :
+        dedt.cleanUp( irCursor, saveDB )
+        tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining post" )
+
+      # check for bug
+      if evalTools.bugFreeExecution( parsedResults ) :
+        pass
+      else : # bug exists!!!
+        # place magic post processing and visualization code here. =]
+        break
+
+  # =================================================================== #
+
+  # -------------------------------------------- #
+  # cleanUp saved db stuff
+  dedt.cleanUp( irCursor, saveDB )
+
+  # -------------------------------------------- #
+  # sanity check
+  print "PROGRAM EXITED SUCCESSFULLY"
+
+
+###############
+#  LDFI CORE  #
+###############
+def LDFICore( argDict ) :
   # ----------------------------------------------- #
 
   # translate all input dedalus files into a single datalog program
@@ -146,14 +190,7 @@ def driver() :
   # magic code here...
   # newProg = //.generateNewClock( solns )
 
-  # -------------------------------------------- #
-  # cleanUp saved db stuff
-  dedt.cleanUp( irCursor, saveDB )
-
-  # -------------------------------------------- #
-  # sanity check
-  print "PROGRAM EXITED SUCCESSFULLY"
-
+  return ( parsedResults, irCursor, saveDB )
 
 #########################
 #  THREAD OF EXECUTION  #
