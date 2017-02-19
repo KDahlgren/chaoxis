@@ -11,7 +11,7 @@ save_data/graphOutput/*
 
 !save_data/README.md
 !save_data/c4Output/README.md
-!save_data/graphOutput/
+!save_data/graphOutput/README.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
