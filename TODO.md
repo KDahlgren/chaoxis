@@ -2,13 +2,13 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+* Add option for encapsulating similar clock facts in a single node representation (see Molly graphs, esp. clock node resolution).
+
 * Add CMAKE check in makefile/setup.py as an installation predicate.
 
 * Support negative subgoals in prov tree derivation.
 
 * Support wildcards in prov tree derivation.
-
-* Add code to test whether or not the results of a datalog evaluation contain a bug.
 
 * Add code for providing default pre and post rules if users do not specify pre and post rules in the dedalus specifications.
 

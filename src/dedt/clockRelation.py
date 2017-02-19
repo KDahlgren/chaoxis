@@ -5,14 +5,14 @@ clockRelation.py
    Define the functionality for creating clock relations.
 '''
 
-import os, sys
+import inspect, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from utils import dumpers, parseCommandLineInput
+from utils import dumpers, parseCommandLineInput, tools
 # ------------------------------------------------------ #
 
 #############
@@ -46,9 +46,14 @@ def initClockRelation( cursor, argDict ) :
           delivTime = str(i + 1)
           cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "')")
 
+    #tools.bp( __name__, inspect.stack()[0][3], "EOT = " + str(maxSendTime) + ",\ndumpers.clockDump( cursor ) = " + str( dumpers.clockDump(cursor)) )
+
     # check for bugs
     if CLOCKRELATION_DEBUG :
+      print ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+      print ">>>> PRINTING CLOCK DUMP <<<<"
       dumpers.clockDump( cursor )
+      print ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
 
   # --------------------------------------------------------------------- #
   # otherwise use topology from input files

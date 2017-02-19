@@ -225,9 +225,8 @@ def clockDump( cursor ) :
     print "********************\nProgram Clock :"
   clock = cursor.execute('''SELECT * FROM Clock''')
 
-  if DUMPERS_DEBUG :
-    for c in clock :
-      print c
+  for c in clock :
+    print c
 
 ######################
 #  RECONSTRUCT RULE  #
