@@ -88,7 +88,14 @@ def main() :
 
   # clean any existing libs
   os.system( "make clean" )
-  
+
+  # download submodules
+  os.system( "make get-submodules" )
+  # copy over template c4 main
+  print "Copying template c4 main ..."
+  os.system( "cp ./src/templateFiles/c4i_template.c ./lib/c4/src/c4i/c4i.c" )
+  print "...done copying template c4 main."
+
   # ---------------------------------------------- #
   # run make for c4
   # find candidate apr locations
@@ -113,14 +120,10 @@ def main() :
     if flag :
       print ">>> C4 installed successfully <<<"
       print "... Done installing C4 Datalog evaluator"
+      print "C4 install using APR path : " + path
       break
-    print "C4 install using APR path : " + path
+  # ---------------------------------------------- #
 
-  # ---------------------------------------------- #
-  # copy over template c4 main
-  os.system( "cp ./src/templateFiles/c4i_template.c ./lib/c4/src/c4i/c4i.c" )
- 
-  # ---------------------------------------------- #
   # run make for everything else
   os.system( "make" )
   
