@@ -12,8 +12,8 @@ BooleanFormula.py
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect, os, sys
-import abc, random
+import inspect
+import abc
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -119,15 +119,6 @@ class BooleanFormula :
   @abc.abstractmethod
   def isCNF( self ) :
       return None
-
-
-  ###############
-  #  CONJUNCTS  #
-  ###############
-  # Implemented by derived classes
-  @abc.abstractmethod
-  def conjuncts( self ) :
-    return None
 
 
   ###########

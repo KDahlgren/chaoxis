@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-CNF_tools.py
+solverTools.py
   Tools for converting provenance trees into CNF
   formulas.
 '''
