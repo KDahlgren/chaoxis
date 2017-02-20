@@ -12,7 +12,9 @@ EncodedProvTree.py
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect
+import inspect, os, sys
+
+import AndFormula, OrFormula, Literal
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -24,13 +26,13 @@ from utils import tools
 # **************************************** #
 
 
-class EncodedProvTree :
+class EncodedProvTree_CNF :
 
   ################
   #  ATTRIBUTES  #
   ################
   provTree = None
-  fmla     = None
+  formula  = None
 
 
   #################
@@ -38,7 +40,7 @@ class EncodedProvTree :
   #################
   def __init__( self, provTree ):
     self.provTree = provTree
-    self.fmla     = self.convertToCNF( self.provTree )
+    self.CNFFormula  = self.convertToCNF( self.provTree )
 
 
   ####################

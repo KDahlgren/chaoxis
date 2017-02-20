@@ -23,15 +23,6 @@ from utils      import parseCommandLineInput, tools
 
 # **************************************** #
 
-####################
-#  CONVERT TO CNF  #
-####################
-# input a provenance tree (no constraints on the root type)
-# return a // representing the formula to solve.
-def convertToCNF( provTree ) :
-  return None
-
-
 
 #########
 #  EOF  #

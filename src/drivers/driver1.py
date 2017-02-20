@@ -23,7 +23,7 @@ from dedt       import dedt, dedalusParser
 from derivation import ProvTree
 from utils      import parseCommandLineInput, tools
 from evaluators import c4_evaluator, evalTools
-from solvers    import CNF_tools
+from solvers    import CNFFormula
 
 # **************************************** #
 
@@ -201,7 +201,7 @@ def LDFICore( argDict ) :
 
   # -------------------------------------------- #
   # graphs to CNF
-  fmla = CNF_tools.convertToCNF( provTreeComplete )
+  #provTree_fmla = EncodedProvTree_CNF.EncodedProvTree_CNF( provTreeComplete ) # get fmla with provTree_fmla.CNFFormula
 
   # -------------------------------------------- #
   # solve CNF

@@ -12,7 +12,9 @@ CNFFormula.py
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect
+import inspect, os, sys
+
+import BooleanFormula
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -26,7 +28,7 @@ from utils import tools
 DEBUG = True
 
 
-class CNFFormula( BooleanFormula ) :
+class CNFFormula( ) :
 
   ################
   #  ATTRIBUTES  #

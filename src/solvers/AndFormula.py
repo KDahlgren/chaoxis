@@ -12,7 +12,9 @@ AndFormula.py
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect
+import inspect, os, sys
+
+import BooleanFormula
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!

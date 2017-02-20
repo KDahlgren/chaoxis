@@ -12,8 +12,7 @@ BooleanFormula.py
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect
-import abc
+import abc, inspect, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -142,14 +141,14 @@ class BooleanFormula :
 
     # case val is populated, return val as a set
     if self.val is not None:
-      return set([self.val])
+      return set( [ self.val ] )
 
     # case val empty
     # (boolean formula is not a literal)
     # recursively grab the variables from
     # the left and right subtrees
     else:
-      return self.left.variables().union(self.right.variables())
+      return self.left.variables().union( self.right.variables() )
 
 
   #############
@@ -184,10 +183,10 @@ class BooleanFormula :
     else:
       lft = self.left.depth()
       rgh = self.right.depth()
-       if lft > rgh:
-         return 1 + lft
-       else:
-         return 1 + rgh
+      if lft > rgh :
+        return 1 + lft
+      else:
+        return 1 + rgh
 
 
   ##############
