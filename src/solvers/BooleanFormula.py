@@ -30,20 +30,20 @@ class BooleanFormula :
   ################
   #  ATTRIBUTES  #
   ################
-  value = None
-  left  = None
-  right = None
-  sign  = None
+  value    = None
+  left     = None
+  right    = None
+  operator = None
 
 
   #################
   #  CONSTRUCTOR  #
   #################
   def __init__(self, left=None, right=None, val=None):
-    self.val = val
-    self.left = left
-    self.right = right
-    self.sign = "UNIMPLEMENTED"
+    self.val      = val
+    self.left     = left
+    self.right    = right
+    self.operator = "UNIMPLEMENTED"
 
 
   #############
@@ -56,9 +56,11 @@ class BooleanFormula :
     if not self.val == None :
       return self.val
 
-    # val empty, so return string representations of subtrees recursively
+    # val empty
+    # (boolean formula is not a literal)
+    # return string representations of subtrees recursively
     else:
-      return "(" + str(self.left) + " " + self.sign + " " + str(self.right) + ")"
+      return "(" + str(self.left) + " " + self.operator + " " + str(self.right) + ")"
 
 
   #############
@@ -70,18 +72,21 @@ class BooleanFormula :
   def __cmp__( self, other ):
 
     # case no other defined
+    # essentially a no-op
     if not other :
       return 1
 
     # case val of this node in the boolean formula is populated
+    # boolean formula has no operators. it's a literal.
     elif self.val :
       return cmp( self.val, other.val)
 
     # case val is not populated
+    # (boolean formula is not a literal)
     else :
 
-      # case signs are identical
-      if self.sign == other.sign:
+      # case operators are identical
+      if self.operator == other.operator :
 
         # case same left vals and same right vals
         if self.left == other.left and self.right == other.right :
@@ -91,7 +96,7 @@ class BooleanFormula :
         else:
           return 1
 
-      # case signs are different
+      # case operators are different
       else:
         return 1
 
@@ -100,6 +105,7 @@ class BooleanFormula :
   #  TO CNF  #
   ############
   # convert the boolean formula to CNF
+  # Implemented by derived classes
   @abc.abstractmethod
   def toCNF( self ):
       return None
@@ -109,9 +115,19 @@ class BooleanFormula :
   #  IS CNF  #
   ############
   # check if already CNF
+  # Implemented by derived classes
   @abc.abstractmethod
   def isCNF( self ) :
       return None
+
+
+  ###############
+  #  CONJUNCTS  #
+  ###############
+  # Implemented by derived classes
+  @abc.abstractmethod
+  def conjuncts( self ) :
+    return None
 
 
   ###########
@@ -130,14 +146,16 @@ class BooleanFormula :
   ###############
   #  VARIABLES  #
   ###############
-  # 
+  # get the complete set of variables in this boolean formula
   def variables( self ) :
 
     # case val is populated, return val as a set
     if self.val is not None:
       return set([self.val])
 
-    # case val empty, recursively grab the variables from
+    # case val empty
+    # (boolean formula is not a literal)
+    # recursively grab the variables from
     # the left and right subtrees
     else:
       return self.left.variables().union(self.right.variables())
@@ -146,13 +164,15 @@ class BooleanFormula :
   #############
   #  CLAUSES  #
   #############
-  # //
+  # count the number of clauses in this boolean formula
   def clauses( self ) :
 
-    # 
+    # val is populated
     if self.val is not None:
       return 1 
 
+    # val is not populated
+    # (boolean formula is not a literal)
     else:
        return 1 + self.left.clauses() + self.right.clauses()
 
@@ -160,10 +180,16 @@ class BooleanFormula :
   ###########
   #  DEPTH  #
   ###########
-  
-  def depth(self):
+  # get the depth of the formula tree representation
+  def depth( self ) :
+
+    # val is populated
     if self.val is not None:
       return 1
+
+    # (boolean formula is not a literal)
+    # recursively calculate the depth from left and right 
+    # arguments of the operator
     else:
       lft = self.left.depth()
       rgh = self.right.depth()
@@ -172,38 +198,48 @@ class BooleanFormula :
        else:
          return 1 + rgh
 
-  def nodeset(self):
-    if self.val is not None:
-      return set((self.ident(), self.val))
+
+  ##############
+  #  NODE SET  #
+  ##############
+  # get the nodeset representation of the formula
+  # supports formula plot code for sanity checking.
+  def nodeset( self ) :
+
+    # case val is populated
+    if self.val is not None :
+      return set( str( self ), self.val )
+
+    # case val is empty
+    # (boolean formula is not a literal)
+    # return the left and right node sets recursively,
+    # while adding the node.
     else:
       sub = self.left.nodeset().union(self.right.nodeset())
-      return sub.add((self.ident(), self.sign))
+      return sub.add( ( str( self ), self.operator ) ) # nodes are tuples
 
-  def edgeset(self):
+
+  ##############
+  #  EDGE SET  #
+  ##############
+  # get the edgeset representation of the formula
+  # supports formula plot code for sanity checking.
+  def edgeset( self ) :
+
+    # case val is populated
     if self.val is not None:
       return set()
+
+    # case val is empty
+    # (boolean formula is not a literal)
+    # return edgesets of left and right equations recursively.
     else:
       sub = self.left.edgeset().union(self.right.edgeset())
-      sub.add((self.ident(), self.left.ident()))
-      sub.add((self.ident(), self.right.ident()))
+      sub.add( str( self ), str( self.left  ) )
+      sub.add( str( self ), str( self.right ) )
       return sub
 
-  def ident(self):
-    return str(self)
-
-
-
-
-  ###############
-  #  CONJUNCTS  #
-  ###############
-  # Implemented by derived classes
-  @abc.abstractmethod
-  def conjuncts(self):
-    return None
-
 
 #########
 #  EOF  #
 #########
-#  EOF  #
