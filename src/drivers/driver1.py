@@ -77,8 +77,14 @@ def driver() :
   argDict = parseArgs( )
   print argDict
 
+  # check if EOT is an integer (this better pass!)
+  try :
+    val = int( argDict[ "EOT" ] )
+  except :
+    tools.bp( __name__, inspect.stack()[0][3], " Could not convert EOT into integer: EOT = " + str(eot) )
+
   # =================================================================== #
-  # loop until find a bug.
+  # loop until find a bug (or not).
 
   while True :
 
@@ -100,7 +106,7 @@ def driver() :
         tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining post" )
 
       # check for bug
-      if evalTools.bugFreeExecution( parsedResults ) :
+      if evalTools.bugFreeExecution( parsedResults, argDict ) :
         pass
       else : # bug exists!!!
         # place magic post processing and visualization code here. =]
@@ -154,8 +160,31 @@ def LDFICore( argDict ) :
       print "Using c4 results from : " + resultsPath
       parsedResults = tools.getEvalResults_file_c4( resultsPath )
 
+      # initialize provenance tree structure
       provTreeComplete = ProvTree.ProvTree( "UltimateGoal", parsedResults, irCursor )
-      for seedRecord in parsedResults[ "post" ] :
+
+      # grab the set of post records at EOT.
+      # assume the right-most attribute/variable/field of the post schema
+      # represents the last send time (aka EOT).
+      eot = argDict[ "EOT" ]
+      postrecords_all = parsedResults[ "post" ]
+      postrecords_eot = []
+      for rec in postrecords_all :
+        print "rec     = " + str(rec)
+        print "rec[-1] = " + str(rec[-1])
+        print "eot     = " + str(eot)
+
+        # check if last element of post record is an integer
+        try :
+          val = int( rec[-1] )
+        except :
+          tools.bp( __name__, inspect.stack()[0][3], " Could not convert last element of record " + str(rec) + ", rec[-1] = " + str(rec[-1]) + " into an integer. Therefore, cannot compare with EOT." )
+
+        # collect eot post records only
+        if int( rec[-1] ) == int( eot ) :
+          postrecords_eot.append( rec )
+
+      for seedRecord in postrecords_eot :
         if DRIVER_DEBUG :
           print " ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
           print "           NEW POST RECORD "
@@ -169,7 +198,6 @@ def LDFICore( argDict ) :
 
     else :
       sys.exit( "ERROR: No path to c4 results file.\nAborting..." ) # sanity check
-
 
   # -------------------------------------------- #
   # graphs to CNF

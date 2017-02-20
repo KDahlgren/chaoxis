@@ -31,16 +31,25 @@ from utils import tools
 # In other words, the set of tuples in post is a superset
 # of the set of tuples in pre.
 #
-def bugFreeExecution( results ) :
+# assume right-most attribute/variable/field value 
+# in both pre and post represents delivery time.
+def bugFreeExecution( results, eot ) :
 
   # grab relevant tuple lists
   pre  = results[ "pre" ]
   post = results[ "post" ]
 
-  # check if every tuple in pre
-  # also appears in post
+  # check if every tuple in pre at EOT
+  # also appears in post at EOT
   for pretup in pre :
-    if not pretup in post :
+
+    # check if last element of post record is an integer
+    try :
+      val = int( pretup[-1] )
+    except :
+      tools.bp( __name__, inspect.stack()[0][3], " Could not convert last element of the pre record  " + str(pretup) + ", pretup[-1] = " + str(pretup[-1]) + " into an integer. Therefore, cannot compare with EOT." )
+
+    if ( int( pretup[-1] ) == eot) and not pretup in post :
       return False
 
   return True
