@@ -40,24 +40,31 @@ class EncodedProvTree_CNF :
   #################
   def __init__( self, provTree ):
     self.provTree = provTree
-    self.CNFFormula  = self.convertToCNF( self.provTree )
+    self.CNFFormula  = self.convertToCNF( self.provTree, "" )
 
 
   ####################
   #  CONVERT TO CNF  #
   ####################
   # recursively construct a CNF formula from the given prov tree
-  def convertToCNF( self, provTree ) :
+  def convertToCNF( self, provTree, currFmla ) :
 
+    # ------------------------------------------- #
     # handle ultimate goal
     if provTree.isUltimateGoal( ) :
-      return None
 
+      for subtree in provTree.subtrees :
+        currFmla += str( self.convertToCNF( subtree, currFmla ) )
+
+      return currFmla
+
+    # ------------------------------------------- #
     # base case: provTree is a fact
     elif provTree.root.treeType == "fact" :
       #return Literal(  )
       return None
 
+    # ------------------------------------------- #
     # case root is a goal
     elif provTree.root.treeType == "goal" :
       return None
@@ -79,10 +86,12 @@ class EncodedProvTree_CNF :
       #else:
       #  OrFormula(left, right)
 
+    # ------------------------------------------- #
     # case root is a rule
     elif provTree.root.treeType == "rule" :
       return None
 
+    # ------------------------------------------- #
     # case root is not an ultimate goal, fact, goal, or rule
     else :
       tools.bp( __name__, inspect.stack()[0][3], "ERROR: Attempting to generate CNF formula from provenance tree. Hit a node which is not an UltimateGoal, fact, goal, or rule:\n" + str(provTree.root) + " is of type " + str(provTree.root.treeType) )

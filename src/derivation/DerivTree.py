@@ -39,6 +39,16 @@ class DerivTree( ) :
   programResults = None # complete dictionary of parsed results from table dump
   cursor         = None # database pointer
 
+
+  ######################
+  #  IS ULTIMATE GOAL  #
+  ######################
+  # a convenience function
+  # provTrees are not DerivTrees
+  def isUltimateGoal( self ) :
+    return False
+
+
   # ------------------------------------------ #
   #################
   #  CONSTRUCTOR  #

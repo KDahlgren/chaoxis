@@ -22,7 +22,7 @@ IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data/graphOutput" )
 
 # --------------------------------------------------- #
 
-class ProvTree() :
+class ProvTree( ) :
 
   #############
   #  ATTRIBS  #

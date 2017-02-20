@@ -38,6 +38,16 @@ class FactNode( Node ) :
       return "fact-> " + self.name + "(" + str(self.record) + ")"
 
 
+  ##################
+  #  FMLA DISPLAY  #
+  ##################
+  def fmlaDisplay( self ) :
+    if self.isNeg :
+      negStr = "_NOT_"
+      return negStr + self.name + "(" + str(self.record) + ")"
+    else :
+      return self.name + "(" + str(self.record) + ")"
+
 #########
 #  EOF  #
 #########

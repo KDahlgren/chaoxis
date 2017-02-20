@@ -23,14 +23,15 @@ from dedt       import dedt, dedalusParser
 from derivation import ProvTree
 from utils      import parseCommandLineInput, tools
 from evaluators import c4_evaluator, evalTools
-from solvers    import CNFFormula
+from solvers    import EncodedProvTree_CNF
 
 # **************************************** #
 
-DRIVER_DEBUG     = True
-RUN_C4_DIRECTLY  = True
-PROV_TREES_ON    = True
-ONEITERATIONONLY = True
+DRIVER_DEBUG            = True
+RUN_C4_DIRECTLY         = True
+PROV_TREES_ON           = True
+ONE_CORE_ITERATION_ONLY = True
+TREE_CNF_ON             = True
 
 ################
 #  PARSE ARGS  #
@@ -93,7 +94,7 @@ def driver() :
     irCursor      = executionData[1]
     saveDB        = executionData[2]
 
-    if ONEITERATIONONLY : # only run a single iteration of LDFI
+    if ONE_CORE_ITERATION_ONLY : # only run a single iteration of LDFI
       break
 
     else :
@@ -201,7 +202,9 @@ def LDFICore( argDict ) :
 
   # -------------------------------------------- #
   # graphs to CNF
-  #provTree_fmla = EncodedProvTree_CNF.EncodedProvTree_CNF( provTreeComplete ) # get fmla with provTree_fmla.CNFFormula
+  if TREE_CNF_ON :
+    provTree_fmla = EncodedProvTree_CNF.EncodedProvTree_CNF( provTreeComplete ) # get fmla with provTree_fmla.CNFFormula
+    print ">>> provTree_fmla = " + str( provTree_fmla )
 
   # -------------------------------------------- #
   # solve CNF

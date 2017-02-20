@@ -14,7 +14,7 @@ OrFormula.py
 # standard python packages
 import inspect, os, sys
 
-import BooleanFormula
+from BooleanFormula import BooleanFormula
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!

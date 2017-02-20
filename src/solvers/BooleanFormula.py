@@ -24,7 +24,7 @@ from utils import tools
 # **************************************** #
 
 
-class BooleanFormula :
+class BooleanFormula( object ) :
 
   ################
   #  ATTRIBUTES  #
@@ -38,7 +38,7 @@ class BooleanFormula :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__(self, left=None, right=None, val=None):
+  def __init__( self, left, right, val ) :
     self.val      = val
     self.left     = left
     self.right    = right
