@@ -216,6 +216,7 @@ def LDFICore( argDict ) :
     if DRIVER_DEBUG :
       if provTree_fmla.formula :
         print ">>> provTree_fmla.formula = " + str( provTree_fmla.formula )
+        #provTree_fmla.formula.graph()
       else :
         tools.bp( __name__, inspect.stack()[0][3], "ERROR: provTree_fmla.formula is empty. Aborting execution..." )
 

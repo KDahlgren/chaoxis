@@ -43,7 +43,7 @@ class EncodedProvTree_CNF :
   #################
   def __init__( self, provTree ):
     self.provTree = provTree
-    self.formula  = self.convertToCNF( self.provTree )
+    self.formula  = self.convertToCNF( self.provTree ) # a BooleanFormula
 
 
   ####################
@@ -52,109 +52,75 @@ class EncodedProvTree_CNF :
   # recursively construct a CNF formula from the given prov tree
   def convertToCNF( self, provTree ) :
 
-    if not provTree.isUltimateGoal() and provTree.root.name == "bcast" :
-      print "...> processing " + provTree.root.name
-
     currFmla = None  # initialize current formula
-
-    if DEBUG :
-      print "*************************************************"
-      print "****> running convertToCNF in function " + inspect.stack()[0][3] + " in file " + __name__
 
     # ------------------------------------------- #
     #        BASE CASE : provTree is a fact       #
     # ------------------------------------------- #
-    if provTree.isLeaf( ) :
-
-      if DEBUG :
-        if provTree.root.name == "bcast" :
-          print "...> " + provTree.root.name + " isLeaf"
+    if provTree.isLeaf() :
 
       if provTree.treeType == "fact" :
+        print "--------"
+        print "fact: provTree.root.name ~> " + str( provTree.root.name ) + str( provTree.root.record ) + ", type = " + str(provTree.root.treeType)
 
-        if DEBUG :
-          print " provTree is a fact..."
-          print " before: currFmla = " + str( currFmla )
-
+        print "> Creating Literal for fact " + str( provTree.root.name ) + str( provTree.root.record )
         currFmla = Literal.Literal( provTree.root.fmlaDisplay() )
-
-        if DEBUG :
-          print " after: currFmla = " + str( currFmla )
 
     else :
       # ------------------------------------------- #
       # case prov tree is rooted at an ultimate goal
       # then the CNF interpretation requires AND'ing all subgoals
-      if provTree.isUltimateGoal( ) :
+      if provTree.isUltimateGoal() :
 
-        if DEBUG :
-          print "...> processing UltimateGoal"
+        print "--------"
+        print " ULTIMATE GOAL : " + str( provTree.rootname ) + " has " + str( len(provTree.subtrees) ) + " descendants :"
+        for d in provTree.subtrees :
+          print "ult.goal desc : d.root ~> " + str(d.root.name) + str(d.root.record) + ", type = " + str(d.root.treeType)
 
-        currFmla = AndFormula.AndFormula( )  # start with an empty AND formula
-
-        if DEBUG :
-          print " provTree is an UltimateGoal..."
-          print " before: currFmla = " + str( currFmla )
-
-        it = 0
+        print "> Creating AndFormula for UG " + str( provTree.rootname )
+        currFmla = AndFormula.AndFormula()  # start with an empty AND formula
         # add CNF formulas of subtrees as args in this AND formula
         for subtree in provTree.subtrees :
-
-          if DEBUG :
-            print "================================================="
-            print " subtree for loop iteration = "  + str( it )
-            print " subtree.root.treeType = " + str( subtree.root.treeType ) 
-            print " subtree.root.name     = " + str( subtree.root.name ) 
-            print " subtree.root.record   = " + str( subtree.root.record )
-
+          print "  Examining " + str(subtree.root.treeType) + " " + str( subtree.root.name ) + str( subtree.root.record )
           currFmla.addArg( self.convertToCNF( subtree ) )
-          it += 1
-
-        if DEBUG :
-          print " done processing UltimateGoal."
-          print " after: currFmla = " + str( currFmla )
 
       # ------------------------------------------- #
       # case root is a goal
       # then the CNF interpretation requires OR'ing all contributing rules
       elif provTree.root.treeType == "goal" :
 
-        currFmla = OrFormula.OrFormula( )  # start with an empty OR formula
-
-        if DEBUG :
-          print "...> processing goal " + str( provTree.root.name )
-          print "     before: currFmla = " + str( currFmla )
+        print "--------"
+        print " GOAL : " + str( provTree.root.name ) + str( provTree.root.record ) + " has " + str( len(provTree.root.descendants) ) + " descendants :"
+        for d in provTree.root.descendants :
+          print "goal desc : d.root ~> " + str(d.root.name) + str(d.root.record) + ", type = " + str(d.root.treeType) 
 
         # iterate over descendants
         for d in provTree.root.descendants :
-          currFmla.addArg( self.convertToCNF( d ) )
+          print "  Examining " + str(d.root.treeType) + " " + str( d.root.name ) + str( d.root.record )
+          if d.root.treeType == "rule" :
+            currFmla = OrFormula.OrFormula()
+            currFmla.addArg( self.convertToCNF( d ) )
 
-        if DEBUG :
-          print "     after: currFmla = " + str( currFmla )
-          if str(currFmla.fmla) == "bcast(['a', 'hello', '1'])" :
-            print "currFmla       = " + str( currFmla )
-            print "currFmla.fmla  = " + str( currFmla.fmla )
-            print "currFmla.left  = " + str( currFmla.left )
-            print "currFmla.right = " + str( currFmla.right )
-            #tools.bp( __name__, inspect.stack()[0][3], "breakpoint")
+          elif d.root.treeType == "fact" :
+            currFmla = Literal.Literal( d.root.fmlaDisplay() )
 
       # ------------------------------------------- #
       # case root is a rule
       # then the CNF interpretation requires AND'ing all subgoals
       elif provTree.root.treeType == "rule" :
 
-        currFmla = AndFormula.AndFormula( )  # start with an empty AND formula
+        print "--------"
+        print " RULE : " + str( provTree.root.name ) + str( provTree.root.record ) + " has " + str( len(provTree.root.descendants) ) + " descendants :"
+        for d in provTree.root.descendants :
+          print "rule desc : d.root ~> " + str(d.root.name) + str(d.root.record) + ", type = " + str(d.root.treeType) 
 
-        if DEBUG :
-          print "...> processing rule " + str( provTree.root.name )
-          print "     before: currFmla = " + str( currFmla )
-
+        print "> Creating AndFormula for rule " + str( provTree.root.name ) + str( provTree.root.record )
+        currFmla = AndFormula.AndFormula()  # start with an empty AND formula
         # iterate over descendants
         for d in provTree.root.descendants :
+          print "  Examining "+ str(d.root.treeType) + " " + str( d.root.name ) + str( d.root.record )
           currFmla.addArg( self.convertToCNF( d ) )
-
-        if DEBUG :
-          print "     after: currFmla = " + str( currFmla )
+          tools.bp( __name__, inspect.stack()[0][3], "rule: currFmla.display() = " + currFmla.display() )
 
       # ------------------------------------------- #
       # case root is not an ultimate goal, fact, goal, or rule

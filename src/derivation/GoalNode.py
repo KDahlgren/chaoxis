@@ -71,6 +71,12 @@ class GoalNode( Node ) :
     else :
       return self.name + "(" + str(self.record) + ")"
 
+  ##################
+  #  FMLA DISPLAY  #
+  ##################
+  def fmlaDisplay( self ) :
+    return str( self )
+
   #############
   #  DISPLAY  #
   #############

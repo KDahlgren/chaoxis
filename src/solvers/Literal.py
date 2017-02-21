@@ -26,57 +26,28 @@ from utils import tools
 # **************************************** #
 
 
-TESTING_MAIN = False
-
-
 class Literal( BooleanFormula ) :
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, val ) :
-    # BOOLEAN FORMULA CONSTRUCTOR left, right, val
-    BooleanFormula.__init__(self, None, None, val)
-    self.fmla = val
+  def __init__( self, value ) :
+    # BOOLEAN FORMULA CONSTRUCTOR left, right, value
+    BooleanFormula.__init__( self, None, None, value )
 
-
-  ############
-  #  TO CNF  #
-  ############
-  # literals satisfy the definition of CNF formula by default.
-  def toCNF( self ) :
-    return self
-
-
-  ############
-  #  IS CNF  #
-  ############
-  # ditto: literals satisfy the definition of CNF formula by default.
-  def isCNF( self ) :
+  ################
+  #  IS LITERAL  #
+  ################
+  def isLiteral( self ) :
     return True
 
 
-  ###############
-  #  DISJUNCTS  #
-  ###############
-  # represent the literal as a disjunctive formula
-  def disjuncts( self ) :
-    return set( [ self.val ] )
+  #############
+  #  DISPLAY  #
+  #############
+  def display( self ) :
+    return self.value
 
-
-######################
-#  MAIN FOR TESTING  #
-######################
-def main( ) :
-  print "... TESTING LITERAL ..."
-  a = Literal( "node(1,2,3)" )
-  print "a = " + str( a )
-
-#########################
-#  THREAD OF EXECUTION  #
-#########################
-if TESTING_MAIN :
-  main()
 
 #########
 #  EOF  #

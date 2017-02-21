@@ -12,7 +12,9 @@ BooleanFormula.py
 #  IMPORTS  #
 #############
 # standard python packages
-import abc, inspect, os, sys
+import abc, inspect, os, sys, time
+from types import *
+import pydot
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -24,6 +26,9 @@ from utils import tools
 # **************************************** #
 
 
+IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data/graphOutput" )
+
+
 class BooleanFormula( object ) :
 
   ################
@@ -33,166 +38,72 @@ class BooleanFormula( object ) :
   left     = None
   right    = None
   operator = None
-  fmla     = None
+  isEmpty  = False # an empty formula subtree
+
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, left, right, val ) :
-    self.val      = val
+  def __init__( self, left, right, value ) :
     self.left     = left
     self.right    = right
-    self.operator = "UNIMPLEMENTED"
+    self.value    = value
 
 
   #############
-  #  __STR__  #
+  #  DISPLAY  #
   #############
   # string representation of a boolean formula
-  def __str__(self):
+  def display( self ) :
 
-    # return val if populated
-    if not self.val == None :
-      return self.val
-
-    # val empty
-    # (boolean formula is not a literal)
-    # return string representations of subtrees recursively
-    else:
-      if not self.right == None :
-        return "(" + str(self.left) + " " + self.operator + " " + str(self.right) + ")"
-      else :
-        if not self.left == None :
-          return str( self.left )
-        else :
-          return "True"  # necessary when not supporting negative provenance.
+    print "---------------------------------------"
+    print "  self             = " + str(self)
+    print "  self.left        = " + str( self.left )
+    print "  self.right       = " + str( self.right )
+    print "  type(self)       = " + str( type(self) )
+    print "  type(self.left)  = " + str( type(self.left) )
+    print "  type(self.right) = " + str( type(self.right) )
 
 
-  #############
-  #  __CMP__  #
-  #############
-  # define comparison between boolean formulas
-  # return 1 if different
-  # return 0 if same
-  def __cmp__( self, other ):
+    # case both left and right arguments are populated
+    if self.left and self.right :
+      return "(" + self.left.display() + " " + self.operator + " " + self.right.display() + ")"
+      #return "(" + self.left.display() + " " + self.operator + " " + str( self.right.display() ) + ")"
 
-    # case no other defined
-    # essentially a no-op
-    if not other :
-      return 1
+    # case right argument is not populated
+    elif self.left and self.right == None :
+      return self.left.display()
 
-    # case val of this node in the boolean formula is populated
-    # boolean formula has no operators. it's a literal.
-    elif self.val :
-      return cmp( self.val, other.val)
+    # case left argument is not populated
+    elif self.left == None and self.right :
+      return self.right.display()
 
-    # case val is not populated
-    # (boolean formula is not a literal)
-    else :
-
-      # case operators are identical
-      if self.operator == other.operator :
-
-        # case same left vals and same right vals
-        if self.left == other.left and self.right == other.right :
-          return 0
-
-        # case different left vals or different right vals
-        else:
-          return 1
-
-      # case operators are different
-      else:
-        return 1
-
-
-  ############
-  #  TO CNF  #
-  ############
-  # convert the boolean formula to CNF
-  # Implemented by derived classes
-  @abc.abstractmethod
-  def toCNF( self ):
-      return None
-
-
-  ############
-  #  IS CNF  #
-  ############
-  # check if already CNF
-  # Implemented by derived classes
-  @abc.abstractmethod
-  def isCNF( self ) :
-      return None
+    elif self.left == None and self.right == None :
+      return "HIT SOME SHIT"
 
 
   ###########
   #  GRAPH  #
   ###########
   # plot the formula in a graph
-  def graph(self, file):
-    #dot = Digraph(comment="LDFI", format='png')
+  def graph( self ) :
+
+    # declare graph
+    graph = pydot.Dot( graph_type = 'digraph', strict=True ) # strict => ignore duplicate edges
+    path  = IMGSAVEPATH + "/cnfFormula_render_" + str(time.strftime("%d-%m-%Y")) + "_" + str(time.strftime("%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs" ))
+
+    # get set of nodes
+    nodes = self.nodeset()
+
+    # get set of edges
     #edges = self.edgeset()
 
-    #dot.edges(edges)
-    #dot.render(file)
-    tools.bp( __name__, inspect.stack()[0][3], "TODO: Implement boolean formula plotting.")
-
-
-  ###############
-  #  VARIABLES  #
-  ###############
-  # get the complete set of variables in this boolean formula
-  def variables( self ) :
-
-    # case val is populated, return val as a set
-    if self.val is not None:
-      return set( [ self.val ] )
-
-    # case val empty
-    # (boolean formula is not a literal)
-    # recursively grab the variables from
-    # the left and right subtrees
-    else:
-      return self.left.variables().union( self.right.variables() )
-
-
-  #############
-  #  CLAUSES  #
-  #############
-  # count the number of clauses in this boolean formula
-  def clauses( self ) :
-
-    # val is populated
-    if self.val is not None:
-      return 1 
-
-    # val is not populated
-    # (boolean formula is not a literal)
-    else:
-       return 1 + self.left.clauses() + self.right.clauses()
-
-
-  ###########
-  #  DEPTH  #
-  ###########
-  # get the depth of the formula tree representation
-  def depth( self ) :
-
-    # val is populated
-    if self.val is not None:
-      return 1
-
-    # (boolean formula is not a literal)
-    # recursively calculate the depth from left and right 
-    # arguments of the operator
-    else:
-      lft = self.left.depth()
-      rgh = self.right.depth()
-      if lft > rgh :
-        return 1 + lft
-      else:
-        return 1 + rgh
+    #if DEBUG :
+    #  print "nodes = " + str( nodes )
+    #  print "edges = " + str( edges )
+    #  tools.bp( __name__, inspect.stack()[0][3], "breakpoint here." )   
+ 
+    #graph.write_png( path + '.png' )
 
 
   ##############
@@ -202,17 +113,33 @@ class BooleanFormula( object ) :
   # supports formula plot code for sanity checking.
   def nodeset( self ) :
 
-    # case val is populated
-    if self.val is not None :
-      return set( str( self ), self.val )
+    # case value is populated
+    if self.isLiteral() :
+      #tools.bp( __name__, inspect.stack()[0][3], "yes is literal" )
+      return set( [ self.value ] )
 
     # case val is empty
     # (boolean formula is not a literal)
     # return the left and right node sets recursively,
     # while adding the node.
     else:
-      sub = self.left.nodeset().union(self.right.nodeset())
-      return sub.add( ( str( self ), self.operator ) ) # nodes are tuples
+      #tools.bp( __name__, inspect.stack()[0][3], "not literal" )
+      #tools.bp( __name__, inspect.stack()[0][3], "str(self) = " + str(self) )
+
+
+      if self.left == None and self.right == None :
+        return set( [ self.val ] )
+
+      if self.left == None or self.right == None :
+        print "str( self )  = " + str( self )
+        print "type( self ) = " + str( type( self ) )
+        tools.bp( __name__, inspect.stack()[0][3], "\nself.left = " + str(self.left) + "\nself.right = " + str(self.right) )
+
+      print "self.left.nodeset()  = " + str( self.left.nodeset() )
+      print "self.right.nodeset() = " + str( self.right.nodeset() )
+
+      sub = self.left.nodeset().union( self.right.nodeset() )
+      #return sub.add( ( str( self ), self.operator ) ) # nodes are tuples
 
 
   ##############
@@ -223,16 +150,16 @@ class BooleanFormula( object ) :
   def edgeset( self ) :
 
     # case val is populated
-    if self.val is not None:
+    if self.isLiteral() :
       return set()
 
     # case val is empty
     # (boolean formula is not a literal)
     # return edgesets of left and right equations recursively.
     else:
-      sub = self.left.edgeset().union(self.right.edgeset())
-      sub.add( str( self ), str( self.left  ) )
-      sub.add( str( self ), str( self.right ) )
+      sub = self.left.edgeset().union( self.right.edgeset() )
+      sub.add( ( str( self ), str( self.left  ) ) )
+      sub.add( ( str( self ), str( self.right ) ) )
       return sub
 
 

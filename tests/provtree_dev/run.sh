@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-cmd="python ../../src/drivers/driver1.py -n a,b,c -f ./provTree_dev.ded --evaluator c4"
+cmd="python ../../src/drivers/driver1.py -n a,b,c -f ./provTree_dev.ded --evaluator c4 --EOT 1"
 
 # run the test
 $cmd > tmp.txt
