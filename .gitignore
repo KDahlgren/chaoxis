@@ -8,7 +8,7 @@ src/evaluators/programFiles/*.py
 save_data/c4Output/*
 save_data/graphOutput/*
 
-test/*/*.txt
+tests/**/*.txt
 
 !save_data/c4Output/README.md
 !save_data/graphOutput/README.md
