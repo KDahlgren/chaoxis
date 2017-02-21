@@ -48,7 +48,7 @@ class GoalNode( Node ) :
       print "<><><><><><><><><><><><><><><><><><><>"
 
     self.descendants = [] # needed or else creates WAAAAAY too many edges for some reason??? <.<
-    self.setDescendant( )
+    self.setDescendants( )
 
     if DEBUG :
       print "---------------------------------------"
@@ -90,8 +90,8 @@ class GoalNode( Node ) :
   ####################
   #  SET DESCENDANT  #
   ####################
-  # goal nodes have exactly one descendant, either a single rule node or a single fact node.
-  def setDescendant( self ) :
+  # goal nodes may have more than one descendant in the case of wildcards
+  def setDescendants( self ) :
 
     if DEBUG :
       print "self.name                              = " + self.name
@@ -147,14 +147,13 @@ class GoalNode( Node ) :
   #  SPAWN FACT  #
   ################
   def spawnFact( self, seedRecord ) :
-    #self.descendant = DerivTree.DerivTree( self.name, "fact", self.isNeg, seedRecord, self.results, self.cursor )
     self.descendants.append( DerivTree.DerivTree( self.name, "fact", self.isNeg, seedRecord, self.results, self.cursor ) )
 
   ################
   #  SPAWN RULE  #
   ################
   def spawnRule( self, seedRecord ) :
-    self.descendant = DerivTree.DerivTree( self.name, "rule", False, seedRecord, self.results, self.cursor )
+    self.descendants.append( DerivTree.DerivTree( self.name, "rule", False, seedRecord, self.results, self.cursor ) )
 
 
 #########

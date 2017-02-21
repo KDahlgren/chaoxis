@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 
-# run the test
-(python ../../src/drivers/driver1.py -n a,b,M -f ./barrier_test.ded --evaluator c4) > tmp.txt
 
+cmd="python ../../src/drivers/driver1.py -n a,b,c -f ./barrier_test.ded --evaluator c4"
+
+# run the test
+$cmd > tmp.txt
+  
 # check if test passed (TODO: make more sophisticated)
 if grep -Fxq "PROGRAM EXITED SUCCESSFULLY" tmp.txt
 then
   echo "TEST PASSED"
+  rm tmp.txt
 else
   echo "TEST FAILED"
-  echo "Offending output : "
-  cat tmp.txt
+  echo -e "Please see ./tmp.txt for execution outputs, or run the following command for more info :\n$cmd"
 fi
 
 # remove the temp file to clean up directory
-rm tmp.txt
+#rm tmp.txt
+

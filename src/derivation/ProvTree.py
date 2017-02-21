@@ -46,11 +46,23 @@ class ProvTree( ) :
   ######################
   #  IS ULTIMATE GOAL  #
   ######################
+  # a convenience function
+  # a provenance tree will never not be rooted
+  # at "UltimateGoal"
   def isUltimateGoal( self ) :
     if self.rootname == "UltimateGoal" :
       return True
     else :
       return False
+
+
+  #############
+  #  IS LEAF  #
+  #############
+  # a convenience function
+  # a provenance tree will never be a leaf.
+  def isLeaf( self ) :
+    return False
 
 
   ########################

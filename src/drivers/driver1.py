@@ -30,6 +30,7 @@ from solvers    import EncodedProvTree_CNF
 DRIVER_DEBUG            = True
 RUN_C4_DIRECTLY         = True
 PROV_TREES_ON           = True
+OUTPUT_PROV_TREES_ON    = False
 ONE_CORE_ITERATION_ONLY = True
 TREE_CNF_ON             = True
 
@@ -44,6 +45,7 @@ def parseArgs( ) :
 
   return argDict
 
+
 ####################
 #  PASS TO SOLVER  #
 ####################
@@ -52,6 +54,7 @@ def passToSolver() :
   print " ... In passToSolver ..."
   #
 
+
 ####################
 #  OUTPUT RESULTS  #
 ####################
@@ -59,6 +62,7 @@ def passToSolver() :
 def outputResults() :
   print " ... In outputResults ..."
   #
+
 
 ############
 #  DRIVER  #
@@ -193,7 +197,7 @@ def LDFICore( argDict ) :
         newProvTree = provTreeComplete.generateProvTree( seedRecord )
         provTreeComplete.subtrees.append( newProvTree )
 
-      if DRIVER_DEBUG :
+      if OUTPUT_PROV_TREES_ON :
         print "provTreeComplete :"
         provTreeComplete.createGraph( )
 
@@ -203,8 +207,17 @@ def LDFICore( argDict ) :
   # -------------------------------------------- #
   # graphs to CNF
   if TREE_CNF_ON :
+
+    if DRIVER_DEBUG :
+      print "\n~~~~ CONVERTING PROV TREE TO CNF ~~~~"
+
     provTree_fmla = EncodedProvTree_CNF.EncodedProvTree_CNF( provTreeComplete ) # get fmla with provTree_fmla.CNFFormula
-    print ">>> provTree_fmla = " + str( provTree_fmla )
+
+    if DRIVER_DEBUG :
+      if provTree_fmla.formula :
+        print ">>> provTree_fmla.formula = " + str( provTree_fmla.formula )
+      else :
+        tools.bp( __name__, inspect.stack()[0][3], "ERROR: provTree_fmla.formula is empty. Aborting execution..." )
 
   # -------------------------------------------- #
   # solve CNF

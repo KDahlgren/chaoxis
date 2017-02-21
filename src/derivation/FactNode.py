@@ -48,6 +48,7 @@ class FactNode( Node ) :
     else :
       return self.name + "(" + str(self.record) + ")"
 
+
 #########
 #  EOF  #
 #########

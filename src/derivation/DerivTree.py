@@ -44,10 +44,21 @@ class DerivTree( ) :
   #  IS ULTIMATE GOAL  #
   ######################
   # a convenience function
-  # provTrees are not DerivTrees
+  # ProvTrees are not DerivTrees
   def isUltimateGoal( self ) :
     return False
 
+
+  #############
+  #  IS LEAF  #
+  #############
+  # a convenience function
+  # a DeriveTree is a leaf iff it is rooted at a fact.
+  def isLeaf( self ) :
+    if self.root.treeType == "fact" :
+      return True
+    else :
+      return False
 
   # ------------------------------------------ #
   #################

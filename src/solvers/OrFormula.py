@@ -15,6 +15,7 @@ OrFormula.py
 import inspect, os, sys
 
 from BooleanFormula import BooleanFormula
+import Literal
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -25,6 +26,10 @@ from utils import tools
 
 # **************************************** #
 
+
+TESTING_MAIN = False
+
+
 class OrFormula( BooleanFormula ) :
 
   ################
@@ -32,14 +37,39 @@ class OrFormula( BooleanFormula ) :
   ################
   operator = None
 
-
   ################
   #  CONSTUCTOR  #
   ################
-  def __init__( self, left, right ) :
-    # BOOLEAN FORMULA CONSTRUCTOR left=None, right=None, val=None
-    BooleanFormula.__init__(self, left, right)
+  def __init__( self ) :
+    # BOOLEAN FORMULA CONSTRUCTOR left, right, val
+    BooleanFormula.__init__(self, None, None, None)
     self.operator = "OR"
+
+
+  #############
+  #  ADD ARG  #
+  #############
+  def addArg( self, subfmla ) :
+    
+    # case formula is populated
+    if self.fmla :
+      #tools.bp( __name__, inspect.stack()[0][3], "BREAKHERE:\nself.fmla = " + str(self.fmla) + "\nsubfmla = " + str(subfmla) )
+
+      # original fmla is the left argument to OR,
+      # new subfmla is the right argument to OR
+      self.left  = self.fmla
+      self.right = subfmla
+ 
+      # create the new fmla string
+      self.fmla = "( " + str( self.fmla ) + " " + self.operator + " " + str( subfmla ) + " )"
+
+    # no fmla currently exists
+    # let fmla = subfmla and call the fmla the left argument of OR
+    else :
+      self.fmla = subfmla
+      self.left = self.fmla
+
+    return self.fmla
 
 
   ############
@@ -95,3 +125,28 @@ class OrFormula( BooleanFormula ) :
       return self.left.disjuncts().union(self.right.disjuncts())
 
 
+
+######################
+#  MAIN FOR TESTING  #
+######################
+def main( ) :
+  print "... TESTING ORFORMULA ..."
+  a = Literal.Literal( "node(i,j,3)" )
+  b = Literal.Literal( "node(j,k,3)" )
+  print "a = " + str( a )
+  print "b = " + str( b )
+
+  f = OrFormula( a, b )
+  print "f = " + str( f )
+
+
+#########################
+#  THREAD OF EXECUTION  #
+#########################
+if TESTING_MAIN :
+  main()
+
+
+#########
+#  EOF  #
+#########

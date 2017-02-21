@@ -33,7 +33,7 @@ class BooleanFormula( object ) :
   left     = None
   right    = None
   operator = None
-
+  fmla     = None
 
   #################
   #  CONSTRUCTOR  #
@@ -59,7 +59,13 @@ class BooleanFormula( object ) :
     # (boolean formula is not a literal)
     # return string representations of subtrees recursively
     else:
-      return "(" + str(self.left) + " " + self.operator + " " + str(self.right) + ")"
+      if not self.right == None :
+        return "(" + str(self.left) + " " + self.operator + " " + str(self.right) + ")"
+      else :
+        if not self.left == None :
+          return str( self.left )
+        else :
+          return "True"  # necessary when not supporting negative provenance.
 
 
   #############

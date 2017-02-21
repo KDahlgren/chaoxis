@@ -2,6 +2,8 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+* Add more rigorous error encoding scheme.
+
 * Add option for encapsulating similar clock facts in a single node representation (see Molly graphs, esp. clock node resolution).
 
 * Add CMAKE check in makefile/setup.py as an installation predicate.
