@@ -30,7 +30,7 @@ from solvers    import EncodedProvTree_CNF
 DRIVER_DEBUG            = True
 RUN_C4_DIRECTLY         = True
 PROV_TREES_ON           = True
-OUTPUT_PROV_TREES_ON    = False
+OUTPUT_PROV_TREES_ON    = True
 ONE_CORE_ITERATION_ONLY = True
 TREE_CNF_ON             = True
 
@@ -216,6 +216,7 @@ def LDFICore( argDict ) :
     if DRIVER_DEBUG :
       if provTree_fmla.formula :
         print ">>> provTree_fmla.formula = " + str( provTree_fmla.formula )
+        print ">>> provTree_fmla.formula.display() = " + str( provTree_fmla.formula.display() )
         #provTree_fmla.formula.graph()
       else :
         tools.bp( __name__, inspect.stack()[0][3], "ERROR: provTree_fmla.formula is empty. Aborting execution..." )

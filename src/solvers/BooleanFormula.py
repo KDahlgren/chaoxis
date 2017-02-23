@@ -13,7 +13,6 @@ BooleanFormula.py
 #############
 # standard python packages
 import abc, inspect, os, sys, time
-from types import *
 import pydot
 
 # ------------------------------------------------------ #
@@ -25,7 +24,7 @@ from utils import tools
 
 # **************************************** #
 
-
+DEBUG = True
 IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data/graphOutput" )
 
 
@@ -34,52 +33,62 @@ class BooleanFormula( object ) :
   ################
   #  ATTRIBUTES  #
   ################
-  value    = None
-  left     = None
-  right    = None
-  operator = None
-  isEmpty  = False # an empty formula subtree
+  left        = None
+  right       = None
+  value       = None
 
 
   #################
   #  CONSTRUCTOR  #
   #################
   def __init__( self, left, right, value ) :
-    self.left     = left
-    self.right    = right
-    self.value    = value
-
-
+    self.left  = left
+    self.right = right
+    self.value = value
+  
+  
   #############
   #  DISPLAY  #
   #############
   # string representation of a boolean formula
   def display( self ) :
 
-    print "---------------------------------------"
-    print "  self             = " + str(self)
-    print "  self.left        = " + str( self.left )
-    print "  self.right       = " + str( self.right )
-    print "  type(self)       = " + str( type(self) )
-    print "  type(self.left)  = " + str( type(self.left) )
-    print "  type(self.right) = " + str( type(self.right) )
+    if DEBUG :
+      print "running display:"
+      print "---------------------------------------"
+      print "  self             = " + str(self)
+      print "  self.left        = " + str( self.left )
+      print "  self.right       = " + str( self.right )
+      print "  self.value       = " + str( self.value )
 
+      if not self.value :
+        print "  self.unary       = " + str( self.unary )
 
-    # case both left and right arguments are populated
-    if self.left and self.right :
-      return "(" + self.left.display() + " " + self.operator + " " + self.right.display() + ")"
-      #return "(" + self.left.display() + " " + self.operator + " " + str( self.right.display() ) + ")"
+      print
+      print "  type(self)       = " + str( type(self) )
+      print "  type(self.left)  = " + str( type(self.left) )
+      print "  type(self.right) = " + str( type(self.right) )
+      print "  type(self.value) = " + str( type(self.value) )
 
-    # case right argument is not populated
-    elif self.left and self.right == None :
-      return self.left.display()
+      if not self.value :
+        print "  type(self.unary) = " + str( type(self.unary) )
 
-    # case left argument is not populated
-    elif self.left == None and self.right :
-      return self.right.display()
+      print
 
-    elif self.left == None and self.right == None :
-      return "HIT SOME SHIT"
+    # a literal
+    if self.value :
+      return self.value           # <------ BASE CASE 1
+
+    # an AND or OR formula, but with only one descendant
+    elif self.unary :
+      return self.unary.display()
+
+    # both arguments exist
+    elif self.left and self.right : 
+      return "( " + self.left.display() + " " + self.operator + " " + self.right.display() + " )"
+
+    else :
+      return "CNF_formula_construction_NOT_WORKING =["
 
 
   ###########

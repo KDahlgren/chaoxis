@@ -32,22 +32,11 @@ class Literal( BooleanFormula ) :
   #  CONSTRUCTOR  #
   #################
   def __init__( self, value ) :
+
     # BOOLEAN FORMULA CONSTRUCTOR left, right, value
     BooleanFormula.__init__( self, None, None, value )
 
-  ################
-  #  IS LITERAL  #
-  ################
-  def isLiteral( self ) :
-    return True
-
-
-  #############
-  #  DISPLAY  #
-  #############
-  def display( self ) :
-    return self.value
-
+    print "instantiated Literal with self.value = " + self.value
 
 #########
 #  EOF  #

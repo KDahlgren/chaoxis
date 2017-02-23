@@ -2,6 +2,10 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+* Build a tools.error as an alternative to tools.bp for error messages specifically.
+
+* Does pyLDFI supprt != ???
+
 * Add more rigorous error encoding scheme.
 
 * Add option for encapsulating similar clock facts in a single node representation (see Molly graphs, esp. clock node resolution).

@@ -1,4 +1,4 @@
-## Tests/
+## qa/
 
 Populate with tests to run to check the correctness of pyLDFI.<br/>
 <br/>

@@ -11,13 +11,9 @@ AndFormula.py
 #############
 #  IMPORTS  #
 #############
-# standard python packages
 import inspect, os, sys
-from types import *
 
-from OrFormula      import OrFormula
 from BooleanFormula import BooleanFormula
-import Literal
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -36,39 +32,19 @@ class AndFormula( BooleanFormula ) :
   #  ATTRIBUTES  #
   ################
   operator = None
+  unary    = None
 
   #################
   #  CONSTRUCTOR  #
   #################
+  # listOfProvDescendants is either 
+  #  1. a list of goal-rooted trees or 
+  #  2. a single fact-rooted tree
   def __init__( self ) :
+
     # BOOLEAN FORMULA CONSTRUCTOR left, right, value
-    BooleanFormula.__init__( self, None, None, None)
+    BooleanFormula.__init__( self, None, None, None )
     self.operator = "AND"
-
-
-  ################
-  #  IS LITERAL  #
-  ################
-  def isLiteral( self ) :
-    return False
-
-
-  #############
-  #  ADD ARG  #
-  #############
-  def addArg( self, subfmla ) :
-
-    newRight = OrFormula()
-    newRight.left  = self.left
-    newRight.right = self.right
-
-    if newRight.left == None and newRight.right == None :
-      self.isEmpty = True
-
-    self.left  = subfmla
-    self.right = newRight
-
-    return self
 
 
 #########
