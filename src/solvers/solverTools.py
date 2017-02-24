@@ -16,7 +16,7 @@ import inspect, os, sys
 from types import *
 
 import AndFormula, OrFormula, Literal
-import psat
+import Solver_PYCOSAT
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -39,7 +39,7 @@ def solveCNF( cnfFormula ) :
   print "cnfFormula.getConjuncts() = " + str( cnfFormula.getConjuncts() )
 
   # get solutions
-  solns = psat.Solver( cnfFormula )
+  solns = Solver_PYCOSAT.Solver_PYCOSAT( cnfFormula )
 
   #if DEBUG :
   #  for soln in  solns.minimal_solutions():

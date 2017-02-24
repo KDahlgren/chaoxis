@@ -127,7 +127,10 @@ class BooleanFormula( object ) :
 
     # a literal
     if self.value :
-      return [ self.value ]         # <------ BASE CASE 1
+      #if "clock" in self.value : # hack to ensure only clock-based solutions???
+        return [ self.value ]         # <------ BASE CASE 1
+      #else :
+      #  return []
 
     # an AND or OR formula, but with only one descendant
     elif self.unary :
