@@ -3,7 +3,7 @@
 '''
 AndFormula.py
   definition of an AND boolean formula.
-  borrows heavily from https://github.com/palvaro/ldfi-py
+  borrows elements from https://github.com/palvaro/ldfi-py
 '''
 
 # **************************************** #
@@ -14,6 +14,7 @@ AndFormula.py
 import inspect, os, sys
 
 from BooleanFormula import BooleanFormula
+import OrFormula
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!

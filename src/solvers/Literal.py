@@ -3,7 +3,7 @@
 '''
 Literal.py
   definition of boolean formula consisting only of a single literal
-  borrows heavily from https://github.com/palvaro/ldfi-py
+  borrows elements from https://github.com/palvaro/ldfi-py
 '''
 
 # **************************************** #

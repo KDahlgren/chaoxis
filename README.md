@@ -56,6 +56,7 @@ Python Packages (not automatically installed with pyLDFI) :
   * [sqlite3](https://docs.python.org/2/library/sqlite3.html)
   * [pyDatalog](https://sites.google.com/site/pydatalog/installation)
   * [pyDot](https://pypi.python.org/pypi/pydot)
+  * [pycosat](https://pythonhosted.org/PuLP/://pypi.python.org/pypi/pycosat)
 
 Other Tools :
   * [cmake](http://brewformulas.org/Cmake)

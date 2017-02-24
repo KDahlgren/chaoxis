@@ -2,6 +2,8 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+* Implement CNF formula visualization.
+
 * Build a tools.error as an alternative to tools.bp for error messages specifically.
 
 * Support == and != operators in equations (see dedalusParser.py)

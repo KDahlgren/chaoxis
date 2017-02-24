@@ -16,6 +16,7 @@ import inspect, os, sys
 from types import *
 
 import AndFormula, OrFormula, Literal
+import psat
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -26,6 +27,25 @@ from utils import tools
 
 # **************************************** #
 
+
+DEBUG = True
+
+
+###############
+#  SOLVE CNF  #
+###############
+def solveCNF( cnfFormula ) :
+
+  print "cnfFormula.getConjuncts() = " + str( cnfFormula.getConjuncts() )
+
+  # get solutions
+  solns = psat.Solver( cnfFormula )
+
+  #if DEBUG :
+  #  for soln in  solns.minimal_solutions():
+  #    print "SOLN " + str(soln)
+
+  return solns
 
 
 #####################

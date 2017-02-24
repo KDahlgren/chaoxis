@@ -23,16 +23,20 @@ from dedt       import dedt, dedalusParser
 from derivation import ProvTree
 from utils      import parseCommandLineInput, tools
 from evaluators import c4_evaluator, evalTools
-from solvers    import EncodedProvTree_CNF
+from solvers    import EncodedProvTree_CNF, solverTools
 
 # **************************************** #
 
+
 DRIVER_DEBUG            = True
 RUN_C4_DIRECTLY         = True
-PROV_TREES_ON           = True
-OUTPUT_PROV_TREES_ON    = True
+PROV_TREES_ON           = True  # toggle prov tree generation code
+OUTPUT_PROV_TREES_ON    = False # output prov tree renders
 ONE_CORE_ITERATION_ONLY = True
-TREE_CNF_ON             = True
+TREE_CNF_ON             = True  # toggle provTree to CNF conversion
+OUTPUT_TREE_CNF_ON      = False # toggle CNF formula renders
+SOLVE_TREE_CNF_ON       = True  # toggle CNF solve
+
 
 ################
 #  PARSE ARGS  #
@@ -44,24 +48,6 @@ def parseArgs( ) :
   argDict = parseCommandLineInput.parseCommandLineInput( )  # get dictionary of arguments.
 
   return argDict
-
-
-####################
-#  PASS TO SOLVER  #
-####################
-# pass dedalus programs and arguments to solver
-def passToSolver() :
-  print " ... In passToSolver ..."
-  #
-
-
-####################
-#  OUTPUT RESULTS  #
-####################
-# output results =]
-def outputResults() :
-  print " ... In outputResults ..."
-  #
 
 
 ############
@@ -213,18 +199,24 @@ def LDFICore( argDict ) :
 
     provTree_fmla = EncodedProvTree_CNF.EncodedProvTree_CNF( provTreeComplete ) # get fmla with provTree_fmla.CNFFormula
 
-    if DRIVER_DEBUG :
-      if provTree_fmla.formula :
-        print ">>> provTree_fmla.formula = " + str( provTree_fmla.formula )
-        print ">>> provTree_fmla.formula.display() = " + str( provTree_fmla.formula.display() )
-        #provTree_fmla.formula.graph()
-      else :
-        tools.bp( __name__, inspect.stack()[0][3], "ERROR: provTree_fmla.formula is empty. Aborting execution..." )
+    if provTree_fmla.formula :
+      print ">>> provTree_fmla.formula = " + str( provTree_fmla.formula )
+      print ">>> provTree_fmla.formula.display() = " + str( provTree_fmla.formula.display() )
+
+      if OUTPUT_TREE_CNF_ON :
+        provTree_fmla.formula.graph()
+
+    else :
+      tools.bp( __name__, inspect.stack()[0][3], "ERROR: provTree_fmla.formula is empty. Aborting execution..." )
 
   # -------------------------------------------- #
   # solve CNF
-  # magic code here...
-  # solns = //.solveCNF( fmla )
+  if SOLVE_TREE_CNF_ON :
+    solns = solverTools.solveCNF( provTree_fmla.formula )
+
+    if DRIVER_DEBUG :
+      for s in  solns.minimal_solutions():
+        print "SOLN " + str( s )
 
   # -------------------------------------------- #
   # new datalog prog

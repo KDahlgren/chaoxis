@@ -3,7 +3,7 @@
 '''
 OrFormula.py
   definition of an OR boolean formula.
-  borrows heavily from https://github.com/palvaro/ldfi-py
+  borrows elements from https://github.com/palvaro/ldfi-py
 '''
 
 # **************************************** #

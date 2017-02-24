@@ -3,7 +3,7 @@
 '''
 BooleanFormula.py
   definition of a boolean formula.
-  borrows heavily from https://github.com/palvaro/ldfi-py
+  borrows elements from https://github.com/palvaro/ldfi-py
 '''
 
 # **************************************** #
@@ -13,6 +13,7 @@ BooleanFormula.py
 #############
 # standard python packages
 import abc, inspect, os, sys, time
+from types import *
 import pydot
 
 # ------------------------------------------------------ #
@@ -42,11 +43,12 @@ class BooleanFormula( object ) :
   #  CONSTRUCTOR  #
   #################
   def __init__( self, left, right, value ) :
+    __metaclass__ = abc.ABCMeta
     self.left  = left
     self.right = right
     self.value = value
-  
-  
+
+
   #############
   #  DISPLAY  #
   #############
@@ -77,16 +79,14 @@ class BooleanFormula( object ) :
 
     # a literal
     if self.value :
-      print "self.value TRUE"
       return self.value           # <------ BASE CASE 1
 
     # an AND or OR formula, but with only one descendant
     elif self.unary :
       return self.unary.display()
 
-    # both arguments exist for the AND or OR formula
+    # both arguments exist for the formula
     elif self.left and self.right : 
-      print "self.left AND self.right TRUE"
       return "( " + self.left.display() + " " + self.operator + " " + self.right.display() + " )"
 
     elif self.left :
@@ -96,11 +96,70 @@ class BooleanFormula( object ) :
       return "CNF_formula_construction_NOT_WORKING =["
 
 
+  ###################
+  #  GET CONJUNCTS  #
+  ###################
+  # list the components of the boolean formula as lists of disjuncted literals
+  # ex:  ((A) AND B ) AND (B OR C) == [ [A], [B], [B,C] ]
+  def getConjuncts( self ) :
+
+    if DEBUG :
+      print "running getConjuncts:"
+      print "---------------------------------------"
+      print "  self             = " + str(self)
+      print "  self.left        = " + str( self.left )
+      print "  self.right       = " + str( self.right )
+      print "  self.value       = " + str( self.value )
+
+      if not self.value :
+        print "  self.unary       = " + str( self.unary )
+
+      print
+      print "  type(self)       = " + str( type(self) )
+      print "  type(self.left)  = " + str( type(self.left) )
+      print "  type(self.right) = " + str( type(self.right) )
+      print "  type(self.value) = " + str( type(self.value) )
+
+      if not self.value :
+        print "  type(self.unary) = " + str( type(self.unary) )
+
+      print
+
+    # a literal
+    if self.value :
+      return [ self.value ]         # <------ BASE CASE 1
+
+    # an AND or OR formula, but with only one descendant
+    elif self.unary :
+      return [ self.unary.getConjuncts() ]
+
+    # both arguments exist for the formula
+    elif self.left and self.right :
+      conjs = []
+      conjs.append( self.left.getConjuncts() )
+      conjs.append( self.right.getConjuncts() )
+      return conjs
+
+    elif self.left :
+      return self.left.getConjuncts()
+
+    else :
+      return [ "GET_CONJUNCTS_NOT_WORKING =[" ]
+
+
   ###########
   #  GRAPH  #
   ###########
   # plot the formula in a graph
   def graph( self ) :
+
+    if DEBUG :
+      print
+      print
+      print "------------------------"
+      print "... graphing formula ..."
+      print "------------------------"
+      print
 
     # declare graph
     graph = pydot.Dot( graph_type = 'digraph', strict=True ) # strict => ignore duplicate edges
@@ -110,12 +169,38 @@ class BooleanFormula( object ) :
     nodes = self.nodeset()
 
     # get set of edges
-    #edges = self.edgeset()
+    edges = self.edgeset()
 
-    #if DEBUG :
-    #  print "nodes = " + str( nodes )
-    #  print "edges = " + str( edges )
-    #  tools.bp( __name__, inspect.stack()[0][3], "breakpoint here." )   
+    if DEBUG :
+      print "nodes = " + str( nodes )
+      print "edges = " + str( edges )
+
+    # ------------------------------------------- #
+
+    # prep node set
+    pyNodes = []
+    for node in nodes :
+      pyNodes.append( pydot.Node( node ) )
+
+    # add nodes to graph
+    for n in pyNodes :
+      graph.add_node( n )
+
+    # ------------------------------------------- #
+
+    # prep edge set
+    pyEdges = []
+    for edge in edges :
+      print "edge[0] = " + str( edge[0] )
+      print "edge[1] = " + str( edge[1] )
+      pyEdges.append( pydot.Edge( edge[0], edge[1] ) )
+
+    # add nodes to graph
+    for e in pyEdges :
+      print "e = " + str( e )
+      #graph.add_edge( n )
+
+    # ------------------------------------------- #
  
     #graph.write_png( path + '.png' )
 
@@ -127,33 +212,39 @@ class BooleanFormula( object ) :
   # supports formula plot code for sanity checking.
   def nodeset( self ) :
 
-    # case value is populated
-    if self.isLiteral() :
-      #tools.bp( __name__, inspect.stack()[0][3], "yes is literal" )
-      return set( [ self.value ] )
+    # the nodeset of a Literal is the value
+    if self.value :
+      return [ self.value ]
 
-    # case val is empty
-    # (boolean formula is not a literal)
-    # return the left and right node sets recursively,
-    # while adding the node.
-    else:
-      #tools.bp( __name__, inspect.stack()[0][3], "not literal" )
-      #tools.bp( __name__, inspect.stack()[0][3], "str(self) = " + str(self) )
+    # the nodeset of a unary is the nodeset of the unary
+    elif self.unary :
+      return self.unary.nodeset()
 
+    # the nodeset of a fmla in which both arguments exist
+    # is the union of the left and the right node sets
+    elif self.left and self.right :
 
-      if self.left == None and self.right == None :
-        return set( [ self.val ] )
+      if DEBUG :
+        print "self.left.nodeset()  = " + str( self.left.nodeset() )
+        print "self.right.nodeset() = " + str( self.right.nodeset() )
 
-      if self.left == None or self.right == None :
-        print "str( self )  = " + str( self )
-        print "type( self ) = " + str( type( self ) )
-        tools.bp( __name__, inspect.stack()[0][3], "\nself.left = " + str(self.left) + "\nself.right = " + str(self.right) )
+      # populate left set
+      leftNodes  = set( self.left.nodeset() )
 
-      print "self.left.nodeset()  = " + str( self.left.nodeset() )
-      print "self.right.nodeset() = " + str( self.right.nodeset() )
+      # populate right set
+      rightNodes = set( self.right.nodeset() )
 
-      sub = self.left.nodeset().union( self.right.nodeset() )
-      #return sub.add( ( str( self ), self.operator ) ) # nodes are tuples
+      # return union
+      return leftNodes.union( rightNodes )
+
+    elif self.left :
+      return self.left.nodeset()
+
+    elif self.right :
+      return self.right.nodeset()
+
+    else :
+      return "Somethin's broken in nodeset() =["
 
 
   ##############
@@ -163,18 +254,46 @@ class BooleanFormula( object ) :
   # supports formula plot code for sanity checking.
   def edgeset( self ) :
 
-    # case val is populated
-    if self.isLiteral() :
-      return set()
+    # the edgeset of a Literal is nothing
+    if self.value :
+      return ()
 
-    # case val is empty
-    # (boolean formula is not a literal)
-    # return edgesets of left and right equations recursively.
-    else:
-      sub = self.left.edgeset().union( self.right.edgeset() )
-      sub.add( ( str( self ), str( self.left  ) ) )
-      sub.add( ( str( self ), str( self.right ) ) )
-      return sub
+    # the edgeset of a unary is the edgeset of the unary
+    elif self.unary :
+      return self.unary.edgeset()
+      
+    # the edgeset of a fmla in which both arguments exist
+    # is the union of the left and the right edge sets
+    elif self.left and self.right :
+
+      if DEBUG :
+        print "self.left.display()  = " + str( self.left.display() )
+        print "self.right.display() = " + str( self.right.display() )
+        print "self.left.edgeset()  = " + str( self.left.edgeset() )
+        print "self.right.edgeset() = " + str( self.right.edgeset() )
+
+      # populate with left edges
+      existingEdges_left = self.left.edgeset()
+      newEdge_left       = ( self.display(), existingEdges_left )
+
+      # populate with right edges
+      existingEdges_right = self.right.edgeset()
+      newEdge_right       = ( self.display(), existingEdges_right )
+
+      print "newEdge_left  = " + str( newEdge_left )
+      print "newEdge_right = " + str( newEdge_right )
+
+      completeEdgeSet = [ newEdge_left, newEdge_left ]
+      return completeEdgeSet
+
+    elif self.left :
+      return self.left.edgeset()
+
+    elif self.right :
+      return self.right.edgeset()
+
+    else :
+      return "Somethin's broken in edgeset() =["
 
 
 #########
