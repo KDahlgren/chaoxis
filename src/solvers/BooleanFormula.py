@@ -77,15 +77,20 @@ class BooleanFormula( object ) :
 
     # a literal
     if self.value :
+      print "self.value TRUE"
       return self.value           # <------ BASE CASE 1
 
     # an AND or OR formula, but with only one descendant
     elif self.unary :
       return self.unary.display()
 
-    # both arguments exist
+    # both arguments exist for the AND or OR formula
     elif self.left and self.right : 
+      print "self.left AND self.right TRUE"
       return "( " + self.left.display() + " " + self.operator + " " + self.right.display() + " )"
+
+    elif self.left :
+      return self.left.display()
 
     else :
       return "CNF_formula_construction_NOT_WORKING =["

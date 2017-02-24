@@ -25,6 +25,7 @@ from utils import tools
 
 # **************************************** #
 
+DEBUG = True
 
 class Literal( BooleanFormula ) :
 
@@ -36,7 +37,9 @@ class Literal( BooleanFormula ) :
     # BOOLEAN FORMULA CONSTRUCTOR left, right, value
     BooleanFormula.__init__( self, None, None, value )
 
-    print "instantiated Literal with self.value = " + self.value
+    if DEBUG :
+      print "instantiated Literal with self.value = " + self.value
+
 
 #########
 #  EOF  #

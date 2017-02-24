@@ -4,7 +4,7 @@ An unordered log of some todo items associated with the development of pyLDFI.
 
 * Build a tools.error as an alternative to tools.bp for error messages specifically.
 
-* Does pyLDFI supprt != ???
+* Support == and != operators in equations (see dedalusParser.py)
 
 * Add more rigorous error encoding scheme.
 

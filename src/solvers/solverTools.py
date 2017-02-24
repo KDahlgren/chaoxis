@@ -61,15 +61,20 @@ def convertToCNF( provTree ) :
       fmla.left  = convertToCNF( leftGoals[0] )
       fmla.right = convertToCNF( rightGoal )
 
+    # sanity check
+    if fmla.left and fmla.unary :
+      tools.bp( __name__, inspect.stack()[0][3], "ERROR1: self.left and self.unary populated for the same formula!")
+
   # -------------------------------------------------- #
   # case prov tree rooted at goal
   elif provTree.root.treeType == "goal" :
 
     # case goal is negative => change when supporting negative provenance.
     if len( provTree.root.descendants ) == 0 :
-      fmla       = OrFormula.OrFormula()
+      #fmla       = OrFormula.OrFormula()
       print " > Adding " + str( provTree.root ) + " to fmla unary."
-      fmla.unary = Literal.Literal( str( provTree.root ) )
+      #fmla.unary = Literal.Literal( str( provTree.root ) )
+      fmla       = Literal.Literal( str( provTree.root ) )
 
     # case goal has 1 or more rule descendants only
     elif checkDescendantTypes( provTree, "rule" ) :
@@ -79,13 +84,17 @@ def convertToCNF( provTree ) :
 
       # branch on left rules contents
       if len( leftRules ) > 1 :
-        fmla.left = getLeftFmla( leftRules, "OR" )
+        fmla.left   = getLeftFmla( leftRules, "AND" )
         fmla.right  = convertToCNF( rightRule )
+        fmla.unary  = None
 
       elif len( leftRules ) < 1 :
+        fmla.left  = None
         fmla.unary = convertToCNF( rightRule )
+        #fmla.unary = "shit"
 
       else : # leftRules contains only one rule
+        fmla.unary = None
         fmla.left  = convertToCNF( leftRules[0] )
         fmla.right = convertToCNF( rightRule )
 
@@ -97,10 +106,15 @@ def convertToCNF( provTree ) :
     elif checkDescendantTypes( provTree, "fact" ) :
       print " > Adding " + str( provTree.root ) + " to fmla."
       fmla = Literal.Literal( str( provTree.root ) ) # <--- BASE CASE!!!
+      print " > Added " + str( provTree.root ) + " to fmla."
 
     # case universe implodes
     else :
       tools.bp( __name__, inspect.stack()[0][3], "ERROR: goal unrecognized goal descendant pattern: provTree.root.descendants : " + str( provTree.root.descendants ) )
+
+    # sanity check
+    if fmla.left and fmla.unary :
+      tools.bp( __name__, inspect.stack()[0][3], "ERROR2: self.left and self.unary populated for the same formula!")
 
   # -------------------------------------------------- #
   # case prov tree rooted at rule
@@ -111,7 +125,8 @@ def convertToCNF( provTree ) :
 
     # branch on left goals contents
     if len( leftGoals ) > 1 :
-      fmla.left  = getLeftFmla( leftGoals, "OR" )
+      #fmla.left  = getLeftFmla( leftGoals, "OR" )
+      fmla.left  = getLeftFmla( leftGoals, "AND" )
       fmla.right = convertToCNF( rightGoal )
 
     elif len( leftGoals ) < 1 :
@@ -121,12 +136,19 @@ def convertToCNF( provTree ) :
       fmla.left  = convertToCNF( leftGoals[0] )
       fmla.right = convertToCNF( rightGoal )
 
+    # sanity check
+    if fmla.left and fmla.unary :
+      tools.bp( __name__, inspect.stack()[0][3], "ERROR3: self.left and self.unary populated for the same formula!")
+
   # -------------------------------------------------- #
   # case universe explodes
   else :
     tools.bp( __name__, inspect.stack()[0][3], "ERROR: prov tree root is not an ultimate goal, a goal, or a rule: provTree.root.treeType = " + str( provTree.root.treeType ) )
 
-  #assert fmla.left and fmla.unary, "ERROR! Populated left and unary for same formula!"
+  # sanity check
+  if fmla.left and fmla.unary :
+    tools.bp( __name__, inspect.stack()[0][3], "ERROR4: self.left and self.unary populated for the same formula!")
+
   return fmla
 
 
@@ -150,10 +172,11 @@ def merge( subfmlas, op ) :
 
     # case multiple subformulas exist
     if len( subfmlas ) > 1 :
-        fmla.left = merge( subfmlas[:-1], op ) # subfmlas[:-1] is of type list
+        fmla.left  = merge( subfmlas[:-1], op ) # subfmlas[:-1] is of type list
+        fmla.right = merge( [ subfmlas[-1] ], op ) # subfmlas[-1] is of type BooleanFormula
 
     # case no subformulas exist
-    if len( subfmlas ) < 1 :
+    elif len( subfmlas ) < 1 :
       tools.bp( __name__, inspect.stack()[0][3], "ERROR: subfmlas is empty." )
 
     # case only one subformula exists
@@ -183,6 +206,12 @@ def getLeftFmla( provTreeList, op ) :
   return mergedFmla
 
 
+##################
+#  DISPLAY TREE  #
+##################
+# input provenance tree
+# display relevant info about the tree to stdout
+# good for debugging
 def displayTree( tree ) :
   print
   print "----------------------------------------------------"
