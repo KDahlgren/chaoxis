@@ -39,7 +39,7 @@ OUTPUT_PROV_TREES_ON    = False # output prov tree renders
 ONE_CORE_ITERATION_ONLY = True
 TREE_CNF_ON             = True  # toggle provTree to CNF conversion
 OUTPUT_TREE_CNF_ON      = False # toggle CNF formula renders
-SOLVE_TREE_CNF_ON       = False # toggle CNF solve
+SOLVE_TREE_CNF_ON       = True  # toggle CNF solve
 
 
 
@@ -222,10 +222,11 @@ def LDFICore( argDict ) :
   # -------------------------------------------- #
   # solve CNF
   if SOLVE_TREE_CNF_ON :
-    solns = solverTools.solveCNF( provTree_fmla.formula )
+    solns = solverTools.solveCNF( provTree_fmla.cnfformula )
 
     if DRIVER_DEBUG and solns :
-      for s in  solns.minimal_solutions():
+      for s in  solns.solutions():
+      #for s in  solns.minimal_solutions():
         print "SOLN " + str( s )
 
   # -------------------------------------------- #

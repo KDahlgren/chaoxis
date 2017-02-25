@@ -14,6 +14,9 @@ import SATVars_PYCOSAT
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
+
+import solverTools
+
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
@@ -38,13 +41,13 @@ class Solver_PYCOSAT :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__(self, cnf):
+  def __init__(self, cnf_str):
 
     self.fmlaVars   = SATVars_PYCOSAT.SATVars_PYCOSAT()
     self.satformula = []
 
     # assign integer ids to variables per disjunctive clause:
-    for clause in cnf.getConjuncts() :
+    for clause in solverTools.getConjuncts( cnf_str ) :
       satclause = map( self.fmlaVars.lookupVar, clause )
       self.satformula.append( list(satclause ) )
 
@@ -52,8 +55,12 @@ class Solver_PYCOSAT :
   ###############
   #  SOLUTIONS  #
   ###############
-  def solutions(self):
-    for soln in pycosat.itersolve(self.satformula):
+  def solutions( self ) :
+    print "solutions: self.satformula = " + str( self.satformula )
+
+    print "len( pycosat.itersolve( self.satformula ) ) = " + str( len( list( pycosat.itersolve( self.satformula ) ) ) )
+
+    for soln in pycosat.itersolve( self.satformula ) :
         yield map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln))
 
 
@@ -81,16 +88,15 @@ class Solver_PYCOSAT :
   #  MINIMAL_SOLUTIONS  #
   #######################
   #
-  # (Alvaro, P. :)
+  # Alvaro, P. :
   # this is a bit of a strawman.  the idea is, we need to enumerate all of the SAT
   # solutions to know which is the smallest!  the containment thing in the old version (below)
   # seems sketchy to me, due to nonmonotonicity.  return to this later.
   #
   def minimal_solutions( self ) :
+    print "minimal_solutions: self.satformula = " + str( self.satformula )
 
     solns = []
-    print "self.satformula = " + str( self.satformula )
-
     for soln in pycosat.itersolve( self.satformula ) :
       solns.append( frozenset( map( self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln) ) ) )
 
@@ -102,6 +108,8 @@ class Solver_PYCOSAT :
   #  N MINIMAL_SOLUTIONS  #
   #########################
   def Nminimal_solutions(self):
+    print "Nminimal_solutions: self.satformula = " + str( self.satformula )
+
     solns = []        
     done = []
     for soln in pycosat.itersolve(self.satformula):

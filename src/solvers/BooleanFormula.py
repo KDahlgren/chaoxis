@@ -93,61 +93,7 @@ class BooleanFormula( object ) :
       return self.left.display()
 
     else :
-      return "CNF_formula_construction_NOT_WORKING =["
-
-
-  ###################
-  #  GET CONJUNCTS  #
-  ###################
-  # list the components of the boolean formula as lists of disjuncted literals
-  # ex:  ((A) AND B ) AND (B OR C) == [ [A], [B], [B,C] ]
-  def getConjuncts( self ) :
-
-    if DEBUG :
-      print "running getConjuncts:"
-      print "---------------------------------------"
-      print "  self             = " + str(self)
-      print "  self.left        = " + str( self.left )
-      print "  self.right       = " + str( self.right )
-      print "  self.value       = " + str( self.value )
-
-      if not self.value :
-        print "  self.unary       = " + str( self.unary )
-
-      print
-      print "  type(self)       = " + str( type(self) )
-      print "  type(self.left)  = " + str( type(self.left) )
-      print "  type(self.right) = " + str( type(self.right) )
-      print "  type(self.value) = " + str( type(self.value) )
-
-      if not self.value :
-        print "  type(self.unary) = " + str( type(self.unary) )
-
-      print
-
-    # a literal
-    if self.value :
-      #if "clock" in self.value : # hack to ensure only clock-based solutions???
-        return [ self.value ]         # <------ BASE CASE 1
-      #else :
-      #  return []
-
-    # an AND or OR formula, but with only one descendant
-    elif self.unary :
-      return [ self.unary.getConjuncts() ]
-
-    # both arguments exist for the formula
-    elif self.left and self.right :
-      conjs = []
-      conjs.append( self.left.getConjuncts() )
-      conjs.append( self.right.getConjuncts() )
-      return conjs
-
-    elif self.left :
-      return self.left.getConjuncts()
-
-    else :
-      return [ "GET_CONJUNCTS_NOT_WORKING =[" ]
+      return "raw_formula_construction_NOT_WORKING =["
 
 
   ###########

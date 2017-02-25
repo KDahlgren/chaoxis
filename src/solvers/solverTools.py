@@ -37,23 +37,63 @@ DEBUG = True
 ###############
 #  SOLVE CNF  #
 ###############
-def solveCNF( cnfFormula ) :
+def solveCNF( cnfFormula_str ) :
 
-  print "cnfFormula.getConjuncts() = " + str( cnfFormula.getConjuncts() )
+  print
+  print "getConjuncts( cnfFormula_str ) = " + str( getConjuncts( cnfFormula_str ) )
+  print
 
   # get solutions
-  solns = Solver_PYCOSAT.Solver_PYCOSAT( cnfFormula )
+  return Solver_PYCOSAT.Solver_PYCOSAT( cnfFormula_str )
 
-  #if DEBUG :
-  #  for soln in  solns.minimal_solutions():
-  #    print "SOLN " + str(soln)
 
-  return solns
+###################
+#  GET CONJUNCTS  #
+###################
+# return list of lists of disjunctive variables
+def getConjuncts( cnfFormula_str ) :
+
+  print
+  print "cnfFormula_str = " + cnfFormula_str
+  print
+
+  # split on ANDs
+  cnfFormula_str = cnfFormula_str.replace( "AND", "__AND__" )
+  cnfFormula_str = cnfFormula_str.replace( "OR" , "__OR__"  )
+  cnfFormula_str = "".join( cnfFormula_str.split() ) # remove whitespace
+  cnfFormula_str = cnfFormula_str.replace( "__OR__" , " OR "  ) # to align with pycosat formatting
+  clauses = cnfFormula_str.split( "__AND__" ) # divide clauses by the ANDs
+
+  # clean strs
+  cleanClauses = []
+  for c in clauses :
+    print "c = " + str( c )
+    c = c.replace( "([", "__OPENPAR__" + "__OPENBRA__" )
+    c = c.replace( "])", "__OPENBRA__" + "__OPENPAR__" )
+    c = c.replace( ",", "__COMMA__" )
+    c = c.replace( "(", "" )
+    c = c.replace( ")", "" )
+    cleanClauses.append( c )
+
+  print "cleanClauses = " + str( cleanClauses )
+
+  masterList = []
+  # for clause in resulting list, collect a list of constituent vars
+  # and add to master list.
+  for c in cleanClauses :
+    c = c.split( " OR " )
+    masterList.append( c )
+
+  print "masterList = " + str( masterList )
+
+  return masterList
 
 
 ####################
 #  CONVERT TO CNF  #
 ####################
+# convert a raw boolean formula to cnf, if possible,
+# using sympy.
 def convertToCNF( rawBooleanFmla_str ) :
 
   cnfFmla = None
@@ -70,6 +110,46 @@ def convertToCNF( rawBooleanFmla_str ) :
   return cnfFmla
 
 
+###################
+#  TOGGLE FORMAT  #
+###################
+def toggle_format( dirtyStr, newFormat ) :
+
+  if newFormat == "valid_vars" :
+    # need to transform raw formula variables into legit Python variables.
+    # also, remove all apostrophes/double quotes!
+    # replace chars :
+    #   [  --->  __OPENBRA__
+    #   ]  --->  __CLOSBRA__
+    #   (  --->  __OPENPAR__
+    #   )  --->  __CLOSPAR__
+    #   ,  --->  __COMMA__
+    tmp0 = dirtyStr
+    tmp0 = tmp0.replace( "'", "" )
+    tmp0 = tmp0.replace( '"', "" )
+    tmp1 = tmp0.replace( "[", "__OPENBRA__" )
+    tmp2 = tmp1.replace( "]", "__CLOSBRA__" )
+    tmp3 = tmp2.replace( "(", "__OPENPAR__" )
+    tmp4 = tmp3.replace( ")", "__CLOSPAR__" )
+    tmp5 = tmp4.replace( ",", "__COMMA__" )
+    cleanResult = tmp5
+
+  elif newFormat == "legible" :
+    # transform back into legible syntax
+    tmp0   = dirtyStr
+    tmp1   = tmp0.replace( "__OPENBRA__", "[" )
+    tmp2   = tmp1.replace( "__CLOSBRA__", "]" )
+    tmp3   = tmp2.replace( "__OPENPAR__", "(" )
+    tmp4   = tmp3.replace( "__CLOSPAR__", ")" )
+    tmp5   = tmp4.replace( "__COMMA__"  , "," )
+    cleanResult = tmp5
+
+  else :
+    tools.bp( __name__, inspect.stack()[0][3], "ERROR: unrecognized format requested: " + str( newFormat ) )
+
+  return cleanResult
+
+
 ##################
 #  FORMAT SYMPY  #
 ##################
@@ -80,24 +160,7 @@ def format_sympy( rawBooleanFmla ) :
   sympy_expr        = None # type string
   sympy_symbol_list = None # type string
 
-  # need to transform raw formula variables into legit Python variables.
-  # also, remove all apostrophes/double quotes!
-  # replace chars :
-  #   [  --->  __OPENBRA__
-  #   ]  --->  __CLOSBRA__
-  #   (  --->  __OPENPAR__
-  #   )  --->  __CLOSPAR__
-  #   ,  --->  __COMMA__
-  tmp0 = rawBooleanFmla
-  tmp0 = tmp0.replace( "'", "" )
-  tmp0 = tmp0.replace( '"', "" )
-  tmp1 = tmp0.replace( "[", "__OPENBRA__" )
-  tmp2 = tmp1.replace( "]", "__CLOSBRA__" )
-  tmp3 = tmp2.replace( "(", "__OPENPAR__" )
-  tmp4 = tmp3.replace( ")", "__CLOSPAR__" )
-  tmp5 = tmp4.replace( ",", "__COMMA__" )
-
-  cleanFmla = tmp5
+  cleanFmla = toggle_format( rawBooleanFmla, "valid_vars" )
 
   # --------------------------------------------------- #
   # populate sympy_expr
@@ -197,16 +260,10 @@ def toCNF_sympy( sympy_info ) :
   result = sympy.to_cnf( sympy_fmla, simplify=False )
   #result = sympy.to_cnf( sympy_fmla, simplify=True  ) # SLOW! even on simplelog (>.<)'
 
-  # transform back into legible syntax
-  tmp0   = str( result ) # WARNING: sympy (rather sillily imo) overrides "replace" for Basic types
-  tmp1   = tmp0.replace( "__OPENBRA__", "[" )
-  tmp2   = tmp1.replace( "__CLOSBRA__", "]" )
-  tmp3   = tmp2.replace( "__OPENPAR__", "(" )
-  tmp4   = tmp3.replace( "__CLOSPAR__", ")" )
-  tmp5   = tmp4.replace( "__COMMA__"  , "," )
-  result = tmp5
+  # WARNING: sympy (rather sillily imo) overrides "replace" for Basic types
+  result_str = toggle_format( str( result ), "legible" )
 
-  return result
+  return result_str
 
 
 ################
