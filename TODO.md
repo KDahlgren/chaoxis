@@ -2,6 +2,10 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+* Verify correctness of CNF formula generation. Build simple test cases experimenting with different combinations of ANDs and ORs. 
+
+* Verify correctness of pycosat solver solutions. Build simple test cases. Why are current solutions outputting one solution containing all the unique variables composing the formula???
+
 * Implement CNF formula visualization.
 
 * Build a tools.error as an alternative to tools.bp for error messages specifically.
