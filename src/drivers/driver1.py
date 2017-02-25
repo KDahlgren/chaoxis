@@ -8,6 +8,7 @@ driver1.py
 
 # **************************************** #
 
+
 #############
 #  IMPORTS  #
 #############
@@ -28,6 +29,9 @@ from solvers    import EncodedProvTree_CNF, solverTools
 # **************************************** #
 
 
+#############
+#  GLOBALS  #
+#############
 DRIVER_DEBUG            = True
 RUN_C4_DIRECTLY         = True
 PROV_TREES_ON           = True  # toggle prov tree generation code
@@ -35,7 +39,8 @@ OUTPUT_PROV_TREES_ON    = False # output prov tree renders
 ONE_CORE_ITERATION_ONLY = True
 TREE_CNF_ON             = True  # toggle provTree to CNF conversion
 OUTPUT_TREE_CNF_ON      = False # toggle CNF formula renders
-SOLVE_TREE_CNF_ON       = True  # toggle CNF solve
+SOLVE_TREE_CNF_ON       = False # toggle CNF solve
+
 
 
 ################
@@ -199,22 +204,27 @@ def LDFICore( argDict ) :
 
     provTree_fmla = EncodedProvTree_CNF.EncodedProvTree_CNF( provTreeComplete ) # get fmla with provTree_fmla.CNFFormula
 
-    if provTree_fmla.formula :
-      print ">>> provTree_fmla.formula = " + str( provTree_fmla.formula )
-      print ">>> provTree_fmla.formula.display() = " + str( provTree_fmla.formula.display() )
+    print "shithappened"
+    if provTree_fmla.rawformula :
+      print ">>> provTree_fmla.rawformula = " + str( provTree_fmla.rawformula )
+      print
+      print ">>> provTree_fmla.rawformula.display() = " + str( provTree_fmla.rawformula.display() )
+      print
+      print ">>> provTree_fmla.cnfformula = " + str( provTree_fmla.cnfformula )
+      print
 
       if OUTPUT_TREE_CNF_ON :
-        provTree_fmla.formula.graph()
+        provTree_fmla.rawformula.graph()
 
     else :
-      tools.bp( __name__, inspect.stack()[0][3], "ERROR: provTree_fmla.formula is empty. Aborting execution..." )
+      tools.bp( __name__, inspect.stack()[0][3], "ERROR: provTree_fmla.rawformula is empty. Aborting execution..." )
 
   # -------------------------------------------- #
   # solve CNF
   if SOLVE_TREE_CNF_ON :
     solns = solverTools.solveCNF( provTree_fmla.formula )
 
-    if DRIVER_DEBUG :
+    if DRIVER_DEBUG and solns :
       for s in  solns.minimal_solutions():
         print "SOLN " + str( s )
 
@@ -224,6 +234,7 @@ def LDFICore( argDict ) :
   # newProg = //.generateNewClock( solns )
 
   return ( parsedResults, irCursor, saveDB )
+
 
 #########################
 #  THREAD OF EXECUTION  #

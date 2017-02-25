@@ -31,17 +31,21 @@ DEBUG = True
 
 class EncodedProvTree_CNF :
 
+
   ################
   #  ATTRIBUTES  #
   ################
-  formula  = None
+  rawformula = None  # a BooleanFormula, not neccessarily in CNF
+  cnfformula = None  # a CNF formula string
 
 
   #################
   #  CONSTRUCTOR  #
   #################
   def __init__( self, provTree ):
-    self.formula  = solverTools.convertToCNF( provTree ) # returns a BooleanFormula
+    self.rawformula    = solverTools.convertToBoolean( provTree )
+    rawBooleanFmla_str = self.rawformula.display()
+    self.cnfformula    = solverTools.convertToCNF( rawBooleanFmla_str )
 
 
 #########

@@ -11,9 +11,12 @@ EncodedProvTree.py
 #############
 #  IMPORTS  #
 #############
-# standard python packages
+# python packages
 import inspect, os, sys
 from types import *
+import sympy
+from sympy.core import symbols
+from sympy import *
 
 import AndFormula, OrFormula, Literal
 import Solver_PYCOSAT
@@ -48,10 +51,185 @@ def solveCNF( cnfFormula ) :
   return solns
 
 
-#####################
+####################
 #  CONVERT TO CNF  #
-#####################
-def convertToCNF( provTree ) :
+####################
+def convertToCNF( rawBooleanFmla_str ) :
+
+  cnfFmla = None
+
+  # transform booleanFmla into the sympy format
+  sympy_info = format_sympy( rawBooleanFmla_str ) # returns tuple of ( sympy formula string, symbol string )
+
+  # run the transformed fmla through the smypy cnf converter
+  res = toCNF_sympy( sympy_info )
+
+  # transform the result back into the booleanFmla syntax
+  cnfFmla = format_std( res )
+
+  return cnfFmla
+
+
+##################
+#  FORMAT SYMPY  #
+##################
+# replace all 'AND's with & and all 'OR's with |
+def format_sympy( rawBooleanFmla ) :
+
+  # return data
+  sympy_expr        = None # type string
+  sympy_symbol_list = None # type string
+
+  # need to transform raw formula variables into legit Python variables.
+  # also, remove all apostrophes/double quotes!
+  # replace chars :
+  #   [  --->  __OPENBRA__
+  #   ]  --->  __CLOSBRA__
+  #   (  --->  __OPENPAR__
+  #   )  --->  __CLOSPAR__
+  #   ,  --->  __COMMA__
+  tmp0 = rawBooleanFmla
+  tmp0 = tmp0.replace( "'", "" )
+  tmp0 = tmp0.replace( '"', "" )
+  tmp1 = tmp0.replace( "[", "__OPENBRA__" )
+  tmp2 = tmp1.replace( "]", "__CLOSBRA__" )
+  tmp3 = tmp2.replace( "(", "__OPENPAR__" )
+  tmp4 = tmp3.replace( ")", "__CLOSPAR__" )
+  tmp5 = tmp4.replace( ",", "__COMMA__" )
+
+  cleanFmla = tmp5
+
+  # --------------------------------------------------- #
+  # populate sympy_expr
+  tmp1       = "".join( cleanFmla.split() ) # remove all whitespace
+  tmp2       = tmp1.replace( "AND", " & " )
+  tmp3       = tmp2.replace( "OR" , " | " )
+  sympy_expr = tmp2
+
+  # --------------------------------------------------- #
+  # populate sympy_symbol_list
+  tmp1 = "".join( cleanFmla.split() )   # remove all whitespace
+
+  tmp2 = tmp1.replace( "("  , ""           ) # remove all (
+  tmp3 = tmp2.replace( ")"  , ""           ) # remove all )
+  tmp4 = tmp3.replace( "AND", "__SOMEOP__" ) # replace ops with some common string
+  tmp5 = tmp4.replace( "OR" , "__SOMEOP__" ) # replace ops with some common string
+
+  tmp6 = tmp5.split( "__SOMEOP__" )          # get list of literal strings
+  tmp7 = set( tmp6 )                         # remove all duplicates
+
+  sympy_symbol_list = list( tmp7 )           # transform back into list to reduce headaches  
+
+  # --------------------------------------------------- #
+
+  return ( sympy_expr, sympy_symbol_list )
+
+
+##################
+#  TO CNF SYMPY  #
+##################
+def toCNF_sympy( sympy_info ) :
+
+  sympy_fmla          = sympy_info[0]
+  sympy_symbol_string = sympy_info[1]
+
+  #
+  # to support large numbers of variables,
+  # need to feed variables into sympy over the course
+  # of multiple symbols() declaration statements.
+  #
+  # conservatively allot at most 3 fmla variables per 
+  # declaration statement.
+  sympy_symbol_string_list3 = []
+  newList                   = []
+  for i in range( 0, len(sympy_symbol_string) ) :
+    currsym = sympy_symbol_string[ i ]
+    if i % 3 == 0 :
+      newList.append( currsym )
+      sympy_symbol_string_list3.append( newList )
+      newList = []
+    elif i + 1 == len( sympy_symbol_string ) :
+      newList.append( currsym )
+      sympy_symbol_string_list3.append( newList )
+      newList = []
+    else :
+      newList.append( currsym )
+
+  # build list of sympy symbol declaration strings
+  symbol_str_list = []
+
+  for varList in sympy_symbol_string_list3 :
+    symbol_str = ""
+
+    # left hand side
+    for i in range( 0, len( sympy_symbol_string ) ) :
+      var = sympy_symbol_string[ i ]
+      if i < len( sympy_symbol_string ) - 1 : 
+        symbol_str += var + ", "
+      else :
+        symbol_str += var
+
+    # operator
+    #symbol_str += ' = sympy.symbols("'
+    symbol_str += ' = symbols("'
+
+    # right hand side
+    for i in range( 0, len( sympy_symbol_string ) ) :
+      var = sympy_symbol_string[ i ]
+      if i < len( sympy_symbol_string ) - 1 :
+        symbol_str += var + ","
+      else :
+        symbol_str += var 
+
+    # closing chars
+    symbol_str += '")'
+
+    symbol_str = symbol_str.replace("\'","")
+    # add to list
+    symbol_str_list.append( symbol_str )
+
+  
+  # execute the symbol strings
+  # (doing this step separately for clarity)
+  for symbol_str in symbol_str_list :
+    exec( symbol_str )
+
+  result = sympy.to_cnf( sympy_fmla, simplify=False )
+  #result = sympy.to_cnf( sympy_fmla, simplify=True  ) # SLOW! even on simplelog (>.<)'
+
+  # transform back into legible syntax
+  tmp0   = str( result ) # WARNING: sympy (rather sillily imo) overrides "replace" for Basic types
+  tmp1   = tmp0.replace( "__OPENBRA__", "[" )
+  tmp2   = tmp1.replace( "__CLOSBRA__", "]" )
+  tmp3   = tmp2.replace( "__OPENPAR__", "(" )
+  tmp4   = tmp3.replace( "__CLOSPAR__", ")" )
+  tmp5   = tmp4.replace( "__COMMA__"  , "," )
+  result = tmp5
+
+  return result
+
+
+################
+#  FORMAT STD  #
+################
+# non-trivial...
+def format_std( sympy_fmla_res ) :
+
+  fmla_std = None
+
+  tmp0 = sympy_fmla_res
+  tmp1 = tmp0.replace( "&", "AND" )
+  tmp2 = tmp1.replace( "|", "OR" )
+
+  fmla_std = tmp2
+
+  return fmla_std
+
+
+########################
+#  CONVERT TO BOOLEAN  #
+########################
+def convertToBoolean( provTree ) :
 
   if not provTree.isUltimateGoal() :
     displayTree( provTree )
@@ -72,14 +250,14 @@ def convertToCNF( provTree ) :
     # branch on left rules contents
     if len( leftGoals ) > 1 :
       fmla.left = getLeftFmla( leftGoals, "AND" )
-      fmla.right  = convertToCNF( rightGoal )
+      fmla.right  = convertToBoolean( rightGoal )
 
     elif len( leftGoals ) < 1 :
-      fmla.unary = convertToCNF( rightGoal )
+      fmla.unary = convertToBoolean( rightGoal )
 
     else : # leftGoals contains only one goal
-      fmla.left  = convertToCNF( leftGoals[0] )
-      fmla.right = convertToCNF( rightGoal )
+      fmla.left  = convertToBoolean( leftGoals[0] )
+      fmla.right = convertToBoolean( rightGoal )
 
     # sanity check
     if fmla.left and fmla.unary :
@@ -105,18 +283,18 @@ def convertToCNF( provTree ) :
       # branch on left rules contents
       if len( leftRules ) > 1 :
         fmla.left   = getLeftFmla( leftRules, "AND" )
-        fmla.right  = convertToCNF( rightRule )
+        fmla.right  = convertToBoolean( rightRule )
         fmla.unary  = None
 
       elif len( leftRules ) < 1 :
         fmla.left  = None
-        fmla.unary = convertToCNF( rightRule )
+        fmla.unary = convertToBoolean( rightRule )
         #fmla.unary = "shit"
 
       else : # leftRules contains only one rule
         fmla.unary = None
-        fmla.left  = convertToCNF( leftRules[0] )
-        fmla.right = convertToCNF( rightRule )
+        fmla.left  = convertToBoolean( leftRules[0] )
+        fmla.right = convertToBoolean( rightRule )
 
     # case goal has one or more fact descendants only
     # goals with more than 1 fact contain wildcards
@@ -147,14 +325,14 @@ def convertToCNF( provTree ) :
     if len( leftGoals ) > 1 :
       #fmla.left  = getLeftFmla( leftGoals, "OR" )
       fmla.left  = getLeftFmla( leftGoals, "AND" )
-      fmla.right = convertToCNF( rightGoal )
+      fmla.right = convertToBoolean( rightGoal )
 
     elif len( leftGoals ) < 1 :
-      fmla.unary = convertToCNF( rightGoal )
+      fmla.unary = convertToBoolean( rightGoal )
 
     else : # leftGoals contains only one goal
-      fmla.left  = convertToCNF( leftGoals[0] )
-      fmla.right = convertToCNF( rightGoal )
+      fmla.left  = convertToBoolean( leftGoals[0] )
+      fmla.right = convertToBoolean( rightGoal )
 
     # sanity check
     if fmla.left and fmla.unary :
@@ -219,7 +397,7 @@ def getLeftFmla( provTreeList, op ) :
 
   for provTree in provTreeList :
     #displayTree( provTree )
-    subfmlas.append( convertToCNF( provTree ) )
+    subfmlas.append( convertToBoolean( provTree ) )
 
   mergedFmla = merge( subfmlas, op )
 
