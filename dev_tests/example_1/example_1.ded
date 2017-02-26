@@ -1,0 +1,27 @@
+// author: Dahlgren
+// a simple example of a dedalus/datalog program which exercises some features 
+// without doing anything particularly useful.
+
+// awesome facts.
+A1( "a", "a" )@1 ;
+//A1( "a", "b" )@1 ;
+//A1( "a", "c" )@1 ;
+//
+//A2( "x", "a" )@1 ;
+//A2( "y", "b" )@1 ;
+//A2( "z", "c" )@1 ;
+//
+//A3( "p", "a" )@1 ;
+//A3( "q", "b" )@1 ;
+//A3( "r", "c" )@1 ;
+
+// brilliant rules.
+//A( N, X, Y, Z ) :- A1( N, X, X1 ), A2( N, Y, Z ), X1 == Z ;
+//A( N, X, Y, Z ) :- A1( N, X, X1 ), A3( N, Y, Z ), X1 != Z ;
+
+//A( N, X, Y, Z ) :- A1( N, X, X1 ), A2( N, Y, Z ) ;
+//A( N, X, Y, Z ) :- A1( N, X, X1 ), A3( N, Y, Z ) ;
+//B( N,    Y    ) :- A3( N, Y, Z)
+
+ pre( X, Y ) :- A( N, X, Y, Z ) ;
+post( X, Y ) :- A( N, X, Y, Z ) ;

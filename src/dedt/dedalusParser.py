@@ -55,7 +55,7 @@ def parse( dedLine ) :
   # ------------------------------------------------------------- #
   #                          RULES                                #
 
-  goal = Word( alphanums + "_" + "(" + ")" + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" )
+  goal = Word( alphanums + "_" + "(" + ")" + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "==" + "!=" )
   subgoal = goal
   arg = Optional( Literal ("@") + Word( alphanums ) )
   fmla = Word( alphanums + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" )

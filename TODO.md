@@ -2,6 +2,14 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+* Make sure c4 clears the dump file before executing.
+
+* Make sure execution fails in response to c4 evaluation failure.
+
+* Add script for checking pyLDFI dependencies (esp. wrt python tools).
+
+* Add pyLDFI to PyPI.
+
 * Verify correctness of CNF formula generation. Build simple test cases experimenting with different combinations of ANDs and ORs. 
 
 * Verify correctness of pycosat solver solutions. Build simple test cases. Why are current solutions outputting one solution containing all the unique variables composing the formula???
