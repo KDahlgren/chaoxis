@@ -6,7 +6,14 @@
 #  IMPORTS  #
 #############
 # standard python packages
-import os, sys
+import inspect, os, sys
+
+# ------------------------------------------------------ #
+# import sibling packages HERE!!!
+packagePath  = os.path.abspath( __file__ + "/../.." )
+sys.path.append( packagePath )
+
+from utils      import tools
 
 # **************************************** #
 
@@ -74,6 +81,13 @@ def runC4_directly( c4_file_path, table_path, savepath ) :
       #os.system( C4_EXEC_PATH + " " + c4_file_path + ' "' + tableListStr + '"' + " 2>&1 " + C4_SAVE_PATH )
       #os.system( C4_EXEC_PATH + " " + c4_file_path + ' "' + tableListStr + '"' + " > " + C4_SAVE_PATH )
       os.system( C4_EXEC_PATH + " " + c4_file_path + ' "' + tableListStr + '" "' + savepath + '"' )
+
+      # check if dump file is empty.
+      if not os.path.exists( savepath ) :
+        tools.bp( __name__, inspect.stack()[0][3], "ERROR: c4 file dump does not exist at " + savepath )
+      else :
+        if not os.path.getsize( savepath ) > 0 :
+          tools.bp( __name__, inspect.stack()[0][3], "ERROR: no c4 dump results at " + savepath  )
 
       return savepath
 

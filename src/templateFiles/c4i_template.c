@@ -193,14 +193,14 @@ static void printDump_file( C4Client * c, const char * tableListStr, const char 
 {
   // remove dump file if it already exists
   FILE *testopen = fopen( SAVEPATH, "w" ) ;
-  if( outfile != NULL )
+  if( testopen != NULL )
   {
-    fclose( testopen )
-    remove( SAVEPATH )
+    fclose( testopen ) ;
+    remove( SAVEPATH ) ;
   }
   else
   {
-    fclose( testopen )
+    fclose( testopen ) ;
   }
 
   // start of actual dump code

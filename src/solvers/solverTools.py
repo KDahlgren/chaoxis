@@ -300,9 +300,12 @@ def convertToBoolean( provTree ) :
   #    ( ( ... ) OP fmla_m-1 ) OP fmla_m
   #
   if provTree.isUltimateGoal() :
-    fmla      = AndFormula.AndFormula() # empty
-    leftGoals = provTree.subtrees[:-1]  # of type list
-    rightGoal = provTree.subtrees[-1]   # not a list
+    if len( provTree.subtrees ) > 0 :
+      fmla      = AndFormula.AndFormula() # empty
+      leftGoals = provTree.subtrees[:-1]  # of type list
+      rightGoal = provTree.subtrees[-1]   # not a list
+    else :
+      tools.bp( __name__, inspect.stack()[0][3], "ERROR: No results in post. Aborting execution..." )
 
     # branch on left rules contents
     if len( leftGoals ) > 1 :

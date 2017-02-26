@@ -2,6 +2,14 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+* Scan for valid relation names when using C4. C4 absolutely cannot handle camel case in relation names, or any capital letters in relation names, as far as I can tell. It also seems relation names must be at least 2 characters long.
+
+* Boost parser to ensure no capital letters in dedalus table/relation/rule/fact names. C4 rejects the execution with a cryptic VAR_INT vs. TBL_INT error otherwise.
+
+* Make sure parser pulls table names from fact declarations, in addition to rules, when populating the c4 table_str.
+
+* Force setup.py to abort if any installation component fails.
+
 * Make sure c4 clears the dump file before executing.
 
 * Make sure execution fails in response to c4 evaluation failure.
@@ -18,7 +26,7 @@ An unordered log of some todo items associated with the development of pyLDFI.
 
 * Build a tools.error as an alternative to tools.bp for error messages specifically.
 
-* Support == and != operators in equations (see dedalusParser.py)
+* Support != operator in equations instead of relying on the <, > hack.
 
 * Add more rigorous error encoding scheme.
 

@@ -35,7 +35,7 @@ from solvers    import EncodedProvTree_CNF, solverTools
 DRIVER_DEBUG            = True
 RUN_C4_DIRECTLY         = True
 PROV_TREES_ON           = True  # toggle prov tree generation code
-OUTPUT_PROV_TREES_ON    = False # output prov tree renders
+OUTPUT_PROV_TREES_ON    = True  # output prov tree renders
 ONE_CORE_ITERATION_ONLY = True
 TREE_CNF_ON             = True  # toggle provTree to CNF conversion
 OUTPUT_TREE_CNF_ON      = False # toggle CNF formula renders
