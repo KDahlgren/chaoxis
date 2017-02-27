@@ -42,7 +42,7 @@ class EncodedProvTree_CNF :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, provTree ):
+  def __init__( self, provTree ) :
     self.rawformula    = solverTools.convertToBoolean( provTree )
     rawBooleanFmla_str = self.rawformula.display()
     self.cnfformula    = solverTools.convertToCNF( rawBooleanFmla_str )

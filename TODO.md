@@ -43,3 +43,10 @@ An unordered log of some todo items associated with the development of pyLDFI.
 * Fix c4 wrapper. Why are table dumps producing random integers?
 
 * Support aggregate functions. For example, run barrier_test and examine how count<I> doesn't work.
+
+* Reminder: pydatalog evaluator not working.
+
+
+#########
+#  EOF  #
+#########

@@ -69,7 +69,7 @@ def getConjuncts( cnfFormula_str ) :
   for c in clauses :
     print "c = " + str( c )
     c = c.replace( "([", "__OPENPAR__" + "__OPENBRA__" )
-    c = c.replace( "])", "__OPENBRA__" + "__OPENPAR__" )
+    c = c.replace( "])", "__CLOSBRA__" + "__CLOSPAR__" )
     c = c.replace( ",", "__COMMA__" )
     c = c.replace( "(", "" )
     c = c.replace( ")", "" )
@@ -110,10 +110,22 @@ def convertToCNF( rawBooleanFmla_str ) :
   return cnfFmla
 
 
-###################
-#  TOGGLE FORMAT  #
-###################
-def toggle_format( dirtyStr, newFormat ) :
+########################
+#  TOGGLE FORMAT LIST  #
+########################
+def toggle_format_list( dirtyList, newFormat ) :
+
+  cleanList = []
+
+  for aStr in dirtyList :
+    cleanList.append( toggle_format_str( aStr, newFormat ) )
+
+  return cleanList
+
+#######################
+#  TOGGLE FORMAT STR  #
+#######################
+def toggle_format_str( dirtyStr, newFormat ) :
 
   if newFormat == "valid_vars" :
     # need to transform raw formula variables into legit Python variables.
@@ -136,13 +148,13 @@ def toggle_format( dirtyStr, newFormat ) :
 
   elif newFormat == "legible" :
     # transform back into legible syntax
-    tmp0   = dirtyStr
-    tmp1   = tmp0.replace( "__OPENBRA__", "[" )
-    tmp2   = tmp1.replace( "__CLOSBRA__", "]" )
-    tmp3   = tmp2.replace( "__OPENPAR__", "(" )
-    tmp4   = tmp3.replace( "__CLOSPAR__", ")" )
-    tmp5   = tmp4.replace( "__COMMA__"  , "," )
-    cleanResult = tmp5
+    cleanResult = dirtyStr
+    cleanResult = cleanResult.replace( "__OPENBRA__", "[" )
+    cleanResult = cleanResult.replace( "__CLOSBRA__", "]" )
+    cleanResult = cleanResult.replace( "__OPENPAR__", "(" )
+    cleanResult = cleanResult.replace( "__CLOSPAR__", ")" )
+    cleanResult = cleanResult.replace( "__COMMA__"  , "," )
+    cleanResult = cleanResult
 
   else :
     tools.bp( __name__, inspect.stack()[0][3], "ERROR: unrecognized format requested: " + str( newFormat ) )
@@ -153,21 +165,22 @@ def toggle_format( dirtyStr, newFormat ) :
 ##################
 #  FORMAT SYMPY  #
 ##################
-# replace all 'AND's with & and all 'OR's with |
+# replace all 'AND's with & and all 'OR's with | and all 'NOT''s with ~
 def format_sympy( rawBooleanFmla ) :
 
   # return data
   sympy_expr        = None # type string
   sympy_symbol_list = None # type string
 
-  cleanFmla = toggle_format( rawBooleanFmla, "valid_vars" )
+  cleanFmla = toggle_format_str( rawBooleanFmla, "valid_vars" )
 
   # --------------------------------------------------- #
   # populate sympy_expr
   tmp1       = "".join( cleanFmla.split() ) # remove all whitespace
-  tmp2       = tmp1.replace( "AND", " & " )
-  tmp3       = tmp2.replace( "OR" , " | " )
-  sympy_expr = tmp2
+  tmp2       = tmp1.replace( "AND" , " & " )
+  tmp3       = tmp2.replace( "OR"  , " | " )
+  tmp4       = tmp3.replace( "NOT" , " ~ " )
+  sympy_expr = tmp4
 
   # --------------------------------------------------- #
   # populate sympy_symbol_list
@@ -175,13 +188,14 @@ def format_sympy( rawBooleanFmla ) :
 
   tmp2 = tmp1.replace( "("  , ""           ) # remove all (
   tmp3 = tmp2.replace( ")"  , ""           ) # remove all )
-  tmp4 = tmp3.replace( "AND", "__SOMEOP__" ) # replace ops with some common string
-  tmp5 = tmp4.replace( "OR" , "__SOMEOP__" ) # replace ops with some common string
+  tmp4 = tmp3.replace( "~"  , ""           ) # remove all ~
+  tmp5 = tmp4.replace( "AND", "__SOMEOP__" ) # replace ops with some common string
+  tmp6 = tmp5.replace( "OR" , "__SOMEOP__" ) # replace ops with some common string
 
-  tmp6 = tmp5.split( "__SOMEOP__" )          # get list of literal strings
-  tmp7 = set( tmp6 )                         # remove all duplicates
+  tmp7 = tmp6.split( "__SOMEOP__" )          # get list of literal strings
+  tmp8 = set( tmp7 )                         # remove all duplicates
 
-  sympy_symbol_list = list( tmp7 )           # transform back into list to reduce headaches  
+  sympy_symbol_list = list( tmp8 )           # transform back into list to reduce headaches  
 
   # --------------------------------------------------- #
 
@@ -196,13 +210,14 @@ def toCNF_sympy( sympy_info ) :
   sympy_fmla          = sympy_info[0]
   sympy_symbol_string = sympy_info[1]
 
-  #
+  # +++++++++++++++++++++++++++++++++++++++++++++++++++ #
   # to support large numbers of variables,
   # need to feed variables into sympy over the course
   # of multiple symbols() declaration statements.
   #
   # conservatively allot at most 3 fmla variables per 
   # declaration statement.
+  #
   sympy_symbol_string_list3 = []
   newList                   = []
   for i in range( 0, len(sympy_symbol_string) ) :
@@ -250,18 +265,26 @@ def toCNF_sympy( sympy_info ) :
     symbol_str = symbol_str.replace("\'","")
     # add to list
     symbol_str_list.append( symbol_str )
-
+  # +++++++++++++++++++++++++++++++++++++++++++++++++++ #
   
   # execute the symbol strings
   # (doing this step separately for clarity)
   for symbol_str in symbol_str_list :
     exec( symbol_str )
 
+  # NOT the formula because LDFI is interested in the set of variable 
+  #   assignments which render the original formula false.
+  #   Therefore, need solutions for making !origfmla _true_.
+  sympy_fmla = "~(" + sympy_fmla + ")"
+
   result = sympy.to_cnf( sympy_fmla, simplify=False )
   #result = sympy.to_cnf( sympy_fmla, simplify=True  ) # SLOW! even on simplelog (>.<)'
 
-  # WARNING: sympy (rather sillily imo) overrides "replace" for Basic types
-  result_str = toggle_format( str( result ), "legible" )
+  # WARNING: sympy (rather sillily imo) overrides "replace" for Basic types.
+  # bypassng with a format toggling function...
+  result_str = toggle_format_str( str( result ), "legible" )
+
+  #tools.bp( __name__, inspect.stack()[0][3], " result_str = "  + str(result_str) )
 
   return result_str
 
@@ -277,8 +300,9 @@ def format_std( sympy_fmla_res ) :
   tmp0 = sympy_fmla_res
   tmp1 = tmp0.replace( "&", "AND" )
   tmp2 = tmp1.replace( "|", "OR" )
+  tmp3 = tmp2.replace( "~", "NOT" )
 
-  fmla_std = tmp2
+  fmla_std = tmp3
 
   return fmla_std
 

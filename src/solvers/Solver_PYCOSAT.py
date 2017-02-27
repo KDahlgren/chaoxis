@@ -36,7 +36,7 @@ class Solver_PYCOSAT :
   ################
   fmlaVars   = None
   satformula = None
-
+  numsolns   = None
 
   #################
   #  CONSTRUCTOR  #
@@ -57,30 +57,35 @@ class Solver_PYCOSAT :
   ###############
   def solutions( self ) :
     print "solutions: self.satformula = " + str( self.satformula )
-
     print "len( pycosat.itersolve( self.satformula ) ) = " + str( len( list( pycosat.itersolve( self.satformula ) ) ) )
 
+    self.numsolns = len( list( pycosat.itersolve( self.satformula ) ) )
+
     for soln in pycosat.itersolve( self.satformula ) :
-        yield map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln))
+        yield map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) # using yield because soln set could be huge
 
 
   ##############
   #  CONTAINS  #
   ##############
-  def contains(self, large, small):
+  def contains( self, large, small ) :
+
     for item in small:
       if not item in large:
         return False
+
     return True
 
 
   #######################
   #  CONTAINED_IN_NONE  #
   #######################
-  def contained_in_none(self, done, soln):
+  def contained_in_none( self, done, soln ) :
+
     for item in done:
       if self.contains(soln, item):
         return False
+
     return True
 
 
@@ -98,35 +103,65 @@ class Solver_PYCOSAT :
 
     solns = []
     for soln in pycosat.itersolve( self.satformula ) :
-      solns.append( frozenset( map( self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln) ) ) )
+      res = frozenset( map( self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln) ) )
+      solns.append( res )
 
-    for soln in sorted( solns, key=self.getKey ) :
-      yield soln
+    #tools.bp( __name__, inspect.stack()[0][3], "sorted( solns, key=self.getLen ) = " + str( sorted( solns, key=self.getLen ) ) )
+
+    minSolnLen       = 0
+    solnsSortedByLen = sorted( solns, key=self.getLen )
+    minSolns         = []
+    for i in range(0,len(solnsSortedByLen)) :
+      soln = solnsSortedByLen[i]
+
+      # skip empty solutions
+      if len( soln ) == 0 :
+        pass
+
+      # set the min soln length
+      elif minSolnLen == 0 :
+        minSolnLen = len(soln)
+        minSolns.append( list( soln ) ) # cast from frozenset to list as a remedy for migraines
+
+      # collect the min solution set
+      elif len(soln) == minSolnLen :
+        minSolns.append( list( soln ) ) # cast from frozenset to list as a remedy for migraines
+
+      # break if hit a longer soln
+      if len(soln) > minSolnLen :
+        break
+
+    yield minSolns  # using yield because soln set could be massive
 
 
   #########################
   #  N MINIMAL_SOLUTIONS  #
   #########################
-  def Nminimal_solutions(self):
+  # broken + questionable existence?
+  def Nminimal_solutions( self ) :
     print "Nminimal_solutions: self.satformula = " + str( self.satformula )
 
     solns = []        
     done = []
-    for soln in pycosat.itersolve(self.satformula):
-      solns.append(frozenset(map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln))))
 
-    for soln in sorted(solns, key=self.getKey):
-      #if not done.has_key(soln):
-      #    yield soln
-      if self.contained_in_none(done, soln):
-        yield soln
-      done.append(soln)
+    # ------------------------------------------------ #
+    for soln in pycosat.itersolve( self.satformula ) :
+      res = frozenset( map( self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln) ) )
+      solns.append( res )
+
+    # ------------------------------------------------ #
+    for soln in sorted( solns, key=self.getLen ) :
+
+      if self.contained_in_none( done, soln ) :
+        yield soln # using yield because soln set could be massive
+
+      done.append( soln )
 
 
-  #############
-  #  GET KEY  #
-  #############
-  def getKey(self, item) :
+  ############
+  #  GET LEN #
+  ############
+  def getLen( self, item ) :
     return len( item )
 
 

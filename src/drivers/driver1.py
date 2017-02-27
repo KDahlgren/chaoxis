@@ -204,7 +204,6 @@ def LDFICore( argDict ) :
 
     provTree_fmla = EncodedProvTree_CNF.EncodedProvTree_CNF( provTreeComplete ) # get fmla with provTree_fmla.CNFFormula
 
-    print "shithappened"
     if provTree_fmla.rawformula :
       print ">>> provTree_fmla.rawformula = " + str( provTree_fmla.rawformula )
       print
@@ -225,9 +224,43 @@ def LDFICore( argDict ) :
     solns = solverTools.solveCNF( provTree_fmla.cnfformula )
 
     if DRIVER_DEBUG and solns :
-      for s in  solns.solutions():
-      #for s in  solns.minimal_solutions():
-        print "SOLN " + str( s )
+      numid    = 1
+
+      # +++++++++++++++++++++++++++++++++++++++++++++ #
+      print "***************************"
+      print "*    PRINTING ALL SOLNS    "
+      print "***************************"
+      for s in solns.solutions() :
+        numsolns = solns.numsolns
+
+        # make pretty
+        final = []
+        for var in s :
+          final.append( solverTools.toggle_format_str( var, "legible" ) )
+
+        print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
+        numid += 1
+
+      # +++++++++++++++++++++++++++++++++++++++++++++ #
+      print "*******************************"
+      print "*    PRINTING MINIMAL SOLNS   *"
+      print "*******************************"
+      numid = 1
+
+      # get solution set
+      # formatted as an array of frozen sets
+      solnSet = solns.minimal_solutions()
+
+      for s in solnSet :
+        numsolns = solns.numsolns
+
+        # make pretty
+        final = []
+        for var in s :
+          final.append( solverTools.toggle_format_list( var, "legible" ) )
+
+        print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
+        numid += 1
 
   # -------------------------------------------- #
   # new datalog prog
