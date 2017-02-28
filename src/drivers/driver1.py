@@ -36,7 +36,7 @@ DRIVER_DEBUG            = True
 RUN_C4_DIRECTLY         = True
 PROV_TREES_ON           = True  # toggle prov tree generation code
 OUTPUT_PROV_TREES_ON    = False # output prov tree renders
-ONE_CORE_ITERATION_ONLY = True 
+ONE_CORE_ITERATION_ONLY = False
 TREE_CNF_ON             = True  # toggle provTree to CNF conversion
 OUTPUT_TREE_CNF_ON      = False # toggle CNF formula renders
 SOLVE_TREE_CNF_ON       = True  # toggle CNF solve
@@ -82,12 +82,27 @@ def driver() :
   # =================================================================== #
   # loop until find a bug (or not).
 
+  runTranslator   = True
+  tableListPath   = None 
+  datalogProgPath = None 
+  irCursor        = None
+  saveDB          = None
+  triedSolnList   = []
+  breakBool       = False
   while True :
 
-    executionData = LDFICore( argDict )
-    parsedResults = executionData[0] 
-    irCursor      = executionData[1]
-    saveDB        = executionData[2]
+    if breakBool :
+      break
+
+    executionData   = LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList )
+    parsedResults   = executionData[0] 
+    runTranslator   = executionData[1] # a value indicating whether the db is appropriately populated
+    tableListPath   = executionData[2]
+    datalogProgPath = executionData[3]
+    irCursor        = executionData[4]
+    saveDB          = executionData[5]
+    triedSolnList   = executionData[6]
+    breakBool       = executionData[7]
 
     if ONE_CORE_ITERATION_ONLY : # only run a single iteration of LDFI
       break
@@ -106,6 +121,7 @@ def driver() :
         pass
       else : # bug exists!!!
         # place magic post processing and visualization code here. =]
+        print "HIT BUGGER!!!"
         break
 
   # =================================================================== #
@@ -122,18 +138,29 @@ def driver() :
 ###############
 #  LDFI CORE  #
 ###############
-def LDFICore( argDict ) :
+def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList ) :
+
+  print
+  print "*******************************************************"
+  print "                 RUNNING LDFI CORE"
+  print "*******************************************************"
+  print
+
   # ----------------------------------------------- #
 
   # translate all input dedalus files into a single datalog program
-  outputs         = dedt.translateDedalus( argDict )
-  tableListPath   = outputs[0] # string of table names
-  datalogProgPath = outputs[1] # path to datalog program
-  irCursor        = outputs[2] # ir db cursor
-  saveDB          = outputs[3] # ir db save file
+  outputs = None
+  if runTranslator :
+    outputs         = dedt.translateDedalus( argDict )
+    tableListPath   = outputs[0] # string of table names
+    datalogProgPath = outputs[1] # path to datalog program
+    irCursor        = outputs[2] # ir db cursor
+    saveDB          = outputs[3] # ir db save file
+    runTranslator   = False
 
   if DRIVER_DEBUG :
-    print "outputs              = " + str( outputs )
+    if outputs :
+      print "outputs              = " + str( outputs )
     print "table   list    path = " + tableListPath
     print "datalog program path = " + datalogProgPath
 
@@ -252,13 +279,13 @@ def LDFICore( argDict ) :
       # formatted as an array of frozen sets
       minimalSolnSet = solns.minimal_solutions()
 
-      finalSolnSet = []
+      finalSolnList = []
       for s in minimalSolnSet :
         numsolns = solns.numsolns
 
         # make pretty
         for var in s :
-          finalSolnSet.append( solverTools.toggle_format_list( var, "legible" ) )
+          finalSolnList.append( solverTools.toggle_format_list( var, "legible" ) )
 
         if DRIVER_DEBUG :
           print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
@@ -266,11 +293,43 @@ def LDFICore( argDict ) :
 
   # -------------------------------------------- #
   # new datalog prog
-  newProgSavePath = newProgGenerationTools.buildNewProg( finalSolnSet, irCursor )
+  breakBool = False
+  finalSolnList  = listDiff( finalSolnList, triedSolnList )
+  if not finalSolnList == [] :
+    executionInfo   = newProgGenerationTools.buildNewProg( finalSolnList, irCursor )
+    newProgSavePath = executionInfo[0]
+    triedSoln       = executionInfo[1]
 
+    if triedSoln == None :
+      if DRIVER_DEBUG :
+        print "NO BUGGERS!!!!! Bwa ha ha! *proceeds to laugh manically*"
+        breakBool = True
+    else :
+      triedSolnList.append( triedSoln )  # add to list of tried solns
+
+  else :
+    tools.bp( __name__, inspect.stack()[0][3], "HIT BUGGER!!!!! Bwa ha ha! *proceeds to laugh manically*" )
+
+  print "finalSolnList = " + str( finalSolnList )
+  print "triedSolnList = " + str( triedSolnList )
+  #tools.bp( __name__, inspect.stack()[0][3], "bp" )
 
   # -------------------------------------------- #
-  return ( parsedResults, irCursor, saveDB )
+  return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, breakBool )
+
+
+###############
+#  LIST DIFF  #
+###############
+def listDiff( finalList, triedList ) :
+
+  newFinal = []
+
+  for item in finalList :
+    if not item in triedList :
+      newFinal.append( item )
+
+  return newFinal
 
 
 #########################

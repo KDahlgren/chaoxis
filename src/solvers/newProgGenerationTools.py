@@ -53,7 +53,12 @@ def buildNewProg( minimalSolnSet, irCursor ) :
   ##############################################
 
   # need to pick one of the minimal solutions
+  print "minimalSolnSet = " + str( minimalSolnSet )
   preferredSoln = getPreferredSoln( minimalSolnSet )
+
+  # case no preferred soln exists
+  if not preferredSoln :
+    return ( newProgSavePath, preferredSoln )
 
   # parse clock soln records
   parsedClockRecords = parseClock( preferredSoln )
@@ -62,7 +67,8 @@ def buildNewProg( minimalSolnSet, irCursor ) :
   # and ensure all other clock records are 'True' wrt the inclusion attribute (simInclude).
   setNewClock( parsedClockRecords, irCursor )
 
-  dumpers.clockDump( irCursor )
+  if DEBUG :
+    dumpers.clockDump( irCursor )
 
   # build a copy of the old program, minus the clock fact lines
   copyProg( oldprogpath, testpath, newProgSavePath ) # edits the new program file directly
@@ -74,11 +80,10 @@ def buildNewProg( minimalSolnSet, irCursor ) :
 
   # sanity checks are good for the soul  ~(^.^)~
   if newProgSavePath :
-    return newProgSavePath
+    print "preferredSoln = " + str( preferredSoln )
+    return ( newProgSavePath, preferredSoln )
   else :
     tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: failed to write new program to " + newProgSavePath )
-
-  return newProgSavePath
 
 
 ########################
