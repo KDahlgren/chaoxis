@@ -24,7 +24,7 @@ from dedt       import dedt, dedalusParser
 from derivation import ProvTree
 from utils      import parseCommandLineInput, tools
 from evaluators import c4_evaluator, evalTools
-from solvers    import EncodedProvTree_CNF, solverTools
+from solvers    import EncodedProvTree_CNF, newProgGenerationTools, solverTools
 
 # **************************************** #
 
@@ -35,8 +35,8 @@ from solvers    import EncodedProvTree_CNF, solverTools
 DRIVER_DEBUG            = True
 RUN_C4_DIRECTLY         = True
 PROV_TREES_ON           = True  # toggle prov tree generation code
-OUTPUT_PROV_TREES_ON    = True  # output prov tree renders
-ONE_CORE_ITERATION_ONLY = True
+OUTPUT_PROV_TREES_ON    = False # output prov tree renders
+ONE_CORE_ITERATION_ONLY = True 
 TREE_CNF_ON             = True  # toggle provTree to CNF conversion
 OUTPUT_TREE_CNF_ON      = False # toggle CNF formula renders
 SOLVE_TREE_CNF_ON       = True  # toggle CNF solve
@@ -238,8 +238,9 @@ def LDFICore( argDict ) :
         for var in s :
           final.append( solverTools.toggle_format_str( var, "legible" ) )
 
-        print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
-        numid += 1
+        if DRIVER_DEBUG :
+          print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
+          numid += 1
 
       # +++++++++++++++++++++++++++++++++++++++++++++ #
       print "*******************************"
@@ -249,24 +250,26 @@ def LDFICore( argDict ) :
 
       # get solution set
       # formatted as an array of frozen sets
-      solnSet = solns.minimal_solutions()
+      minimalSolnSet = solns.minimal_solutions()
 
-      for s in solnSet :
+      finalSolnSet = []
+      for s in minimalSolnSet :
         numsolns = solns.numsolns
 
         # make pretty
-        final = []
         for var in s :
-          final.append( solverTools.toggle_format_list( var, "legible" ) )
+          finalSolnSet.append( solverTools.toggle_format_list( var, "legible" ) )
 
-        print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
-        numid += 1
+        if DRIVER_DEBUG :
+          print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
+          numid += 1
 
   # -------------------------------------------- #
   # new datalog prog
-  # magic code here...
-  # newProg = //.generateNewClock( solns )
+  newProgSavePath = newProgGenerationTools.buildNewProg( finalSolnSet, irCursor )
 
+
+  # -------------------------------------------- #
   return ( parsedResults, irCursor, saveDB )
 
 

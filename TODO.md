@@ -2,6 +2,10 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+# Make overall design not specific to c4!
+
+* Insert a check in the parser to make sure users do not name tables with strings starting with "clock".
+
 * Scan for valid relation names when using C4. C4 absolutely cannot handle camel case in relation names, or any capital letters in relation names, as far as I can tell. It also seems relation names must be at least 2 characters long.
 
 * Boost parser to ensure no capital letters in dedalus table/relation/rule/fact names. C4 rejects the execution with a cryptic VAR_INT vs. TBL_INT error otherwise.

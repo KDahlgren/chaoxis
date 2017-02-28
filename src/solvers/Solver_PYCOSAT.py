@@ -63,6 +63,7 @@ class Solver_PYCOSAT :
 
     for soln in pycosat.itersolve( self.satformula ) :
         yield map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) # using yield because soln set could be huge
+        #return map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) # not using yield because generators are a headache and a half.
 
 
   ##############
@@ -132,6 +133,7 @@ class Solver_PYCOSAT :
         break
 
     yield minSolns  # using yield because soln set could be massive
+    #return minSolns  # not using yield because generators are a headache and a half.
 
 
   #########################

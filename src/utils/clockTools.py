@@ -142,6 +142,7 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   firstSubgoalAtts = []
   firstGoalAtt     = ""
 
+
 #############################
 #  ADD CLOCK SUBGOAL ASYNC  #
 #############################

@@ -18,7 +18,7 @@ from utils import dumpers, parseCommandLineInput, tools
 #############
 #  GLOBALS  #
 #############
-CLOCKRELATION_DEBUG = False
+CLOCKRELATION_DEBUG = True
 
 #########################
 #  INIT CLOCK RELATION  #
@@ -44,7 +44,8 @@ def initClockRelation( cursor, argDict ) :
       for n1 in nodeSet :
         for n2 in nodeSet :
           delivTime = str(i + 1)
-          cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "')")
+          #cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "')")
+          cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "', 'True')")
 
     #tools.bp( __name__, inspect.stack()[0][3], "EOT = " + str(maxSendTime) + ",\ndumpers.clockDump( cursor ) = " + str( dumpers.clockDump(cursor)) )
 

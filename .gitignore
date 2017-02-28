@@ -2,6 +2,7 @@
 
 src/evaluators/programFiles/*.txt
 src/evaluators/programFiles/*.olg
+src/evaluators/programFiles/*.olg*
 src/evaluators/programFiles/*.data
 src/evaluators/programFiles/*.py
 

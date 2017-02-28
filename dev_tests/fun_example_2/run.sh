@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-cmd="python ../../src/drivers/driver1.py -n a,b,c -f ./fun_example_1.ded --evaluator c4"
+cmd="python ../../src/drivers/driver1.py -n a,b,c -f ./fun_example_2.ded --evaluator c4"
 
 # run the test
 $cmd > tmp.txt

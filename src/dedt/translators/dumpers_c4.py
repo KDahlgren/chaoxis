@@ -195,7 +195,8 @@ def dump_clock( cursor ) :
 
   formattedClockFactsList = []
 
-  cursor.execute( "SELECT * FROM Clock" )
+  #cursor.execute( "SELECT * FROM Clock" )
+  cursor.execute( "SELECT src, dest, sndTime, delivTime FROM Clock" )
   clockFacts = cursor.fetchall()
   clockFacts = tools.toAscii_multiList( clockFacts )
 

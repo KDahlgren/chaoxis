@@ -1,0 +1,35 @@
+//
+// author: Dahlgren
+//
+// a fun example designed to test a subset of targetted functionality.
+// the program tests OR branching at goal nodes.
+// 
+
+// awesome facts
+a1( "a", "a" )@1 ;
+a1( "b", "b" )@1 ;
+a1( "c", "c" )@1 ;
+
+a2( "a", "a" )@1 ;
+a2( "a", "p" )@1 ;
+a2( "a", "q" )@1 ;
+a2( "a", "r" )@1 ;
+
+a3( "a", "x" )@1 ;
+
+// brilliant rules
+//
+// apparently need to describe the fact tables as rules.
+// also works without the @next ops.
+//
+a1( X, Y )@next :- a1( X, Y ) ;
+a2( X, Y )@next :- a2( X, Y ) ;
+a3( X, Y )@next :- a3( X, Y ) ;
+
+a_table( X, Y, Z ) :- a1( X, Y ), a2( X, Z ) ;
+a_table( X, Y, Z ) :- a1( X, Y ), a3( X, Z ) ;
+
+ pre( X ) :- a_table( X, X, X ) ;
+post( X ) :- a_table( X, Y, Z ) ;
+
+

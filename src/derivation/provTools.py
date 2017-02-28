@@ -336,7 +336,7 @@ def get_prov_rid_info( rname, record, fullResults, cursor ) :
         validRIDS.append( r )
 
   if len( validRIDS ) < 1 :
-    sys.exit( "********************\n********************\nFATAL ERROR in file " + __name__ + " in function " + inspect.stack()[0][3] + " :\n>>> " + str(record) + "\ndoes match a record in the program output results for the provenance of rule\n>>> " + rname + "\nProgram results dump located at: " + C4_RESULTS_PATH )
+    sys.exit( "********************\n********************\nFATAL ERROR in file " + __name__ + " in function " + inspect.stack()[0][3] + " :\n>>> " + str(record) + "\ndoes not match a record in the program output results for the provenance of rule\n>>> " + rname + "\nProgram results dump located at: " + C4_RESULTS_PATH )
 
   elif len( validRIDS ) > 1 :
     print "********************\n********************\nWARNING : Multiple rules exist which could have triggered the derivation of the record " + str(record) +  ". The current implementation solution picks the first one and hopes for the best. Future versions of pyLDFI will support a more robust picking method."

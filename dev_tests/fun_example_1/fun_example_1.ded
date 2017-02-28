@@ -1,6 +1,8 @@
+//
 // author: Dahlgren
+//
 // a fun example designed to test a subset of targetted functionality.
-// the program does nothing particularly significant.
+// the program tests equality and NOT support
 // 
 
 // awesome facts
@@ -33,7 +35,7 @@ a_table( X, Y, Z ) :- a1( X, Y ), a2( X, Z ) ;
 //a_table( X, Y, Z ) :- a1( X, Y ), a2( X, Z ), X < Y ; 
 //a_table( X, Y, Z ) :- a1( X, Y ), a2( X, Z ), X > Y ; 
 
-pre( X, Y, Z ) :- a_table( X, Y, Z ) ;
+ pre( X, Y, Z ) :- a_table( X, Y, Z ) ;
 post( X, Y, Z ) :- a_table( X, Y, Z ) ;
 
 

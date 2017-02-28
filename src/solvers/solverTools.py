@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-EncodedProvTree.py
+solverTools.py
   code for encoding a given provenance tree
   borrows heavily from https://github.com/palvaro/ldfi-py
 '''
@@ -31,7 +31,7 @@ from utils import tools
 # **************************************** #
 
 
-DEBUG = True
+DEBUG = False
 
 
 ###############
