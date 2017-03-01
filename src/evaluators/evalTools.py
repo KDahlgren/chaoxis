@@ -39,6 +39,9 @@ def bugFreeExecution( results, eot ) :
   pre  = results[ "pre" ]
   post = results[ "post" ]
 
+  print " pre = " + str( pre )
+  print "post = " + str( post ) 
+
   # check if every tuple in pre at EOT
   # also appears in post at EOT
   for pretup in pre :

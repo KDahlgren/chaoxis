@@ -77,9 +77,7 @@ def runC4_directly( c4_file_path, table_path, savepath ) :
         print "tableListStr = " + tableListStr
         print "savepath     = " + savepath
 
-      #os.system( "(" + C4_EXEC_PATH + " " + c4_file_path + tableListStr + ") 2>&1 | tee " + C4_SAVE_PATH )
-      #os.system( C4_EXEC_PATH + " " + c4_file_path + ' "' + tableListStr + '"' + " 2>&1 " + C4_SAVE_PATH )
-      #os.system( C4_EXEC_PATH + " " + c4_file_path + ' "' + tableListStr + '"' + " > " + C4_SAVE_PATH )
+      # run the program using the modified c4 executable installed during the pyLDFI setup process.
       os.system( C4_EXEC_PATH + " " + c4_file_path + ' "' + tableListStr + '" "' + savepath + '"' )
 
       # check if dump file is empty.

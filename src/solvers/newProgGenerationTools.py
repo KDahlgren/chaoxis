@@ -42,7 +42,7 @@ def buildNewProg( solnSet, irCursor ) :
   if os.path.isdir( testpath ) :
     pass
   else :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR1: directory for storing datalog programs does not exist:\n" + testpath + " you're lucky you got this far. Aborting... " )
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR1: directory for storing datalog programs does not exist:\n" + testpath + "\nThat's pretty weird. Aborting... " )
 
   # save the old program
   oldprogpath = None
@@ -95,9 +95,12 @@ def getPreferredSoln( solnSet ) :
 
   solnChoice = None
 
-  print "solnSet = " + str( solnSet)
+  #print "solnSet = " + str( solnSet)
 
   for aSoln in solnSet :
+    if aSoln == [] : # skip empties
+      pass
+    print "aSoln = " + str(aSoln)
     valid = True
     for var in aSoln :
       if not "clock(" in var :
@@ -240,7 +243,7 @@ def finalizeNewProg( testpath, newProgSavePath, irCursor ) :
     # replace any single quotes with double quotes
     src  = src.replace(  '"', "'" )
     dest = dest.replace( '"', "'" )
-    newClockLine = "clock(" + src + "," + dest + "," + str( sndTime ) + "," + str( delivTime ) + ") ; "
+    newClockLine = 'clock("' + src + '","' + dest + '",' + str( sndTime ) + "," + str( delivTime ) + ") ; "
     newClockFacts.append( newClockLine )
 
   # concatenate all clock facts into a single line

@@ -41,7 +41,7 @@ TREE_CNF_ON             = True  # toggle provTree to CNF conversion
 OUTPUT_TREE_CNF_ON      = False # toggle CNF formula renders
 SOLVE_TREE_CNF_ON       = True  # toggle CNF solve
 
-
+C4_DUMP_SAVEPATH = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
 
 ################
 #  PARSE ARGS  #
@@ -92,7 +92,8 @@ def driver() :
   while True :
 
     if breakBool :
-      break
+      print "HIT BREAKBOOL"
+      #break
 
     executionData   = LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList )
     parsedResults   = executionData[0] 
@@ -115,6 +116,9 @@ def driver() :
       elif not "post" in parsedResults :
         dedt.cleanUp( irCursor, saveDB )
         tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining post" )
+
+      if breakBool :
+        tools.bp( __name__, inspect.stack()[0][3], "evalTools.bugFreeExecution( parsedResults, argDict ) = " + str( evalTools.bugFreeExecution( parsedResults, argDict ) ) )
 
       # check for bug
       if evalTools.bugFreeExecution( parsedResults, argDict ) :
@@ -146,6 +150,8 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
   print "*******************************************************"
   print
 
+  os.system( "rm " + C4_DUMP_SAVEPATH )
+
   # ----------------------------------------------- #
 
   # translate all input dedalus files into a single datalog program
@@ -170,7 +176,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
   resultsPath = None
 
   # c4
-  savepath = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
+  savepath = C4_DUMP_SAVEPATH
   if RUN_C4_DIRECTLY :
     resultsPath = c4_evaluator.runC4_directly( datalogProgPath, tableListPath, savepath )
   else :
@@ -275,9 +281,17 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
           print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( finalStr )
           numid += 1
 
-        # add soln to soln list
+        # add soln to soln list and clear temporary save list for the next iteration
         finalSolnList.append( finalStr )
         finalStr = []
+
+      # duplicates are annoying.
+      tmp = []
+      for s in finalSolnList :
+        if s : # skip empties
+          if not s in tmp :
+            tmp.append( s )
+      finalSolnList = tmp
 
       #print "*******************************"
       #print "*    PRINTING MINIMAL SOLNS   *"
@@ -300,7 +314,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
       #    numid += 1
 
     else :
-      tools.bp( __name__, inspect.stack()[0][3], "Congradulations! No solutions exist, meaning the solver could not find a counterexample. Aborting..." )
+      tools.bp( __name__, inspect.stack()[0][3], "Congratulations! No solutions exist, meaning the solver could not find a counterexample. Aborting..." )
     # +++++++++++++++++++++++++++++++++++++++++++++ #
 
   # -------------------------------------------- #
@@ -308,35 +322,48 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
   breakBool = False
 
   if DRIVER_DEBUG :
-    print "finalSolnList = " + str( finalSolnList )
+    print "before: finalSolnList = " + str( finalSolnList )
 
-  finalSolnList  = listDiff( finalSolnList, triedSolnList )
+  finalSolnList  = listDiff( finalSolnList, triedSolnList ) # remove triedSolns from list
 
   if DRIVER_DEBUG :
-    print "finalSolnList = " + str( finalSolnList )
+    print "after: finalSolnList = " + str( finalSolnList )
     print "triedSolnList = " + str( triedSolnList )
 
-  if not finalSolnList == [] :
+  # case the finalSolnList still contains clock-only solns
+  if not clockFree( finalSolnList ) :
     executionInfo   = newProgGenerationTools.buildNewProg( finalSolnList, irCursor )
     newProgSavePath = executionInfo[0]
     triedSoln       = executionInfo[1]
-
-    if triedSoln == None :
-      if DRIVER_DEBUG :
-        print "NO BUGGERS!!!!! Bwa ha ha! *proceeds to laugh manically*"
-        breakBool = True
-    else :
-      triedSolnList.append( triedSoln )  # add to list of tried solns
-
+    triedSolnList.append( triedSoln )  # add to list of tried solns
   else :
-    tools.bp( __name__, inspect.stack()[0][3], "HIT BUGGER!!!!! Bwa ha ha! *proceeds to laugh manically*" )
-
-  print "finalSolnList = " + str( finalSolnList )
-  print "triedSolnList = " + str( triedSolnList )
-  #tools.bp( __name__, inspect.stack()[0][3], "bp" )
+    breakBool = True # no more clock-only solutions
 
   # -------------------------------------------- #
   return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, breakBool )
+
+
+################
+#  CLOCK FREE  #
+################
+# check if any solns contain only clock facts
+# return False if solns containing only clock facts exist
+def clockFree( finalSolnList ) :
+
+  vals = []
+  for soln in finalSolnList :     # check if each soln contains only clock facts
+    valid = True # be optimistic
+    for var in soln :
+      if not "clock(" in var :
+        valid = False
+    vals.append( valid )
+
+  # case there exists at least one clock-only soln,
+  #  then the solution list is not clock free
+  if True in vals :
+    return False
+  else :
+    return True
 
 
 ###############
