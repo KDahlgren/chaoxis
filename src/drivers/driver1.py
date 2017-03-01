@@ -98,16 +98,18 @@ def driver() :
       #break
 
     executionData   = LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, ITER_COUNT )
-    parsedResults   = executionData[0] 
-    runTranslator   = executionData[1] # a value indicating whether the db is appropriately populated
-    tableListPath   = executionData[2]
-    datalogProgPath = executionData[3]
-    irCursor        = executionData[4]
-    saveDB          = executionData[5]
-    triedSolnList   = executionData[6]
-    breakBool       = executionData[7]
 
-    ITER_COUNT     += 1
+    if not executionData == "badstatus1" :
+      parsedResults   = executionData[0] 
+      runTranslator   = executionData[1] # a value indicating whether the db is appropriately populated
+      tableListPath   = executionData[2]
+      datalogProgPath = executionData[3]
+      irCursor        = executionData[4]
+      saveDB          = executionData[5]
+      triedSolnList   = executionData[6]
+      breakBool       = executionData[7]
+
+      ITER_COUNT     += 1
 
     if ONE_CORE_ITERATION_ONLY : # only run a single iteration of LDFI
       break
@@ -222,6 +224,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
           postrecords_eot.append( rec )
 
       if len( postrecords_eot ) < 1 :
+        return "badstatus1"
         tools.bp( __name__, inspect.stack()[0][3], "postrecords_eot = " + str( postrecords_eot ) )
 
       for seedRecord in postrecords_eot :

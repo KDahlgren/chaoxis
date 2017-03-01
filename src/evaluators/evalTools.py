@@ -52,7 +52,19 @@ def bugFreeExecution( results, eot ) :
     except :
       tools.bp( __name__, inspect.stack()[0][3], " Could not convert last element of the pre record  " + str(pretup) + ", pretup[-1] = " + str(pretup[-1]) + " into an integer. Therefore, cannot compare with EOT." )
 
-    if ( int( pretup[-1] ) == eot) and not pretup in post :
+    # ------------------------------------------------------- #
+    # Check #1 : only interested in tuples occuring at eot
+    eotTupsExist = False # glass half empty
+    for posttup in post :
+      if int( posttup[-1] ) == eot :
+        eotTupsExist = True
+
+    if not eotTupsExist :
+      return False
+
+    # ------------------------------------------------------- #
+    # Check #2 : all eot tups in pre must exist in post
+    if ( int( pretup[-1] ) == eot ) and not pretup in post :
       return False
 
   return True
