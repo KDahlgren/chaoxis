@@ -77,13 +77,13 @@ class ProvTree( ) :
   ##################
   # input list of prov trees (DerivTree instances)
   # save image file, no return value
-  def createGraph( self ) :
+  def createGraph( self, iter_count ) :
     if DEBUG :
       print "... running createGraph ..."
       print "subtrees = " + str( self.subtrees )
   
     graph = pydot.Dot( graph_type = 'digraph', strict=True ) # strict => ignore duplicate edges
-    path  = IMGSAVEPATH + "/provtree_render_" + str(time.strftime("%d-%m-%Y")) + "_" + str(time.strftime("%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs" ))
+    path  = IMGSAVEPATH + "/provtree_render_" + str(time.strftime("%d-%m-%Y")) + "_" + str( time.strftime( "%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs_" + str(iter_count) ))
 
     nodes = []
     edges = []

@@ -35,13 +35,14 @@ from solvers    import EncodedProvTree_CNF, newProgGenerationTools, solverTools
 DRIVER_DEBUG            = True
 RUN_C4_DIRECTLY         = True
 PROV_TREES_ON           = True  # toggle prov tree generation code
-OUTPUT_PROV_TREES_ON    = False # output prov tree renders
+OUTPUT_PROV_TREES_ON    = True  # output prov tree renders
 ONE_CORE_ITERATION_ONLY = False
 TREE_CNF_ON             = True  # toggle provTree to CNF conversion
 OUTPUT_TREE_CNF_ON      = False # toggle CNF formula renders
 SOLVE_TREE_CNF_ON       = True  # toggle CNF solve
 
-C4_DUMP_SAVEPATH = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
+C4_DUMP_SAVEPATH        = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
+
 
 ################
 #  PARSE ARGS  #
@@ -82,6 +83,7 @@ def driver() :
   # =================================================================== #
   # loop until find a bug (or not).
 
+  ITER_COUNT      = 0
   runTranslator   = True
   tableListPath   = None 
   datalogProgPath = None 
@@ -95,7 +97,7 @@ def driver() :
       print "HIT BREAKBOOL"
       #break
 
-    executionData   = LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList )
+    executionData   = LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, ITER_COUNT )
     parsedResults   = executionData[0] 
     runTranslator   = executionData[1] # a value indicating whether the db is appropriately populated
     tableListPath   = executionData[2]
@@ -104,6 +106,8 @@ def driver() :
     saveDB          = executionData[5]
     triedSolnList   = executionData[6]
     breakBool       = executionData[7]
+
+    ITER_COUNT     += 1
 
     if ONE_CORE_ITERATION_ONLY : # only run a single iteration of LDFI
       break
@@ -142,7 +146,7 @@ def driver() :
 ###############
 #  LDFI CORE  #
 ###############
-def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList ) :
+def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, iter_count ) :
 
   print
   print "*******************************************************"
@@ -185,6 +189,10 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
   # ----------------------------------------------- #
   # get provenance trees
   if PROV_TREES_ON :
+
+    if DRIVER_DEBUG :
+      print "\n~~~~ BUILDING PROV TREE ~~~~"
+
     if resultsPath :
       print "Using c4 results from : " + resultsPath
       parsedResults = tools.getEvalResults_file_c4( resultsPath )
@@ -213,6 +221,9 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
         if int( rec[-1] ) == int( eot ) :
           postrecords_eot.append( rec )
 
+      if len( postrecords_eot ) < 1 :
+        tools.bp( __name__, inspect.stack()[0][3], "postrecords_eot = " + str( postrecords_eot ) )
+
       for seedRecord in postrecords_eot :
         if DRIVER_DEBUG :
           print " ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
@@ -223,14 +234,14 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
 
       if OUTPUT_PROV_TREES_ON :
         print "provTreeComplete :"
-        provTreeComplete.createGraph( )
+        provTreeComplete.createGraph( iter_count )
 
     else :
       sys.exit( "ERROR: No path to c4 results file.\nAborting..." ) # sanity check
 
   # -------------------------------------------- #
   # graphs to CNF
-  if TREE_CNF_ON :
+  if TREE_CNF_ON and PROV_TREES_ON :
 
     if DRIVER_DEBUG :
       print "\n~~~~ CONVERTING PROV TREE TO CNF ~~~~"
