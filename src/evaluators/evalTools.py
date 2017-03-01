@@ -34,7 +34,7 @@ from utils import tools
 #
 # assume right-most attribute/variable/field value 
 # in both pre and post represents delivery time.
-def bugFreeExecution( results, eot ) :
+def bugFreeExecution( results, eot, executionStatus ) :
 
   # grab relevant tuple lists
   pre  = results[ "pre" ]
@@ -43,6 +43,8 @@ def bugFreeExecution( results, eot ) :
   print " eot = " + str( eot )
   print " pre = " + str( pre )
   print "post = " + str( post ) 
+
+  #tools.bp( __name__, inspect.stack()[0][3], "bp" )
 
   # ------------------------------------------------------- #
   # CHECK #0 :  
@@ -72,12 +74,18 @@ def bugFreeExecution( results, eot ) :
   if not eotTupsExist :
     print "post contains no eot data"
     return False
+
   # ------------------------------------------------------- #
   # CHECK #3 : all eot tups in pre must exist in post
   for pretup in pre :
     if ( int( pretup[-1] ) == eot ) and not pretup in post :
       print "eot tuples exist in pre, but not in post"
       return False
+
+  # ------------------------------------------------------- #
+  # CHECK #4 : no more eot tuples in post
+  if executionStatus == "nomoreeotpostrecords" :
+    return False
  
   # ------------------------------------------------------- #
   # otherwise...

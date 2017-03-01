@@ -20,11 +20,12 @@ import inspect, os, sys
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from dedt       import dedt, dedalusParser
-from derivation import ProvTree
-from utils      import parseCommandLineInput, tools
-from evaluators import c4_evaluator, evalTools
-from solvers    import EncodedProvTree_CNF, newProgGenerationTools, solverTools
+from dedt           import dedt, dedalusParser
+from derivation     import ProvTree
+from utils          import parseCommandLineInput, tools
+from evaluators     import c4_evaluator, evalTools
+from solvers        import EncodedProvTree_CNF, newProgGenerationTools, solverTools
+from visualizations import vizTools
 
 # **************************************** #
 
@@ -90,16 +91,12 @@ def driver() :
   irCursor        = None
   saveDB          = None
   triedSolnList   = []
-  breakBool       = False
   while True :
-
-    if breakBool :
-      print "HIT BREAKBOOL"
-      #break
 
     executionData   = LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, ITER_COUNT )
 
-    if not executionData == "badstatus1" :
+    executionStatus = None
+    if not executionData == "nomoreeotpostrecords" :
       parsedResults   = executionData[0] 
       runTranslator   = executionData[1] # a value indicating whether the db is appropriately populated
       tableListPath   = executionData[2]
@@ -107,15 +104,18 @@ def driver() :
       irCursor        = executionData[4]
       saveDB          = executionData[5]
       triedSolnList   = executionData[6]
-      breakBool       = executionData[7]
 
-      ITER_COUNT     += 1
+    else :
+      executionStatus = executionData
 
-    if ONE_CORE_ITERATION_ONLY : # only run a single iteration of LDFI
+    ITER_COUNT += 1
+    # ---------------------------------------------------------------------- #
+    # control loop iterations
+    if ONE_CORE_ITERATION_ONLY : # only run a single iteration of LDFI (good for debugging)
       break
 
     else :
-      # sanity check
+      # sanity check pre and post must appear in the evaluation results.
       if not "pre" in parsedResults :
         dedt.cleanUp( irCursor, saveDB )
         tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining pre" )
@@ -123,16 +123,25 @@ def driver() :
         dedt.cleanUp( irCursor, saveDB )
         tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining post" )
 
-      if breakBool :
-        tools.bp( __name__, inspect.stack()[0][3], "evalTools.bugFreeExecution( parsedResults, argDict ) = " + str( evalTools.bugFreeExecution( parsedResults, argDict ) ) )
-
       # check for bug
-      if evalTools.bugFreeExecution( parsedResults, argDict[ 'EOT' ] ) :
+      if evalTools.bugFreeExecution( parsedResults, argDict[ 'EOT' ], executionStatus ) :
         pass
       else : # bug exists!!!
         # place magic post processing and visualization code here. =]
         print "HIT BUGGER!!!"
+
+        if DRIVER_DEBUG :
+          print 
+          print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+          print "    RUNNING POST PROCESSING"
+          print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+          print 
+
+        # generate prov graphs of buggy executions.
+        vizTools.generateBuggyProvGraphs()
+
         break
+    # ---------------------------------------------------------------------- #
 
   # =================================================================== #
 
@@ -149,6 +158,7 @@ def driver() :
 #  LDFI CORE  #
 ###############
 def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, iter_count ) :
+
 
   print
   print "*******************************************************"
@@ -192,6 +202,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
   # get provenance trees
   if PROV_TREES_ON :
 
+
     if DRIVER_DEBUG :
       print "\n~~~~ BUILDING PROV TREE ~~~~"
 
@@ -208,6 +219,10 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
       eot = argDict[ "EOT" ]
       postrecords_all = parsedResults[ "post" ]
       postrecords_eot = []
+
+      if DRIVER_DEBUG :
+        print "postrecords_all = " + str(postrecords_all)
+
       for rec in postrecords_all :
         print "rec     = " + str(rec)
         print "rec[-1] = " + str(rec[-1])
@@ -224,8 +239,10 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
           postrecords_eot.append( rec )
 
       if len( postrecords_eot ) < 1 :
-        return "badstatus1"
-        tools.bp( __name__, inspect.stack()[0][3], "postrecords_eot = " + str( postrecords_eot ) )
+        return "nomoreeotpostrecords"
+
+      if iter_count == 1 :
+        tools.bp( __name__, inspect.stack()[0][3], "iter_count = " + str(iter_count) )
 
       for seedRecord in postrecords_eot :
         if DRIVER_DEBUG :
@@ -244,6 +261,8 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
 
   # -------------------------------------------- #
   # graphs to CNF
+
+
   if TREE_CNF_ON and PROV_TREES_ON :
 
     if DRIVER_DEBUG :
@@ -275,10 +294,9 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
       print "***************************"
       print "*    PRINTING ALL SOLNS    "
       print "***************************"
-      for s in solns.solutions() :
-        print s
 
     # +++++++++++++++++++++++++++++++++++++++++++++ #
+    # collect solns and process into legible format
     if solns :
       numid    = 1
 
@@ -307,34 +325,12 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
             tmp.append( s )
       finalSolnList = tmp
 
-      #print "*******************************"
-      #print "*    PRINTING MINIMAL SOLNS   *"
-      #print "*******************************"
-      #numid = 1
-
-      ## get solution set
-      ## formatted as an array of frozen sets
-      #minimalSolnSet = solns.minimal_solutions()
-
-      #for s in minimalSolnSet :
-      #  numsolns = solns.numsolns
-
-      #  # make pretty
-      #  for var in s :
-      #    finalSolnList.append( solverTools.toggle_format_list( var, "legible" ) )
-
-      #  if DRIVER_DEBUG :
-      #    print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
-      #    numid += 1
-
     else :
       tools.bp( __name__, inspect.stack()[0][3], "Congratulations! No solutions exist, meaning the solver could not find a counterexample. Aborting..." )
     # +++++++++++++++++++++++++++++++++++++++++++++ #
 
   # -------------------------------------------- #
   # new datalog prog
-  breakBool = False
-
   if DRIVER_DEBUG :
     print "before: finalSolnList = " + str( finalSolnList )
 
@@ -350,11 +346,9 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
     newProgSavePath = executionInfo[0]
     triedSoln       = executionInfo[1]
     triedSolnList.append( triedSoln )  # add to list of tried solns
-  else :
-    breakBool = True # no more clock-only solutions
 
   # -------------------------------------------- #
-  return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, breakBool )
+  return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList )
 
 
 ################
