@@ -91,22 +91,20 @@ def driver() :
   irCursor        = None
   saveDB          = None
   triedSolnList   = []
+  executionStatus = None
   while True :
 
     executionData   = LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, ITER_COUNT )
 
-    executionStatus = None
-    if not executionData == "nomoreeotpostrecords" :
-      parsedResults   = executionData[0] 
-      runTranslator   = executionData[1] # a value indicating whether the db is appropriately populated
-      tableListPath   = executionData[2]
-      datalogProgPath = executionData[3]
-      irCursor        = executionData[4]
-      saveDB          = executionData[5]
+    parsedResults   = executionData[0] 
+    runTranslator   = executionData[1] # a value indicating whether the db is appropriately populated
+    tableListPath   = executionData[2]
+    datalogProgPath = executionData[3]
+    irCursor        = executionData[4]
+    saveDB          = executionData[5]
+    if executionData[6] :
       triedSolnList   = executionData[6]
-
-    else :
-      executionStatus = executionData
+    executionStatus = executionData[7]
 
     ITER_COUNT += 1
     # ---------------------------------------------------------------------- #
@@ -138,7 +136,7 @@ def driver() :
           print 
 
         # generate prov graphs of buggy executions.
-        vizTools.generateBuggyProvGraphs()
+        vizTools.generateBuggyProvGraphs( parsedResults, argDict[ "EOT" ], irCursor )
 
         break
     # ---------------------------------------------------------------------- #
@@ -238,8 +236,10 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
         if int( rec[-1] ) == int( eot ) :
           postrecords_eot.append( rec )
 
+      #
+      # !!! RETURN EARLY IF POST CONTAINS NO EOT RECORDS !!!
       if len( postrecords_eot ) < 1 :
-        return "nomoreeotpostrecords"
+        return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, None, "nomoreeotpostrecords")
 
       if iter_count == 1 :
         tools.bp( __name__, inspect.stack()[0][3], "iter_count = " + str(iter_count) )
@@ -348,7 +348,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
     triedSolnList.append( triedSoln )  # add to list of tried solns
 
   # -------------------------------------------- #
-  return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList )
+  return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, "GOOD" )
 
 
 ################
