@@ -31,7 +31,7 @@ DEBUG = False
 ####################
 #  BUILD NEW PROG  #
 ####################
-def buildNewProg( minimalSolnSet, irCursor ) :
+def buildNewProg( solnSet, irCursor ) :
   newProgSavePath = None  # initialize as None to trigger later sanity check in the event of failure
 
   ##############################################
@@ -52,9 +52,9 @@ def buildNewProg( minimalSolnSet, irCursor ) :
 
   ##############################################
 
-  # need to pick one of the minimal solutions
-  print "minimalSolnSet = " + str( minimalSolnSet )
-  preferredSoln = getPreferredSoln( minimalSolnSet )
+  # need to pick one of the solutions
+  #print "solnSet = " + str( solnSet )
+  preferredSoln = getPreferredSoln( solnSet )
 
   # case no preferred soln exists
   if not preferredSoln :

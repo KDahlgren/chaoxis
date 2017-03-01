@@ -250,51 +250,72 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
   if SOLVE_TREE_CNF_ON :
     solns = solverTools.solveCNF( provTree_fmla.cnfformula )
 
-    if DRIVER_DEBUG and solns :
-      numid    = 1
-
-      # +++++++++++++++++++++++++++++++++++++++++++++ #
+    # sanity check
+    if DRIVER_DEBUG :
       print "***************************"
       print "*    PRINTING ALL SOLNS    "
       print "***************************"
       for s in solns.solutions() :
-        numsolns = solns.numsolns
+        print s
 
-        # make pretty
-        final = []
-        for var in s :
-          final.append( solverTools.toggle_format_str( var, "legible" ) )
-
-        if DRIVER_DEBUG :
-          print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
-          numid += 1
-
-      # +++++++++++++++++++++++++++++++++++++++++++++ #
-      print "*******************************"
-      print "*    PRINTING MINIMAL SOLNS   *"
-      print "*******************************"
-      numid = 1
-
-      # get solution set
-      # formatted as an array of frozen sets
-      minimalSolnSet = solns.minimal_solutions()
+    # +++++++++++++++++++++++++++++++++++++++++++++ #
+    if solns :
+      numid    = 1
 
       finalSolnList = []
-      for s in minimalSolnSet :
+      finalStr = []
+      for s in solns.solutions() :
         numsolns = solns.numsolns
 
         # make pretty
         for var in s :
-          finalSolnList.append( solverTools.toggle_format_list( var, "legible" ) )
+          finalStr.append( solverTools.toggle_format_str( var, "legible" ) )
 
         if DRIVER_DEBUG :
-          print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
+          print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( finalStr )
           numid += 1
+
+        # add soln to soln list
+        finalSolnList.append( finalStr )
+        finalStr = []
+
+      #print "*******************************"
+      #print "*    PRINTING MINIMAL SOLNS   *"
+      #print "*******************************"
+      #numid = 1
+
+      ## get solution set
+      ## formatted as an array of frozen sets
+      #minimalSolnSet = solns.minimal_solutions()
+
+      #for s in minimalSolnSet :
+      #  numsolns = solns.numsolns
+
+      #  # make pretty
+      #  for var in s :
+      #    finalSolnList.append( solverTools.toggle_format_list( var, "legible" ) )
+
+      #  if DRIVER_DEBUG :
+      #    print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( final )
+      #    numid += 1
+
+    else :
+      tools.bp( __name__, inspect.stack()[0][3], "Congradulations! No solutions exist, meaning the solver could not find a counterexample. Aborting..." )
+    # +++++++++++++++++++++++++++++++++++++++++++++ #
 
   # -------------------------------------------- #
   # new datalog prog
   breakBool = False
+
+  if DRIVER_DEBUG :
+    print "finalSolnList = " + str( finalSolnList )
+
   finalSolnList  = listDiff( finalSolnList, triedSolnList )
+
+  if DRIVER_DEBUG :
+    print "finalSolnList = " + str( finalSolnList )
+    print "triedSolnList = " + str( triedSolnList )
+
   if not finalSolnList == [] :
     executionInfo   = newProgGenerationTools.buildNewProg( finalSolnList, irCursor )
     newProgSavePath = executionInfo[0]
