@@ -127,7 +127,7 @@ def driver() :
         tools.bp( __name__, inspect.stack()[0][3], "evalTools.bugFreeExecution( parsedResults, argDict ) = " + str( evalTools.bugFreeExecution( parsedResults, argDict ) ) )
 
       # check for bug
-      if evalTools.bugFreeExecution( parsedResults, argDict ) :
+      if evalTools.bugFreeExecution( parsedResults, argDict[ 'EOT' ] ) :
         pass
       else : # bug exists!!!
         # place magic post processing and visualization code here. =]

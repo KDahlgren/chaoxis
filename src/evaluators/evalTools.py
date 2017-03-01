@@ -6,7 +6,8 @@
 #  IMPORTS  #
 #############
 # standard python packages
-import os, sys
+import inspect, os, sys
+from types import *
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -39,32 +40,45 @@ def bugFreeExecution( results, eot ) :
   pre  = results[ "pre" ]
   post = results[ "post" ]
 
+  print " eot = " + str( eot )
   print " pre = " + str( pre )
   print "post = " + str( post ) 
 
-  # check if every tuple in pre at EOT
-  # also appears in post at EOT
+  # ------------------------------------------------------- #
+  # CHECK #0 :  
+  #   check if last elements of all pre record are integers
   for pretup in pre :
-
-    # check if last element of post record is an integer
     try :
       val = int( pretup[-1] )
     except :
       tools.bp( __name__, inspect.stack()[0][3], " Could not convert last element of the pre record  " + str(pretup) + ", pretup[-1] = " + str(pretup[-1]) + " into an integer. Therefore, cannot compare with EOT." )
 
-    # ------------------------------------------------------- #
-    # Check #1 : only interested in tuples occuring at eot
-    eotTupsExist = False # glass half empty
-    for posttup in post :
-      if int( posttup[-1] ) == eot :
-        eotTupsExist = True
+  # ------------------------------------------------------- #
+  # CHECK #1 :  
+  #   check if last elements of all pre record are integers
+  for posttup in post :
+    try :
+      val = int( posttup[-1] )
+    except :
+      tools.bp( __name__, inspect.stack()[0][3], " Could not convert last element of the post record  " + str(posttup) + ", posttup[-1] = " + str(posttup[-1]) + " into an integer. Therefore, cannot compare with EOT." )
 
-    if not eotTupsExist :
-      return False
+  # ------------------------------------------------------- #
+  # CHECK #2 : only interested in tuples occuring at eot
+  eotTupsExist = False # glass half empty
+  for posttup in post :
+    if int( posttup[-1] ) == eot :
+      eotTupsExist = True
 
-    # ------------------------------------------------------- #
-    # Check #2 : all eot tups in pre must exist in post
+  if not eotTupsExist :
+    print "post contains no eot data"
+    return False
+  # ------------------------------------------------------- #
+  # CHECK #3 : all eot tups in pre must exist in post
+  for pretup in pre :
     if ( int( pretup[-1] ) == eot ) and not pretup in post :
+      print "eot tuples exist in pre, but not in post"
       return False
-
+ 
+  # ------------------------------------------------------- #
+  # otherwise...
   return True
