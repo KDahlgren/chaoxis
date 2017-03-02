@@ -236,13 +236,12 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
         if int( rec[-1] ) == int( eot ) :
           postrecords_eot.append( rec )
 
-      #
+      #tools.bp( __name__, inspect.stack()[0][3], "postrecords_eot = " + str(postrecords_eot) )
+      print "postrecords_eot = " + str(postrecords_eot)
+
       # !!! RETURN EARLY IF POST CONTAINS NO EOT RECORDS !!!
       if len( postrecords_eot ) < 1 :
         return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, None, "nomoreeotpostrecords")
-
-      if iter_count == 1 :
-        tools.bp( __name__, inspect.stack()[0][3], "iter_count = " + str(iter_count) )
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
       # populate prov tree
@@ -328,6 +327,21 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
             tmp.append( s )
       finalSolnList = tmp
 
+      # remove all solutions containing non-clock facts.
+      tmp = []
+      for s in finalSolnList :
+        clockOnly = True
+        for i in s :
+          if not i.startswith( "clock(" ) :
+            clockOnly = False # hit a non-clock fact
+        if clockOnly :
+          tmp.append( s )
+
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+      # set final final copy of the solution list
+      finalSolnList = tmp
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+
     else :
       tools.bp( __name__, inspect.stack()[0][3], "Congratulations! No solutions exist, meaning the solver could not find a counterexample. Aborting..." )
     # +++++++++++++++++++++++++++++++++++++++++++++ #
@@ -337,44 +351,27 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
   if DRIVER_DEBUG :
     print "before: finalSolnList = " + str( finalSolnList )
 
-  finalSolnList  = listDiff( finalSolnList, triedSolnList ) # remove triedSolns from list
+  finalSolnList  = listDiff( finalSolnList, triedSolnList ) # remove triedSolns from final solution list
+
+  print "finalSolnList = " + str(finalSolnList) + "\nlen(finalSolnList) = " + str(len(finalSolnList)) + "\ntriedSolnList = " + str(triedSolnList) + "\nlen(triedSolnList) = " + str(len(triedSolnList))
+#  if iter_count == 1 :
+#    tools.bp( __name__, inspect.stack()[0][3], "finalSolnList = " + str(finalSolnList) + "\nlen(finalSolnList) = " + str(len(finalSolnList)) + "\ntriedSolnList = " + str(triedSolnList) + "\nlen(triedSolnList) = " + str(len(triedSolnList)) )
 
   if DRIVER_DEBUG :
     print "after: finalSolnList = " + str( finalSolnList )
     print "triedSolnList = " + str( triedSolnList )
 
   # case the finalSolnList still contains clock-only solns
-  if not clockFree( finalSolnList ) :
+  if len( finalSolnList ) > 0 :
     executionInfo   = newProgGenerationTools.buildNewProg( finalSolnList, irCursor )
     newProgSavePath = executionInfo[0]
     triedSoln       = executionInfo[1]
     triedSolnList.append( triedSoln )  # add to list of tried solns
+  else :
+    return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, "exhaustedClockOnlySolns" )
 
   # -------------------------------------------- #
   return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, "GOOD" )
-
-
-################
-#  CLOCK FREE  #
-################
-# check if any solns contain only clock facts
-# return False if solns containing only clock facts exist
-def clockFree( finalSolnList ) :
-
-  vals = []
-  for soln in finalSolnList :     # check if each soln contains only clock facts
-    valid = True # be optimistic
-    for var in soln :
-      if not "clock(" in var :
-        valid = False
-    vals.append( valid )
-
-  # case there exists at least one clock-only soln,
-  #  then the solution list is not clock free
-  if True in vals :
-    return False
-  else :
-    return True
 
 
 ###############

@@ -18,6 +18,62 @@ DEBUG = True
 C4_RESULTS_PATH = os.path.abspath( __file__ + "/../../../save_data/c4Output/c4dump.txt" )
 
 
+##################
+#  GET ORIG RID  #
+##################
+def getOrigRID( provRID, provName, cursor ) :
+  rid = None
+
+  # ------------------------------------------------------- #
+  # get complete attList for provRID
+  cursor.execute( "SELECT SubgoalAtt.attID,SubgoalAtt.attName FROM Rule,Subgoals,SubgoalAtt WHERE Rule.rid==Subgoals.rid AND Subgoals.sid==SubgoalAtt.sid AND Rule.ridi='" + provRID + "'" )
+  attList_provRID = cursor.fetchall()
+  attList_provRID = tools.toAscii_multiList( attList_provRID )
+
+  # ------------------------------------------------------- #
+  # get list of candidate original rule ids
+
+  # get original name
+  tmp      = provName.split( "_prov" )
+  origName = tmp[0]
+
+  # get ids and names for all rules
+  cursor.execute( "SELECT rid,goalName FROM Rule" )
+  ridList = cursor.fetchall()
+  ridList = tools.toAscii_multiList( ridList )
+
+  # grab ids for rules labeled with the original name
+  candidateRIDS = []
+  for r in ridList :
+    candid = r[0]
+    name  = r[1]
+    if name == origName :
+      candidateRIDS.append( candid )
+
+  # ------------------------------------------------------- #
+  # find the original rule with matching attList
+
+  print "candidateRIDS = " + str( candidateRIDS )
+
+  for candid in candidateRIDS :
+    # grab the att list for this rule
+    cursor.execute( "SELECT SubgoalAtt.attID,SubgoalAtt.attName FROM Rule,Subgoals,SubgoalAtt WHERE Rule.rid==Subgoals.rid AND Subgoals.sid==SubgoalAtt.sid AND Rule.rid=='" + candid + "'" )
+    attList_candid = cursor.fetchall()
+    attList_candid = tools.toAscii_multiList( attList_candid )
+
+    print "attList_candid = " + str( attList_candid )
+    print "attList_gname  = " + str( attList_gname )
+
+    if checkEquality( attList_gname, attList_candid ) :
+      print "returning candid = " + candid
+      return candid
+
+  # otherwise, no provenance rule matches =[
+  tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: could not find matching provenance rule for " + gname )
+
+  return rid
+
+
 #########################
 #  GET PARTIAL MATCHES  #
 #########################
@@ -169,40 +225,21 @@ def getAttVal( att, goalAttMap ) :
 # assume validity of left-to-right ordering
 # returns an array of tuples mapping atts to values.
 def getGoalAttMap( provRID, provName, record, results, cursor ) :
-  goalAttMap = []
+  goalAttMap = {}
 
+  # ---------------------------------------------------------------- #
   # grab all goal atts for this prov rule
   cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + provRID + "'" )
   res = cursor.fetchall()
   res = tools.toAscii_multiList( res )
 
-  atts = []
+  attNames = []
   for r in res :
-    attName = r[1]
-    atts.append( attName )
+    name = r[1]
+    attNames.append( name )
 
-  # grab the set of provenance records containing the input record.
-  fullCandidateProvRecords = getFullCandidateProvRecords( provName, record, results )
-
-  if len( fullCandidateProvRecords ) > 1 :
-    print "**** WARNING ****\nMore than one provenance record partially matches the input record:\ninput record = " + str(record) + "\nprovenance records = " + str( fullCandidateProvRecords ) + "\npyLDFI currently handles only one provenance record per input record. In particular, the chosen provenance record is the first in the list of candidate provenance records."
-  elif len( fullCandidateProvRecords ) < 1 :
-    sys.exit( "**** FATAL ERROR ****\nNo provenance record partially matches the input record.\ninput record = " + str( record ) + "\nfull results = " + str(results) )
-
-  else :
-    fullProvRecord = fullCandidateProvRecords[0]
-
-    if DEBUG :
-      if provName.startswith( "missing_log" ) :
-        sys.exit( "BREAKPOINT : fullCandidateProvRecords = " + str(fullCandidateProvRecords) )
-
-    # map atts to values in tuples first
-    # to align with ordering.
-    for i in range( 0, len( atts ) ) :
-      if i < len( atts ) :
-        goalAttMap.append( ( atts[i], fullProvRecord[i] ) )
-      else :
-        goalAttMap.append( ( atts[i], None ) )
+  # ---------------------------------------------------------------- #
+  # match attNames with vals from the record
 
   return goalAttMap
 
@@ -287,65 +324,82 @@ def getSubgoals( provRuleID, cursor ) :
 ##################
 #  GET PROV RID  #
 ##################
-# choose the prov rid associated with a particular rule
-# given the name of the rule, the seed record from the evaluation
+# choose the prov rid associated with a particular goal
+# given the name of the goal, the seed record from the evaluation
 # results, the full results, and the database cursor.
 #
-# get list of prov rids associated with rname
+# get list of prov rids associated with gname and
 # iterate over contents of prov relations from full results.
 # discover the tuple most closely matching the input record.
-# Observe the schemas for all prov rules for a specific rule are identical.
-# Furthermore, the schemas of the original rule and the prov rules are identical 
-# up to the arity of the original rule for the first N fields of the schema (left-to-right)
 #
-def get_prov_rid_info( rname, record, fullResults, cursor ) :
+def get_prov_rid_info( gname, record, fullResults, cursor ) :
   rid = None
 
   if DEBUG :
-    print "... running getProvRID ..."
-    print " rname       = " + str( rname )
+    print "... running get_prov_rid_info ..."
+    print " gname       = " + str( gname )
     print " record      = " + str( record )
     print " fullResults = " + str( fullResults )
-    #sys.exit( "BREAKPOINT1" )
+
+  # ------------------------------------------------------- #
+  # get complete attList for gname
+  cursor.execute( "SELECT SubgoalAtt.attID,SubgoalAtt.attName FROM Rule,Subgoals,SubgoalAtt WHERE Rule.rid==Subgoals.rid AND Subgoals.sid==SubgoalAtt.sid AND Rule.goalName=='" + gname + "'" )
+  attList_gname = cursor.fetchall()
+  attList_gname = tools.toAscii_multiList( attList_gname )
+
+  # ------------------------------------------------------- #
+  # get list of candidate provenance rule ids
 
   # get ids and names for all rules
-  provName = rname + "_prov"
+  provName = gname + "_prov"
   cursor.execute( "SELECT rid,goalName FROM Rule" )
   ridList = cursor.fetchall()
   ridList = tools.toAscii_multiList( ridList )
 
-  # grab the relevant prov rules only
+  # grab ids for prov rules related to gname
   candidateRIDS = []
   for r in ridList :
-    ident = r[0]
+    candid = r[0]
     name  = r[1]
-
     if name.startswith( provName ) :
-      candidateRIDS.append( r )
+      candidateRIDS.append( candid )
 
-  # iterate over relations per prov rule to find a partial match with record.
-  validRIDS = []
-  for r in candidateRIDS :
+  # ------------------------------------------------------- #
+  # find the prov rule with matching attList
 
-    ident       = r[0]
-    name        = r[1]
-    evalResults = fullResults[ name ]
+  print "candidateRIDS = " + str( candidateRIDS )
 
-    for res in evalResults :
-      if checkContains( res, record ) :
-        validRIDS.append( r )
+  for candid in candidateRIDS :
+    # grab the att list for this rule
+    cursor.execute( "SELECT SubgoalAtt.attID,SubgoalAtt.attName FROM Rule,Subgoals,SubgoalAtt WHERE Rule.rid==Subgoals.rid AND Subgoals.sid==SubgoalAtt.sid AND Rule.rid=='" + candid + "'" )
+    attList_candid = cursor.fetchall()
+    attList_candid = tools.toAscii_multiList( attList_candid )
 
-  if len( validRIDS ) < 1 :
-    sys.exit( "********************\n********************\nFATAL ERROR in file " + __name__ + " in function " + inspect.stack()[0][3] + " :\n>>> " + str(record) + "\ndoes not match a record in the program output results for the provenance of rule\n>>> " + rname + "\nProgram results dump located at: " + C4_RESULTS_PATH )
+    print "attList_candid = " + str( attList_candid )
+    print "attList_gname  = " + str( attList_gname )
 
-  elif len( validRIDS ) > 1 :
-    print "********************\n********************\nWARNING : Multiple rules exist which could have triggered the derivation of the record " + str(record) +  ". The current implementation solution picks the first one and hopes for the best. Future versions of pyLDFI will support a more robust picking method."
-    rid = validRIDS[0]
+    if checkEquality( attList_gname, attList_candid ) :
+      print "returning candid = " + candid
+      return candid
 
-  else :
-    rid = validRIDS[0]
+  # otherwise, no provenance rule matches =[
+  tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: could not find matching provenance rule for " + gname )
 
-  return rid
+
+####################
+#  CHECK EQUALITY  #
+####################
+# check if the complete att list of the original rule
+# is a subset of the complete att list of the candidate
+# provenance rule (future work: should probably be an
+# equivalent set)
+def checkEquality( attList_gname, attList_candid ) :
+
+  for att in attList_gname :
+    if not att in attList_candid :
+      return False
+
+  return True
 
 
 ####################

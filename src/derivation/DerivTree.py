@@ -33,12 +33,12 @@ class DerivTree( ) :
   #  ATTRIBS  #
   #############
   name           = None # name of relation identifier
+  rid            = None # rule id, if applicable
   treeType       = None # goal, rule, or fact
   isNeg          = None # is goal negative? assume positive
   root           = None # GoalNode, RuleNode, FactNode
   programResults = None # complete dictionary of parsed results from table dump
   cursor         = None # database pointer
-
 
   ####################
   #  IS FINAL STATE  #
@@ -64,9 +64,10 @@ class DerivTree( ) :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, name, treeType, isNeg, record, results, cursor ) :
+  def __init__( self, name, rid, treeType, isNeg, record, results, cursor ) :
 
     self.name           = name
+    self.rid            = rid
     self.treeType       = treeType
     self.isNeg          = isNeg
     self.programResults = results
@@ -92,7 +93,7 @@ class DerivTree( ) :
       self.root = GoalNode.GoalNode( self.name, self.isNeg, record, self.programResults, self.cursor )
 
     elif self.treeType == "rule" :
-      self.root = RuleNode.RuleNode( self.name, record, self.programResults, self.cursor )
+      self.root = RuleNode.RuleNode( self.name, self.rid, record, self.programResults, self.cursor )
 
     elif self.treeType == "fact" :
       self.root = FactNode.FactNode( self.name, self.isNeg, record, self.programResults, self.cursor )
@@ -124,10 +125,7 @@ class DerivTree( ) :
       # case goal
       if self.root.treeType == "goal" :
 
-        if self.root.descendant :
-          desc = [ self.root.descendant ] # goals only have one descendant
-
-        elif not self.root.descendants == [] :
+        if not self.root.descendants == [] :
           desc = self.root.descendants
 
         else :

@@ -86,6 +86,11 @@ def bugFreeExecution( results, eot, executionStatus ) :
   # CHECK #4 : no more eot tuples in post
   if executionStatus == "nomoreeotpostrecords" :
     return False
+
+  # ------------------------------------------------------- #
+  # CHECK #5 : exhausted all clock-only solutions
+  if executionStatus == "exhaustedClockOnlySolns" :
+    return False
  
   # ------------------------------------------------------- #
   # otherwise...
