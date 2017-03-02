@@ -136,7 +136,7 @@ def driver() :
           print 
 
         # generate prov graphs of buggy executions.
-        vizTools.generateBuggyProvGraphs( parsedResults, argDict[ "EOT" ], irCursor )
+        vizTools.generateBuggyProvGraphs( parsedResults, argDict[ "EOT" ], irCursor, ITER_COUNT )
 
         break
     # ---------------------------------------------------------------------- #
@@ -209,7 +209,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
       parsedResults = tools.getEvalResults_file_c4( resultsPath )
 
       # initialize provenance tree structure
-      provTreeComplete = ProvTree.ProvTree( "UltimateGoal", parsedResults, irCursor )
+      provTreeComplete = ProvTree.ProvTree( "FinalState", parsedResults, irCursor )
 
       # grab the set of post records at EOT.
       # assume the right-most attribute/variable/field of the post schema
@@ -244,17 +244,20 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
       if iter_count == 1 :
         tools.bp( __name__, inspect.stack()[0][3], "iter_count = " + str(iter_count) )
 
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+      # populate prov tree
       for seedRecord in postrecords_eot :
         if DRIVER_DEBUG :
           print " ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
           print "           NEW POST RECORD "
           print "seedRecord = " + str( seedRecord )
-        newProvTree = provTreeComplete.generateProvTree( seedRecord )
+        newProvTree = provTreeComplete.generateProvTree( "post", seedRecord )
         provTreeComplete.subtrees.append( newProvTree )
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 
       if OUTPUT_PROV_TREES_ON :
         print "provTreeComplete :"
-        provTreeComplete.createGraph( iter_count )
+        provTreeComplete.createGraph( None, iter_count )
 
     else :
       sys.exit( "ERROR: No path to c4 results file.\nAborting..." ) # sanity check

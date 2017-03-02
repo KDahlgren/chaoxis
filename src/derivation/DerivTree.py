@@ -40,12 +40,12 @@ class DerivTree( ) :
   cursor         = None # database pointer
 
 
-  ######################
-  #  IS ULTIMATE GOAL  #
-  ######################
+  ####################
+  #  IS FINAL STATE  #
+  ####################
   # a convenience function
   # ProvTrees are not DerivTrees
-  def isUltimateGoal( self ) :
+  def isFinalState( self ) :
     return False
 
 

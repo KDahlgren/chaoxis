@@ -312,7 +312,7 @@ def format_std( sympy_fmla_res ) :
 ########################
 def convertToBoolean( provTree ) :
 
-  if not provTree.isUltimateGoal() :
+  if not provTree.isFinalState() :
     displayTree( provTree )
 
   fmla = None # initialize
@@ -323,7 +323,7 @@ def convertToBoolean( provTree ) :
   # always only one right goal => builds forumlas up from the left with parens:
   #    ( ( ... ) OP fmla_m-1 ) OP fmla_m
   #
-  if provTree.isUltimateGoal() :
+  if provTree.isFinalState() :
     if len( provTree.subtrees ) > 0 :
       fmla      = AndFormula.AndFormula() # empty
       leftGoals = provTree.subtrees[:-1]  # of type list

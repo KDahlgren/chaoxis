@@ -28,10 +28,11 @@ from utils      import tools
 
 DEBUG = True
 
+
 ################################
 #  GENERATE BUGGY PROV GRAPHS  #
 ################################
-def generateBuggyProvGraphs( parsedResults, eot, irCursor ) :
+def generateBuggyProvGraphs( parsedResults, eot, irCursor, iter_count ) :
 
   if DEBUG :
     print
@@ -40,8 +41,10 @@ def generateBuggyProvGraphs( parsedResults, eot, irCursor ) :
     print "000000000000000000000000000000000000"
     print
 
+  # ------------------------------------------------------------- #
   # discover the set of goal nodes possessing records for eot.
-  # do not need to worry about overlapping graphs because pydot ignores duplicates.
+  # do not need to worry about overlapping or redundant 
+  # graphs because pydot ignores duplicates.
   validGoals = []
   for key in parsedResults :
     if not "_prov" in key : # skip provenance goals
@@ -55,11 +58,23 @@ def generateBuggyProvGraphs( parsedResults, eot, irCursor ) :
   if DEBUG :
     print "validGoals = " + str( validGoals )
 
+  # ------------------------------------------------------------- #
   # generate a provenance graph for each goal node.
 
-  # output the progenance graphs in a single render.
+  # initialize provenance tree structure
+  provTree_buggy = ProvTree.ProvTree( "FinalState", parsedResults, irCursor )
 
-  return None
+  # populate prov tree
+  for goal in validGoals :
+    for seedRecord in parsedResults[ goal ] :
+      newProvTree = provTree_buggy.generateProvTree( goal, seedRecord )
+      provTree_buggy.subtrees.append( newProvTree )
+
+  provTree_buggy.createGraph( "buggyGraph", iter_count )
+
+  # ------------------------------------------------------------- #
+  # output the progenance graphs in a single render.
+  # //
 
 
 #########

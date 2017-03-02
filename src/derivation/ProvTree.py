@@ -48,9 +48,9 @@ class ProvTree( ) :
   ######################
   # a convenience function
   # a provenance tree will never not be rooted
-  # at "UltimateGoal"
-  def isUltimateGoal( self ) :
-    if self.rootname == "UltimateGoal" :
+  # at "FinalState"
+  def isFinalState( self ) :
+    if self.rootname == "FinalState" :
       return True
     else :
       return False
@@ -60,7 +60,7 @@ class ProvTree( ) :
   #  IS LEAF  #
   #############
   # a convenience function
-  # a provenance tree will never be a leaf.
+  # a non-empty provenance tree will never be a leaf.
   def isLeaf( self ) :
     return False
 
@@ -68,8 +68,8 @@ class ProvTree( ) :
   ########################
   #  GENERATE PROV TREE  #
   ########################
-  def generateProvTree( self, seedRecord ) :
-    return DerivTree.DerivTree( "post", "goal", False, seedRecord, self.fullResults, self.cursor )
+  def generateProvTree( self, name, seedRecord ) :
+    return DerivTree.DerivTree( name, "goal", False, seedRecord, self.fullResults, self.cursor )
  
  
   ##################
@@ -77,13 +77,18 @@ class ProvTree( ) :
   ##################
   # input list of prov trees (DerivTree instances)
   # save image file, no return value
-  def createGraph( self, iter_count ) :
+  def createGraph( self, addNameInfo, iter_count ) :
     if DEBUG :
       print "... running createGraph ..."
       print "subtrees = " + str( self.subtrees )
   
     graph = pydot.Dot( graph_type = 'digraph', strict=True ) # strict => ignore duplicate edges
-    path  = IMGSAVEPATH + "/provtree_render_" + str(time.strftime("%d-%m-%Y")) + "_" + str( time.strftime( "%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs_" + str(iter_count) ))
+
+    path  = IMGSAVEPATH + "/provtree_render_" + str(time.strftime("%d-%m-%Y")) + "_" + str( time.strftime( "%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs" )) + "_" + str(iter_count)
+
+    # example: add "_buggyGraph" to the end of the name
+    if addNameInfo :
+      path += "_" + addNameInfo
 
     nodes = []
     edges = []
