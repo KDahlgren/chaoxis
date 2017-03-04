@@ -39,6 +39,8 @@ class DerivTree( ) :
   root           = None # GoalNode, RuleNode, FactNode
   programResults = None # complete dictionary of parsed results from table dump
   cursor         = None # database pointer
+  provAttMap     = None
+  idPair         = None
 
   ####################
   #  IS FINAL STATE  #
@@ -64,7 +66,7 @@ class DerivTree( ) :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, name, rid, treeType, isNeg, record, results, cursor ) :
+  def __init__( self, name, rid, treeType, isNeg, provAttMap, record, results, cursor ) :
 
     self.name           = name
     self.rid            = rid
@@ -72,6 +74,7 @@ class DerivTree( ) :
     self.isNeg          = isNeg
     self.programResults = results
     self.cursor         = cursor
+    self.provAttMap     = provAttMap
 
     if DEBUG :
       print "=================================="
@@ -93,7 +96,7 @@ class DerivTree( ) :
       self.root = GoalNode.GoalNode( self.name, self.isNeg, record, self.programResults, self.cursor )
 
     elif self.treeType == "rule" :
-      self.root = RuleNode.RuleNode( self.name, self.rid, record, self.programResults, self.cursor )
+      self.root = RuleNode.RuleNode( self.name, self.rid, self.provAttMap, record, self.programResults, self.cursor )
 
     elif self.treeType == "fact" :
       self.root = FactNode.FactNode( self.name, self.isNeg, record, self.programResults, self.cursor )

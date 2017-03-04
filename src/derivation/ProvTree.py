@@ -69,7 +69,7 @@ class ProvTree( ) :
   #  GENERATE PROV TREE  #
   ########################
   def generateProvTree( self, name, seedRecord ) :
-    return DerivTree.DerivTree( name, None, "goal", False, seedRecord, self.fullResults, self.cursor )
+    return DerivTree.DerivTree( name, None, "goal", False, None, seedRecord, self.fullResults, self.cursor )
  
  
   ##################

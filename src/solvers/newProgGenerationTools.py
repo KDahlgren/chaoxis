@@ -24,14 +24,23 @@ from utils import dumpers, tools
 
 # **************************************** #
 
-
-DEBUG = False
+ITER_COUNT = None
+DEBUG      = True
 
 
 ####################
 #  BUILD NEW PROG  #
 ####################
-def buildNewProg( solnSet, irCursor ) :
+def buildNewProg( solnSet, irCursor, iter_count ) :
+
+  if DEBUG :
+    print "...running buildNewProg..."
+
+  ITER_COUNT = iter_count
+
+  if iter_count == 1 :
+    print "ITER_COUNT = " + str( ITER_COUNT )
+
   newProgSavePath = None  # initialize as None to trigger later sanity check in the event of failure
 
   ##############################################
@@ -47,7 +56,7 @@ def buildNewProg( solnSet, irCursor ) :
   # save the old program
   oldprogpath = None
   if os.path.isfile( newProgSavePath ) :
-    oldprogpath = newProgSavePath + "_saved_" + str(time.strftime("%d-%m-%Y")) + "_" + str(time.strftime("%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs" ) )
+    oldprogpath = newProgSavePath + "_saved_" + str(time.strftime("%d-%m-%Y")) + "_" + str(time.strftime("%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs" ) ) + "_" + str( iter_count )
     os.system( "mv " + newProgSavePath + " " + oldprogpath )
 
   ##############################################
@@ -60,16 +69,32 @@ def buildNewProg( solnSet, irCursor ) :
   if not preferredSoln :
     return ( newProgSavePath, preferredSoln )
 
+  # ----------------------------------------- #
   # parse clock soln records
   parsedClockRecords = parseClock( preferredSoln )
 
+  # reset clock.
   # flip the inclusion of clock records (simInclude) in the solution from 'True' to 'False' 
   # and ensure all other clock records are 'True' wrt the inclusion attribute (simInclude).
   setNewClock( parsedClockRecords, irCursor )
 
+  # ----------------------------------------- #
+  # build new clock configuration
+
   if DEBUG :
+    print ">> CLOCK DUMP before <<"
     dumpers.clockDump( irCursor )
 
+  # falsify the appropriate record(s)
+  shootClockRecs( parsedClockRecords, irCursor )
+
+  if DEBUG :
+    print ">> CLOCK DUMP after <<"
+    dumpers.clockDump( irCursor )
+
+  #tools.bp( __name__, inspect.stack()[0][3], "bp" )
+
+  # ----------------------------------------- #
   # build a copy of the old program, minus the clock fact lines
   copyProg( oldprogpath, testpath, newProgSavePath ) # edits the new program file directly
 
@@ -84,6 +109,49 @@ def buildNewProg( solnSet, irCursor ) :
     return ( newProgSavePath, preferredSoln )
   else :
     tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: failed to write new program to " + newProgSavePath )
+
+
+######################
+#  SHOOT CLOCK RECS  #
+######################
+def shootClockRecs( parsedClockRecords, irCursor ) :
+
+  # flip all the simIncludes to True to reset to newest clock soln configuration
+  simInclude = "True"
+  irCursor.execute( "UPDATE Clock SET simInclude='" + simInclude + "'" )
+
+  # flip the simIncludes for the target clock records
+  simInclude = "False"
+  for rec in parsedClockRecords :
+    src       = rec[0]
+    dest      = rec[1]
+    sndTime   = rec[2]
+    delivTime = rec[3]
+
+    # optimistic by default
+    qSRC       = "src=='" + src + "'"
+    qDEST      = " AND dest=='" + dest + "'"
+    qSNDTIME   = " AND sndTime==" + sndTime + ""
+    qDELIVTIME = " AND delivTime==" + delivTime + ""
+
+    # erase query components as necessary
+    if "_" in src :
+      qSRC = ""
+    if "_" in dest :
+      qDEST = ""
+    if "_" in sndTime :
+      qSNDTIME = ""
+    if "_" in delivTime :
+      qDELIVTIME = ""
+
+    # set query
+    query = "UPDATE Clock SET simInclude='" + simInclude + "' WHERE " + qSRC + qDEST + qSNDTIME + qDELIVTIME
+
+    if DEBUG :
+      print "query = " + str(query)
+
+    # execute query
+    irCursor.execute( query )
 
 
 ########################
@@ -130,6 +198,7 @@ def parseClock( preferredSoln ) :
 ##################
 #  GET CONTENTS  #
 ##################
+# extract the data from the clock fact
 def getContents( clockFact ) :
 
   openParen   = None
@@ -219,7 +288,7 @@ def copyProg( oldProgPath, testpath, newProgPath ) :
     else :
       sys.exit( "FATAL ERROR: directory for saving C4 Overlog program does not exist at : " + testpath )
   else :
-    sys.exit( "FATAL ERROR: no new program specified. Aborting..." )
+    sys.exit( "FATAL ERROR: no old program specified. Aborting..." )
   ##############################################
 
 
@@ -230,10 +299,11 @@ def copyProg( oldProgPath, testpath, newProgPath ) :
 def finalizeNewProg( testpath, newProgSavePath, irCursor ) :
 
   # get all clock facts where simInclude == True
-  irCursor.execute( "SELECT src,dest,sndTime,delivTime FROM Clock WHERE simInclude='True'" )
+  irCursor.execute( "SELECT src,dest,sndTime,delivTime FROM Clock WHERE simInclude=='True'" )
   res = irCursor.fetchall()
   res = tools.toAscii_multiList( res )
 
+  # copy all True clock facts into the new program
   newClockFacts = []
   for data in res :
     src       = data[0]
@@ -257,7 +327,7 @@ def finalizeNewProg( testpath, newProgSavePath, irCursor ) :
   # repetition is redundant, but very reassuring.
   if os.path.isdir( testpath ) :
     outfile = open( newProgSavePath, "a" )
-    # inserts into file on new line -> may mess with the correctness 
+    # appends to end of last line -> may mess with the correctness 
     # in copyProg wrt the assumption that the program exists as a single line
     outfile.write( newClockLines )
     outfile.close()
@@ -265,6 +335,9 @@ def finalizeNewProg( testpath, newProgSavePath, irCursor ) :
     sys.exit( "FATAL ERROR2: directory for saving C4 Overlog program does not exist: " + testpath )
   ##############################################
 
+  if ITER_COUNT == 1 :
+    os.system( "cat " + newProgSavePath )
+    sys.exit()
 
 #########
 #  EOF  #

@@ -28,37 +28,56 @@ class RuleNode( Node ) :
   #####################
   #  SPECIAL ATTRIBS  #
   #####################
-  descendants = []
-  firing      = None
-  rid         = None
+  descendants   = []
+  prid          = None
+  provAttMap    = None
+  triggerRecord = None
 
   # --------------------------------- #
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, name, rid, record, results, cursor ) :
+  def __init__( self, name, prid, provAttMap, record, results, cursor ) :
+
+    # ///////////////////////////////////////////////////////// #
     # NODE CONSTRUCTOR: treeType, name, isNeg, record, program results, db cursor
     Node.__init__( self, "rule", name, False, record, results, cursor )
 
-    self.firing = record
-    self.rid    = rid
+    # ///////////////////////////////////////////////////////// #
+    # collect parent goal data
+    self.prid          = prid
+    self.provAttMap    = provAttMap
+    self.triggerRecord = record
 
-    if DEBUG :
-      print "*************************************"
-      print "    RULE NODE INIT DATA"
-      print "  name   = " + str( name )
-      print "  record = " + str( record )
-      print "*************************************"
+    # ///////////////////////////////////////////////////////// #
+    # fill in provenance attribute mapping Nones with data from 
+    # the trigger record.
+    fullProvMap = self.getFullMap()
 
+    #tools.bp( __name__, inspect.stack()[0][3], "fullProvMap = " + str(fullProvMap) )
+
+    # ///////////////////////////////////////////////////////// #
+    # get all subgoal info:
+    #   subgoal names and subgoal attribute mappings, given 
+    #   the fullProvMap
+    subgoalInfo = self.getSubgoalInfo( fullProvMap )
+
+    # ///////////////////////////////////////////////////////// #
+    # extract subgoal trigger records based on the subgoal 
+    # att maps
+    subgoalSeedRecords = self.getSubgoalSeedRecords( subgoalInfo )
+
+    # ///////////////////////////////////////////////////////// #
     # launch descendants
     self.descendants = [] # needed or else pyDot creates WAAAAAAAAY too many edges for some reason??? <.<
-    self.setDescendants( )
+    self.setDescendants( subgoalSeedRecords )
 
     if DEBUG :
       print "RULE NODE " + str( self.name ) + str(self.record) + " has " + str( len( self.descendants ) ) + " descendants.>"
       for d in self.descendants :
         print "   d = " + str( d.root )
+
 
   #############
   #  __STR__  #
@@ -68,155 +87,159 @@ class RuleNode( Node ) :
     return "rule-> "+ self.name + "(" + str(self.record) + ")"
 
 
-  #####################
-  #  SET DESCENDANTS  #
-  #####################
-  # rule nodes have one or more descendants.
-  # all descendants are goal nodes.
-  def setDescendants( self ) :
+  ##################
+  #  GET FULL MAP  #
+  ##################
+  # return a version of the provAttMap with all None's replaced with 
+  # appropriate data from the trigger record
+  def getFullMap( self ) :
 
-    # assumes self.rid is the provenance rid for this rule
-    pgoalAttMap = self.getProvGoalAttMap()
+    # sanity check
+    # the arity of the provenance schema must equal
+    # the arity of the trigger record.
+    if not len( self.provAttMap ) == len( self.triggerRecord ) :
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : the arity of the provenance schema does not equal the arity of the provenance trigger record...You got serious probs =[\nself.provAttMap = " + str(self.provAttMap) + "\nself.triggerRecord = " + str(self.triggerRecord) )
 
-    # get the info for all the subgoals of this rule
-    subgoalInfo = self.getSubgoalInfo()
+    fullProvAttMap = []
+    for i in range(0,len(self.provAttMap)) :
+      attValPair = self.provAttMap[ i ]
+      att = attValPair[0]
+      val = attValPair[1]
+      recval = self.triggerRecord[ i ]
 
-    # per subgoal, map subgoal attributes to values from the firing record.
-    collectedSubMaps = []
-    for sub in subgoalInfo :
-      subName = sub[0]
-      isNeg   = sub[1][0]
-      attList = sub[2]
-
-      # get sub att map
-      subAttMap = self.setSubAttMap( attList, pgoalAttMap )
-      collectedSubMaps.append( (subName, isNeg, subAttMap) )
-
-    # iterate over populated subgoal maps
-    for subMap in collectedSubMaps :
-      subName       = subMap[0]
-      subAttMapping = subMap[2]
-
-      # handle isNeg for this subgoal
-      isNeg_str     = subMap[1]
-      if isNeg_str == "notin" :
-        isNeg = True
+      if val == None :
+        fullProvAttMap.append( [ att, recval ] )
+      elif val == recval :
+        fullProvAttMap.append( attValPair )
       else :
-        isNeg = False
-
-      # spawn the descendant goal node
-      self.spawnNode( subName, isNeg, self.firing )
-
-
-  ################
-  #  SPAWN NODE  #
-  ################
-  def spawnNode( self, subName, isNeg, firing ) :
-
-    if DEBUG :
-      print "++++++++++++++++++++++++++++++++++++++++++"
-      print "        CREATING SPAWN NODE"
-      print "self.name     = " + str( self.name )
-      print "self.treeType = " + str( self.treeType )
-      print "self.record   = " + str( self.record )
-      print "subName       = " + str( subName )
-      print "isNeg         = " + str( isNeg )
-      print "firing        = " + str( firing )
-      print "++++++++++++++++++++++++++++++++++++++++++"
-
-    self.descendants.append( DerivTree.DerivTree( subName, None, "goal", isNeg, firing, self.results, self.cursor ) )
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : the attribute mappings for the provenance rule do not agree with the data in the provenance trigger rule...You got serious probs, mate =[\nself.provAttMap = " + str(self.provAttMap) + "\nself.triggerRecord = " + str(self.triggerRecord) )
+      
+    return fullProvAttMap
 
 
   ######################
   #  GET SUBGOAL INFO  #
   ######################
-  # grab the set of subgoals for this rule
-  # note the subgoal and lists for both original and provenance rules are identical.
-  def getSubgoalInfo( self ) :
+  # return an array of binary arrays connecting each subgoal name
+  # with a corresponding array of binary arrays connecting 
+  # the subgoal attributes with appropriate values, as specified 
+  # by the fullProvMap.
+  def getSubgoalInfo( self, fullProvMap ) :
+    # ------------------------------------------------------------- #
+    # Transform the provAttMap into a dictionary for convenience.
+    fullProvDict = {}
+    for arr in fullProvMap :
+      att = arr[0]
+      val = arr[1]
+
+      # sanity check
+      if att in fullProvDict.keys() and not val == fullProvDict[ att ] :
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : multiple data values exist for the same attribute.\nattribute = " + att + "\nval = " + val + " and ogattDict[ att ] = " + fullProvDict[ att ] )
+      else : # add to dictionary
+        fullProvDict[ att ] = val
+    # ------------------------------------------------------------- #
+
     subgoalInfo = []
-  
-    # grab all subgoals for the prov rule
-    self.cursor.execute( "SELECT subgoalName,sid FROM Subgoals WHERE rid=='" + self.rid + "'" )
-    subInfo = self.cursor.fetchall()
-    subInfo = tools.toAscii_multiList( subInfo )
-  
-    # grab all the atts per subgoal
-    # plus isNeg value.
-    for sub in subInfo :
-      name = sub[0]
-      sid  = sub[1]
-  
-      self.cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid=='" + self.rid + "' AND sid=='" + sid + "'" )
-      attInfo = self.cursor.fetchall()
-      attInfo = tools.toAscii_multiList( attInfo )
-  
-      self.cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid=='" + self.rid + "' AND sid=='" + sid + "'" )
-      negInfo = self.cursor.fetchall()
-      negInfo = tools.toAscii_list( negInfo )
-  
-      if len( negInfo ) >= 1 :
-        if not negInfo[0] == "notin" :
-          sys.exit( "**** FATAL ERROR ****\nUnrecognized prefix argument to rule subgoal in " + str(cleanNegInfo) + "\nAborting..." )
+
+    # get the list of subgoals
+    self.cursor.execute( "SELECT sid,subgoalName FROM Subgoals WHERE rid=='" + self.prid + "'" )
+    subIDNameList = self.cursor.fetchall()
+    subIDNameList = tools.toAscii_multiList( subIDNameList )
+
+    # for each sid, grab the subgoal attribute list and the isNeg
+    for idNamePair in subIDNameList :
+      sid     = idNamePair[0]
+      subname = idNamePair[1]
+
+      # get the attribute list for this subgoal
+      self.cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid=='" + self.prid + "' AND sid=='" + sid + "'" )
+      attList = self.cursor.fetchall()
+      attList = tools.toAscii_multiList( attList )
+      attList = [ idNamePair[1] for idNamePair in attList ]
+
+      # get the isNeg information
+      self.cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid=='" + self.prid + "' AND sid=='" + sid + "'" )
+      isNeg = self.cursor.fetchone()
+      if isNeg :
+        isNeg = tools.toAscii_str( isNeg )
       else :
-        negInfo.append( "" ) # no prefix means subgoal is positive
-  
-      # ---------------------------------- #
-      # sanity checks
-      if len( attInfo ) < 1 :
-        sys.exit( "**** FATAL ERROR ****\nNo attributes for subgoal " + name + "\nAborting..." )
-  
-      if len( negInfo ) > 1 :
-        print "**** WARNING ****:\nMore than one additional prefix argument exists for the subgoal of a rule in the input program. The current version of pyLDFI only supports one optional prefix argument per subgoal, notin. Proceeding by taking the first additional argument by default."
-      # ---------------------------------- #
-  
-      # clean up att list
-      cleanList = []
-      for att in attInfo :
-        attID   = att[0]
-        attName = att[1]
-        cleanList.append( attName )
-  
-      # define subgoal info tuple
-      newTup = ( name, negInfo, cleanList )
-      subgoalInfo.append( newTup )
+        isNeg = ""
+
+      # ///////////////////////////////////////////////////////// #
+      # Map each attribute to a value based on the mappings from 
+      # the full provAttMap.
+      thisSubAttMap = []
+      for att in attList :
+        #if att == "__WILDCARD__" :
+        if att == "_" :
+          thisSubAttMap.append( [ att, None ] )
+        elif att in fullProvDict.keys() :
+          thisSubAttMap.append( [ att, fullProvDict[ att ] ] )
+        else :
+          thisSubAttMap.append( [ att, None ] )
+
+      subgoalInfo.append( [ subname, isNeg, thisSubAttMap ] )
+      # ///////////////////////////////////////////////////////// #
 
     return subgoalInfo
 
 
-  ###########################
-  #  GET PROV GOAL ATT MAP  #
-  ###########################
-  def getProvGoalAttMap( self ) :
+  ##############################
+  #  GET SUBGOAL SEED RECORDS  #
+  ##############################
+  # return subgoal trigger records, as suggested by the subgoal att mappings
+  def getSubgoalSeedRecords( self, subgoalInfo ) :
 
-    # get goal att list for the prov rule
-    self.cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid='" + self.rid + "'" )
-    attList = self.cursor.fetchall()
-    attList = tools.toAscii_multiList( attList )
-    attList = [ attInfo[1] for attInfo in attList ] # get att strings only
+    subgoalSeedRecords = []
 
-    attMap = {}
-    for i in range(0,len(attList)) :
-      attMap[ attList[ i ] ] = self.record[ i ]
+    for subgoal in subgoalInfo :
+      subname = subgoal[0]
+      isNeg   = subgoal[1]
+      attMap  = subgoal[2]
 
-    return attMap
+      triggerRec = []
+      for attPair in attMap :
+        attName = attPair[0]
+        val     = attPair[1]
+
+        if attName == "_" :
+          triggerRec.append( "_" )
+        else :
+          triggerRec.append( val )
+
+      subgoalSeedRecords.append( [ subname, isNeg, triggerRec ] )
+
+    return subgoalSeedRecords
 
 
   #####################
-  #  SET SUB ATT MAP  #
+  #  SET DESCENDANTS  #
   #####################
-  def setSubAttMap( self, subAttList, attMap ) :
+  # rule nodes have one or more descendants.
+  # all descendants are goal nodes.
+  def setDescendants( self, subgoalSeedRecords ) :
 
-    subAttMap = {}
+    # iterate over subgoals
+    for subgoal in subgoalSeedRecords :
+      subName    = subgoal[0]
+      seedRecord = subgoal[2]
 
-    for att in subAttList :
-      if (att in attMap.keys()) :
-        subAttMap[ att ] = attMap[ att ]
-      elif att == "_" :
-        pass
+      # handle isNeg for this subgoal
+      isNeg_str = subgoal[1]
+      if isNeg_str == "" :
+        isNeg = False
       else :
-        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : subgoal attribute '" + att + "' does not exist in the provenance att map '" + str(attMap) + "'"  )
+        isNeg = True
 
-    return subAttMap
+      # spawn the descendant goal node
+      self.spawnNode( subName, isNeg, seedRecord )
+
+
+  ################
+  #  SPAWN NODE  #
+  ################
+  def spawnNode( self, subName, isNeg, seedRecord ) :
+    self.descendants.append( DerivTree.DerivTree( subName, None, "goal", isNeg, None, seedRecord, self.results, self.cursor ) )
 
 
 #########

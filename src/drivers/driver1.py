@@ -363,7 +363,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
 
   # case the finalSolnList still contains clock-only solns
   if len( finalSolnList ) > 0 :
-    executionInfo   = newProgGenerationTools.buildNewProg( finalSolnList, irCursor )
+    executionInfo   = newProgGenerationTools.buildNewProg( finalSolnList, irCursor, iter_count )
     newProgSavePath = executionInfo[0]
     triedSoln       = executionInfo[1]
     triedSolnList.append( triedSoln )  # add to list of tried solns
