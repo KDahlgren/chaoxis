@@ -8,6 +8,7 @@ src/evaluators/programFiles/*.py
 
 save_data/c4Output/*
 save_data/graphOutput/*
+save_data/fault_injection_solns/*
 
 dev_tests/**/*.txt
 dev_tests/**/*.db
@@ -16,6 +17,7 @@ qa/**/*.db
 
 !save_data/c4Output/README.md
 !save_data/graphOutput/README.md
+!save_data/fault_injection_solns/README.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

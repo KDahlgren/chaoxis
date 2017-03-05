@@ -141,6 +141,7 @@ class GoalNode( Node ) :
     qDELIVTIME = " AND delivTime==" + delivTime + ""
 
     # erase query components as necessary
+    # EXISTING BUG TODO : does not work if _ in src --> need to handle ANDs more intelligently
     if "_" in src :
       qSRC = ""
     if "_" in dest :

@@ -54,7 +54,7 @@ class SATVars_PYCOSAT :
 
       # assign the id
       if "NOT" in var : # negate id if it's a negative variable
-        var = var.replace( "NOT", "" ) # cleaning hack for good aesthetics
+        var = var.replace( "_NOT_", "" ) # cleaning hack for good aesthetics
         self.var2num[var] = int(-1) * self.counter
       else :
         self.var2num[var] = self.counter

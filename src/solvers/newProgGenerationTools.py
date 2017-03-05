@@ -63,11 +63,11 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
 
   # need to pick one of the solutions
   #print "solnSet = " + str( solnSet )
-  preferredSoln = getPreferredSoln( solnSet )
+  preferredSoln = getPreferredSoln( solnSet, irCursor )
 
   # case no preferred soln exists
   if not preferredSoln :
-    return ( newProgSavePath, preferredSoln )
+    return ( newProgSavePath, None )
 
   # ----------------------------------------- #
   # parse clock soln records
@@ -92,8 +92,6 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
     print ">> CLOCK DUMP after <<"
     dumpers.clockDump( irCursor )
 
-  #tools.bp( __name__, inspect.stack()[0][3], "bp" )
-
   # ----------------------------------------- #
   # build a copy of the old program, minus the clock fact lines
   copyProg( oldprogpath, testpath, newProgSavePath ) # edits the new program file directly
@@ -105,7 +103,7 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
 
   # sanity checks are good for the soul  ~(^.^)~
   if newProgSavePath :
-    print "preferredSoln = " + str( preferredSoln )
+    #print "preferredSoln = " + str( preferredSoln )
     return ( newProgSavePath, preferredSoln )
   else :
     tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: failed to write new program to " + newProgSavePath )
@@ -135,6 +133,7 @@ def shootClockRecs( parsedClockRecords, irCursor ) :
     qDELIVTIME = " AND delivTime==" + delivTime + ""
 
     # erase query components as necessary
+    # EXISTING BUG TODO : does not work if _ in src --> need to handle ANDs more intelligently
     if "_" in src :
       qSRC = ""
     if "_" in dest :
@@ -159,16 +158,16 @@ def shootClockRecs( parsedClockRecords, irCursor ) :
 ########################
 # solnSet is an array
 # pick the first soln containing only clock facts
-def getPreferredSoln( solnSet ) :
+# returns a list of one or more clock facts
+def getPreferredSoln( solnSet, irCursor ) :
 
   solnChoice = None
-
-  #print "solnSet = " + str( solnSet)
 
   for aSoln in solnSet :
     if aSoln == [] : # skip empties
       pass
-    print "aSoln = " + str(aSoln)
+
+    # grab the first soln containing only clock facts
     valid = True
     for var in aSoln :
       if not "clock(" in var :
@@ -176,6 +175,51 @@ def getPreferredSoln( solnSet ) :
     if valid :
       solnChoice = aSoln
       break
+
+  if solnChoice :
+    dataList = parseClock( solnChoice )
+    dataList = dataList[0]
+    if "_" in dataList :
+      # get all corrsponding clock facts
+      src       = dataList[0]
+      dest      = dataList[1]
+      sndTime   = dataList[2]
+      delivTime = dataList[3]
+
+      # optimistic by default
+      qSRC       = "src=='" + src + "'"
+      qDEST      = " AND dest=='" + dest + "'"
+      qSNDTIME   = " AND sndTime==" + sndTime + ""
+      qDELIVTIME = " AND delivTime==" + delivTime + ""
+
+      # erase query components as necessary
+      # EXISTING BUG TODO : does not work if _ in src --> need to handle ANDs more intelligently
+      if "_" in src :
+        qSRC  = ""
+      if "_" in dest :
+        qDEST = ""
+      if "_" in sndTime :
+        qSNDTIME = ""
+      if "_" in delivTime :
+        qDELIVTIME = ""
+
+      # set query
+      query = "SELECT src,dest,sndTime,delivTime FROM Clock WHERE " + qSRC + qDEST + qSNDTIME + qDELIVTIME
+
+      if DEBUG :
+        print "query = " + str(query)
+
+      # execute query
+      irCursor.execute( query )
+      solnList = irCursor.fetchall()
+      solnList = tools.toAscii_multiList( solnList )
+
+      # format solns
+      solnChoice = []
+      for soln in solnList :
+        soln = [ str(i) for i in soln ] # convert all data to strings
+        atts = ",".join(soln)
+        solnChoice.append( "clock([" + atts + "])" )
 
   return solnChoice
 

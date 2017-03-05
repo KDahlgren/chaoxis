@@ -36,6 +36,9 @@ from utils import tools
 # in both pre and post represents delivery time.
 def bugFreeExecution( results, eot, executionStatus ) :
 
+  isBugFree   = True   # be optimistic ^.^
+  explanation = None
+
   # grab relevant tuple lists
   pre  = results[ "pre" ]
   post = results[ "post" ]
@@ -43,8 +46,6 @@ def bugFreeExecution( results, eot, executionStatus ) :
   print " eot = " + str( eot )
   print " pre = " + str( pre )
   print "post = " + str( post ) 
-
-  #tools.bp( __name__, inspect.stack()[0][3], "bp" )
 
   # ------------------------------------------------------- #
   # CHECK #0 :  
@@ -72,26 +73,35 @@ def bugFreeExecution( results, eot, executionStatus ) :
       eotTupsExist = True
 
   if not eotTupsExist :
-    print "post contains no eot data"
-    return False
+    isBugFree   = False
+    explanation = "post contains no eot data"
 
   # ------------------------------------------------------- #
   # CHECK #3 : all eot tups in pre must exist in post
   for pretup in pre :
     if ( int( pretup[-1] ) == eot ) and not pretup in post :
-      print "eot tuples exist in pre, but not in post"
-      return False
+      isBugFree   = False
+      explanation = "eot tuples exist in pre, but not in post"
 
   # ------------------------------------------------------- #
   # CHECK #4 : no more eot tuples in post
-  if executionStatus == "nomoreeotpostrecords" :
-    return False
+  if executionStatus == "noMoreEOTPostRecords" :
+    isBugFree   = False
+    explanation = "noMoreEOTPostRecords"
 
   # ------------------------------------------------------- #
   # CHECK #5 : exhausted all clock-only solutions
+  #   this means post satisfies pre, despite turning off
+  #   the discovered combinations of clock solutions.
   if executionStatus == "exhaustedClockOnlySolns" :
-    return False
+    isBugFree   = True
+    explanation = "exhaustedClockOnlySolns"
  
   # ------------------------------------------------------- #
-  # otherwise...
-  return True
+
+  return [ isBugFree, explanation ]
+
+
+#########
+#  EOF  #
+#########

@@ -43,6 +43,7 @@ OUTPUT_TREE_CNF_ON      = False # toggle CNF formula renders
 SOLVE_TREE_CNF_ON       = True  # toggle CNF solve
 
 C4_DUMP_SAVEPATH        = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
+FINAL_FI_SOLN_SAVEPATH  = os.path.abspath( __file__ + "/../../.." ) + "/save_data/finalFIsolns/"
 
 
 ################
@@ -84,27 +85,34 @@ def driver() :
   # =================================================================== #
   # loop until find a bug (or not).
 
-  ITER_COUNT      = 0
-  runTranslator   = True
-  tableListPath   = None 
-  datalogProgPath = None 
-  irCursor        = None
-  saveDB          = None
-  triedSolnList   = []
-  executionStatus = None
+  ITER_COUNT       = 0
+  runTranslator    = True
+  tableListPath    = None 
+  datalogProgPath  = None 
+  irCursor         = None
+  saveDB           = None
+  triedSolnList    = []
+  currentTriedSoln = None
+  executionStatus  = None
+
+  prevTriedSoln    = None
   while True :
 
-    executionData   = LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, ITER_COUNT )
+    executionData   = LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, prevTriedSoln, ITER_COUNT )
 
-    parsedResults   = executionData[0] 
-    runTranslator   = executionData[1] # a value indicating whether the db is appropriately populated
-    tableListPath   = executionData[2]
-    datalogProgPath = executionData[3]
-    irCursor        = executionData[4]
-    saveDB          = executionData[5]
-    if executionData[6] :
-      triedSolnList   = executionData[6]
-    executionStatus = executionData[7]
+    parsedResults    = executionData[0] 
+    runTranslator    = executionData[1] # a value indicating whether the db is appropriately populated
+    tableListPath    = executionData[2]
+    datalogProgPath  = executionData[3]
+    irCursor         = executionData[4]
+    saveDB           = executionData[5]
+    triedSolnList    = executionData[6]
+    currentTriedSoln = executionData[7]
+    executionStatus  = executionData[8]
+
+    #if currentTriedSoln :
+    #  print "currentTriedSoln = " + str( currentTriedSoln )
+    #  tools.bp( __name__, inspect.stack()[0][3], "evalTools.bugFreeExecution( parsedResults, argDict[ 'EOT' ], executionStatus ) = " + str(evalTools.bugFreeExecution( parsedResults, argDict[ 'EOT' ], executionStatus )) )
 
     ITER_COUNT += 1
     # ---------------------------------------------------------------------- #
@@ -121,10 +129,20 @@ def driver() :
         dedt.cleanUp( irCursor, saveDB )
         tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining post" )
 
-      # check for bug
-      if evalTools.bugFreeExecution( parsedResults, argDict[ 'EOT' ], executionStatus ) :
-        pass
-      else : # bug exists!!!
+      # ****************************************************************** #
+      #                          CHECK FOR BUG                             #
+      # ****************************************************************** #
+      #
+      bugEval     = evalTools.bugFreeExecution( parsedResults, argDict[ 'EOT' ], executionStatus )
+      isBugFree   = bugEval[0]
+      explanation = bugEval[1]
+
+      # case execution is bug free
+      if isBugFree :
+        pass # run another iteration in the infinite loop over LDFICore
+
+      # case BUG EXISTS!!! *dalek accent* EXTERMINATE! EXTERMINATE!
+      else :
         # place magic post processing and visualization code here. =]
         print "HIT BUGGER!!!"
 
@@ -135,11 +153,33 @@ def driver() :
           print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
           print 
 
+        # save the solution which caused the bug and the reason why
+        if DRIVER_DEBUG :
+          print "isBugFree        = " + str( isBugFree )
+          print "currentTriedSoln = " + str( currentTriedSoln )
+          print "explanation      = " + str( explanation )
+
+        if os.path.isdir( FINAL_FI_SOLN_SAVEPATH ) :
+          save_fi_results_filename = FINAL_FI_SOLN_SAVEPATH + "fault_injection_soln.txt"
+          outfile = open( save_fi_results_filename, "w" )
+          outfile.write( str( currentTriedSoln ) )
+          outfile.write( "\n" )
+          outfile.write( explanation )
+          outfile.write( "\n" )
+          outfile.close()
+          print "pyLDFI saved fault injection solution information in : " + save_fi_results_filename
+        else :
+          tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : directory for saving files containing fault injection solution information does not exist:\n" + FINAL_FI_SOLN_SAVEPATH )
+
         # generate prov graphs of buggy executions.
         vizTools.generateBuggyProvGraphs( parsedResults, argDict[ "EOT" ], irCursor, ITER_COUNT )
 
-        break
+        break # break the infinite loop over LDFICore
+      # ****************************************************************** #
+
     # ---------------------------------------------------------------------- #
+
+    prevTriedSoln = currentTriedSoln
 
   # =================================================================== #
 
@@ -155,7 +195,7 @@ def driver() :
 ###############
 #  LDFI CORE  #
 ###############
-def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, iter_count ) :
+def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, prevTriedSoln, iter_count ) :
 
 
   print
@@ -226,6 +266,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
         print "rec[-1] = " + str(rec[-1])
         print "eot     = " + str(eot)
 
+        # sanity check
         # check if last element of post record is an integer
         try :
           val = int( rec[-1] )
@@ -236,12 +277,11 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
         if int( rec[-1] ) == int( eot ) :
           postrecords_eot.append( rec )
 
-      #tools.bp( __name__, inspect.stack()[0][3], "postrecords_eot = " + str(postrecords_eot) )
       print "postrecords_eot = " + str(postrecords_eot)
 
       # !!! RETURN EARLY IF POST CONTAINS NO EOT RECORDS !!!
       if len( postrecords_eot ) < 1 :
-        return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, None, "nomoreeotpostrecords")
+        return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, None, prevTriedSoln, "noMoreEOTPostRecords")
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
       # populate prov tree
@@ -288,6 +328,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
 
   # -------------------------------------------- #
   # solve CNF
+  finalSolnList = []
   if SOLVE_TREE_CNF_ON :
     solns = solverTools.solveCNF( provTree_fmla.cnfformula )
 
@@ -302,7 +343,6 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
     if solns :
       numid    = 1
 
-      finalSolnList = []
       finalStr = []
       for s in solns.solutions() :
         numsolns = solns.numsolns
@@ -318,6 +358,8 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
         # add soln to soln list and clear temporary save list for the next iteration
         finalSolnList.append( finalStr )
         finalStr = []
+
+      #tools.bp( __name__, inspect.stack()[0][3], "finalSolnList = " + str(finalSolnList) )
 
       # duplicates are annoying.
       tmp = []
@@ -343,7 +385,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 
     else :
-      tools.bp( __name__, inspect.stack()[0][3], "Congratulations! No solutions exist, meaning the solver could not find a counterexample. Aborting..." )
+      tools.bp( __name__, inspect.stack()[0][3], "Congratulations! No solutions exist, meaning the solver could not find a counterexample, which means your program is pyLDFI certified. =D\nAborting..." )
     # +++++++++++++++++++++++++++++++++++++++++++++ #
 
   # -------------------------------------------- #
@@ -353,25 +395,23 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
 
   finalSolnList  = listDiff( finalSolnList, triedSolnList ) # remove triedSolns from final solution list
 
-  print "finalSolnList = " + str(finalSolnList) + "\nlen(finalSolnList) = " + str(len(finalSolnList)) + "\ntriedSolnList = " + str(triedSolnList) + "\nlen(triedSolnList) = " + str(len(triedSolnList))
-#  if iter_count == 1 :
-#    tools.bp( __name__, inspect.stack()[0][3], "finalSolnList = " + str(finalSolnList) + "\nlen(finalSolnList) = " + str(len(finalSolnList)) + "\ntriedSolnList = " + str(triedSolnList) + "\nlen(triedSolnList) = " + str(len(triedSolnList)) )
-
   if DRIVER_DEBUG :
     print "after: finalSolnList = " + str( finalSolnList )
     print "triedSolnList = " + str( triedSolnList )
 
   # case the finalSolnList still contains clock-only solns
   if len( finalSolnList ) > 0 :
-    executionInfo   = newProgGenerationTools.buildNewProg( finalSolnList, irCursor, iter_count )
-    newProgSavePath = executionInfo[0]
-    triedSoln       = executionInfo[1]
-    triedSolnList.append( triedSoln )  # add to list of tried solns
+    executionInfo    = newProgGenerationTools.buildNewProg( finalSolnList, irCursor, iter_count )
+    newProgSavePath  = executionInfo[0]
+    currentTriedSoln = executionInfo[1]
+    triedSolnList.append( currentTriedSoln )  # add to list of tried solns
+
+  # case no more clock-only solutions exist
   else :
-    return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, "exhaustedClockOnlySolns" )
+    return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, None, "exhaustedClockOnlySolns" )
 
   # -------------------------------------------- #
-  return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, "GOOD" )
+  return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, currentTriedSoln, "GOOD" )
 
 
 ###############
