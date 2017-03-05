@@ -30,6 +30,11 @@ To run the unit tests, go to pyLDFI/qa/pyLDFI_TestEnsemble/ and run:
 python pyLDFI_TestEnsemble.py
 ```
 
+* All provenance graph visualizations are stored in pyldfi/save_data/graphOutput/ with a time stamp indicating execution generation time.
+* All fault injection solution recommendations are stored in pyldfi/save_data/fault_injection_solns/ with a time stamp indicating execution generation time.
+* You can view a dump of the last execution simulation results in pyldfi/save_data/c4Output/c4dump.txt
+* You can view the sequence of datalog programs, decorated with timestamps indicating generation time, used over the course of an LDFI simulation in pyldfi/src/evaluators/programFiles/
+
 ## More Exercises
 
 * Run simplelog/ with output from pyldfi/dev_tests/simpleLog/ :
@@ -44,36 +49,14 @@ or simply run the following command for a sparse determination of execution succ
 ```
 bash run.sh
 ```
-* Run fun_example_1/ with output from pyldfi/dev_tests/fun_example_1/ :
+* Ditto for running fun_example_1/ with output from pyldfi/dev_tests/fun_example_1/ :
 ```
 python ../../src/drivers/driver1.py -n a,b,c -f ./fun_example_1.ded --evaluator c4
 ```
-or simply run (using bash or your other favorite shell) for full stdout :
-```
-bash run.sh cmd
-```
-or simply run the following command for a sparse determination of execution success :
-```
-bash run.sh
-```
-* Run fun_example_2/ with output from pyldfi/dev_tests/fun_example_2/ :
+* Ditto for running fun_example_2/ with output from pyldfi/dev_tests/fun_example_2/ :
 ```
 python ../../src/drivers/driver1.py -n a,b,c -f ./fun_example_2.ded --evaluator c4
 ```
-or simply run (using bash or your other favorite shell) for full stdout :
-```
-bash run.sh cmd
-```
-or simply run the following command for a sparse determination of execution success :
-```
-bash run.sh
-```
-
-* All provenance graph visualizations are stored in pyldfi/save_data/graphOutput/ with a time stamp indicating execution generation time.
-* All fault injection solution recommendations are stored in pyldfi/save_data/fault_injection_solns/ with a time stamp indicating execution generation time.
-* You can view a dump of the last execution simulation results in pyldfi/save_data/c4Output/c4dump.txt
-* You can view the sequence of datalog programs, decorated with timestamps indicating generation time, used over the course of an LDFI simulation in pyldfi/src/evaluators/programFiles/
-
 
 ## Dependencies
 Python Packages (not automatically installed with pyLDFI) :
