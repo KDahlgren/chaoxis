@@ -52,15 +52,16 @@ bash run.sh
 Image ouput:
 ![provtree_render_05-03-2017_10hrs-59mins-44secs_0](https://cloud.githubusercontent.com/assets/16612428/23590379/849e1680-0193-11e7-8bb2-d90451211abd.png)
 
-
-* Ditto for running fun_example_1/ with output from pyldfi/dev_tests/fun_example_1/ :
+----
+* Ditto instructions for running fun_example_1/ with output from pyldfi/dev_tests/fun_example_1/ :
 ```
 python ../../src/drivers/driver1.py -n a,b,c -f ./fun_example_1.ded --evaluator c4
 ```
 Image output:
 ![provtree_render_05-03-2017_10hrs-42mins-39secs_0](https://cloud.githubusercontent.com/assets/16612428/23590386/a2d46974-0193-11e7-8f86-25ddf88eb7b4.png)
 
-e Ditto for running fun_example_2/ with output from pyldfi/dev_tests/fun_example_2/ :
+----
+* Ditto instructions for running fun_example_2/ with output from pyldfi/dev_tests/fun_example_2/ :
 ```
 python ../../src/drivers/driver1.py -n a,b,c -f ./fun_example_2.ded --evaluator c4
 ```
