@@ -13,7 +13,7 @@ driver1.py
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect, os, sys
+import inspect, os, sys, time
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -43,7 +43,7 @@ OUTPUT_TREE_CNF_ON      = False # toggle CNF formula renders
 SOLVE_TREE_CNF_ON       = True  # toggle CNF solve
 
 C4_DUMP_SAVEPATH        = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
-FINAL_FI_SOLN_SAVEPATH  = os.path.abspath( __file__ + "/../../.." ) + "/save_data/finalFIsolns/"
+FINAL_FI_SOLN_SAVEPATH  = os.path.abspath( __file__ + "/../../.." ) + "/save_data/fault_injection_solns/"
 
 
 ################
@@ -160,7 +160,7 @@ def driver() :
           print "explanation      = " + str( explanation )
 
         if os.path.isdir( FINAL_FI_SOLN_SAVEPATH ) :
-          save_fi_results_filename = FINAL_FI_SOLN_SAVEPATH + "fault_injection_soln.txt"
+          save_fi_results_filename = FINAL_FI_SOLN_SAVEPATH + "fault_injection_soln_" + str(time.strftime("%d-%m-%Y")) + "_" + str( time.strftime( "%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs" )) + "_" + str(ITER_COUNT) + ".txt"
           outfile = open( save_fi_results_filename, "w" )
           outfile.write( str( currentTriedSoln ) )
           outfile.write( "\n" )
