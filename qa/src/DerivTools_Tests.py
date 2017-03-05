@@ -16,7 +16,7 @@ import os, sys, unittest
 packagePath  = os.path.abspath( __file__ + "/../../../src" )
 sys.path.append( packagePath )
 
-from derivTools import *
+from derivation import *
 # ------------------------------------------------------ #
 
 

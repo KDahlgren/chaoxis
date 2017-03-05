@@ -18,7 +18,7 @@ from utils import dumpers, parseCommandLineInput, tools
 #############
 #  GLOBALS  #
 #############
-CLOCKRELATION_DEBUG = True
+CLOCKRELATION_DEBUG = False
 
 #########################
 #  INIT CLOCK RELATION  #
@@ -38,7 +38,7 @@ def initClockRelation( cursor, argDict ) :
   if argDict[ "nodes" ] :
     print "Using node topology from command line: " + str(argDict[ "nodes" ]) 
 
-    nodeSet          = argDict[ "nodes" ]
+    nodeSet = argDict[ "nodes" ]
 
     for i in range( int(defaultStartSendTime), int(maxSendTime)+1 ) :
       for n1 in nodeSet :
@@ -50,11 +50,11 @@ def initClockRelation( cursor, argDict ) :
     #tools.bp( __name__, inspect.stack()[0][3], "EOT = " + str(maxSendTime) + ",\ndumpers.clockDump( cursor ) = " + str( dumpers.clockDump(cursor)) )
 
     # check for bugs
-    if CLOCKRELATION_DEBUG :
-      print ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
-      print ">>>> PRINTING CLOCK DUMP <<<<"
-      dumpers.clockDump( cursor )
-      print ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+    #if CLOCKRELATION_DEBUG :
+    #  print ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+    #  print ">>>> PRINTING CLOCK DUMP <<<<"
+    #  dumpers.clockDump( cursor )
+    #  print ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
 
   # --------------------------------------------------------------------- #
   # otherwise use topology from input files
@@ -63,31 +63,37 @@ def initClockRelation( cursor, argDict ) :
 
     # collect all connection info
     # assumes topology facts characterized by name == "node"
-    cursor.execute('''SELECT Fact.fid, FactAtt.attID, FactAtt.attName, Fact.timeArg FROM Fact, FactAtt WHERE Fact.fid == FactAtt.fid AND Fact.name == "node"''')
+    cursor.execute( "SELECT Fact.fid, FactAtt.attID, FactAtt.attName, Fact.timeArg FROM Fact, FactAtt WHERE Fact.fid == FactAtt.fid AND Fact.name == 'node'" )
 
-    # collect connections
+    # collect all node connections
     topology = []
     results = cursor.fetchall()
 
+    # iterate over specified node connections
+    # and create a list of trinary tuples (src,dest,time)
+    # defining connections between nodes true at specific times.
     for i in range(1, len(results)) :
       prevNode = results[i-1]
       currNode = results[i]
       connection = []
 
       if currNode[0] == prevNode[0] : # match fid's
-        if (prevNode[1] == unicode("0")) and (currNode[1] == unicode("1")) :
+        #if (prevNode[1] == unicode("0")) and (currNode[1] == unicode("1")) :
+        if (prevNode[1] == 0) and (currNode[1] == 1) :
           src  = prevNode[2]
           dest = currNode[2]
           time = currNode[3]
 
-        elif (prevNode[1] == unicode("1")) and (currNode[1] == unicode("0")) :
+        #elif (prevNode[1] == unicode("1")) and (currNode[1] == unicode("0")) :
+        elif (prevNode[1] == 1) and (currNode[1] == 0) :
           src  = currNode[2]
           dest = prevNode[2]
           time = currNode[3]
 
         else :
-          sys.exit( "ERROR: attID ordering\n" + "  prevNode = " + str(prevNode) + "\n" + "  currNode = " + str(currNode) )
+          sys.exit( "ERROR: attID ordering doesn't make sense =[ :\n" + "  prevNode = " + str(prevNode) + "\n" + "  currNode = " + str(currNode) )
 
+        # create trinary tuple
         connection.append( src )
         connection.append( dest )
         connection.append( time )
@@ -102,9 +108,10 @@ def initClockRelation( cursor, argDict ) :
         sndTime    = conn[2] # unicode raw
         newSndTime = sndTime.encode('utf-8')
         delivTime  = str( int(newSndTime) + 1 )
+        simInclude = "True"
 
         if i >= int( newSndTime ) :
-          cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + str(i) + "','" + delivTime + "')") # ignore duplicates
+          cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + str(i) + "','" + delivTime + "','" + simInclude + "')") # ignore duplicates
 
     # collect total node set
     nodeSet = []
@@ -120,11 +127,11 @@ def initClockRelation( cursor, argDict ) :
       dest      = n
       sndTime   = 1
       delivTime = sndTime + 1
-      cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + str(sndTime) + "','" + str(delivTime) + "')") # ignore duplicates
+      cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + src + "','" + dest + "','" + str(sndTime) + "','" + str(delivTime) + "','" + simInclude + "')") # ignore duplicates
 
     # double check success
-    if CLOCKRELATION_DEBUG :
-      dumpers.clockDump( cursor )
+    #if CLOCKRELATION_DEBUG :
+    #  dumpers.clockDump( cursor )
 
   # --------------------------------------------------------------------- #
   else :

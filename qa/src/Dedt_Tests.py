@@ -9,19 +9,21 @@ Dedt_Tests.py
 #  IMPORTS  #
 #############
 # standard python packages
-import os, sys, unittest,sqlite3
+import inspect, os, sqlite3, sys, unittest
 from StringIO import StringIO
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../../../src" )
 sys.path.append( packagePath )
-testPath = os.path.abspath(__file__+"/../../../tests")
 
 
 from dedt import dedt, dedalusParser, clockRelation, dedalusRewriter
+from utils import tools
 
 # ------------------------------------------------------ #
+
+testPath = os.path.abspath(__file__+"/../../../qa")
 
 
 ################
@@ -209,9 +211,9 @@ class Dedt_Tests( unittest.TestCase ) :
     #for saving the program clock output
     #to be used in comparison below
     clockRelation.CLOCKRELATION_DEBUG = True
-    originalStdout= sys.stdout
-    cmdResult = StringIO()
-    fileResult = StringIO()
+    originalStdout                    = sys.stdout
+    cmdResult                         = StringIO()
+    fileResult                        = StringIO()
     
     #run through using cmdline topology option to make sure it doesn't
     #throw up an error
@@ -229,20 +231,22 @@ class Dedt_Tests( unittest.TestCase ) :
     self.assertTrue(clockRelation.initClockRelation(cursor,inputArg)==outputResult)
     
     #check to make sure that the outputs from both options are the same
-    sys.stdout =originalStdout #return stdout to original 
-    cmdOutput=cmdResult.getvalue()[cmdResult.getvalue().find('\n')+1:]
-    fileOutput=fileResult.getvalue()[fileResult.getvalue().find('\n')+1:]
+    # where "options" := grabbing node topology from file OR 
+    #                    grabbing node topology from the cmdline
+    sys.stdout = originalStdout #return stdout to original 
+    cmdOutput  = cmdResult.getvalue() [ cmdResult.getvalue().find('\n')  + 1 : ]
+    fileOutput = fileResult.getvalue()[ fileResult.getvalue().find('\n') + 1 : ]
     self.assertEqual(cmdOutput,fileOutput)
     
     #clean up testing
     IRDB.close()
     os.remove( testDB )
-  
 
   def test_buildClockRelation_clockRelation(self):
     #Not implemented in src yet
     return None
     
+
 ###########################
 #  DEDALUSREWRITER TESTS  #
 ###########################
