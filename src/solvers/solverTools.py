@@ -165,7 +165,7 @@ def toggle_format_str( dirtyStr, newFormat ) :
 ##################
 #  FORMAT SYMPY  #
 ##################
-# replace all 'AND's with & and all 'OR's with | and all 'NOT''s with ~
+# replace all 'AND's with & and all 'OR's with | and all '_NOT_''s with ~
 def format_sympy( rawBooleanFmla ) :
 
   # return data
@@ -179,7 +179,7 @@ def format_sympy( rawBooleanFmla ) :
   tmp1       = "".join( cleanFmla.split() ) # remove all whitespace
   tmp2       = tmp1.replace( "AND" , " & " )
   tmp3       = tmp2.replace( "OR"  , " | " )
-  tmp4       = tmp3.replace( "NOT" , " ~ " )
+  tmp4       = tmp3.replace( "_NOT_" , " ~ " )
   sympy_expr = tmp4
 
   # --------------------------------------------------- #
@@ -300,7 +300,7 @@ def format_std( sympy_fmla_res ) :
   tmp0 = sympy_fmla_res
   tmp1 = tmp0.replace( "&", "AND" )
   tmp2 = tmp1.replace( "|", "OR" )
-  tmp3 = tmp2.replace( "~", "NOT" )
+  tmp3 = tmp2.replace( "~", "_NOT_" )
 
   fmla_std = tmp3
 

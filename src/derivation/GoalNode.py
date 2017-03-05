@@ -57,6 +57,10 @@ class GoalNode( Node ) :
       oridList = [ aPair[0] for aPair in allIDPairs ]
       ogattMaps = self.getGoalAttMaps( oridList )
 
+      if self.name == "a_table" :
+        print "self.name = " + str( self.name )
+        print "ogattMaps = " + str( ogattMaps )
+
       # ///////////////////////////////////////////////////////// #
       # for each provenance rule id, use the corresponding orid map
       # for goal atts to seed record values to map provenance rule 
@@ -301,13 +305,14 @@ class GoalNode( Node ) :
       if (len( thisattList ) < len( self.record )) or (len( thisattList ) > len( self.record )) :
         tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : number of attributes in goal attribute list for " + self.name + " does not match the number of values in the seed record:\nattribute list = " + str(thisattList) + "\nrecord = " + str(self.record) )
 
+      # map atts to values from the seed record
       thisAttValList = []
       for i in range(0,len(thisattList)) :
         att = thisattList[ i ]
         val = self.record[ i ]
         thisAttValList.append( [ att, val ] )
 
-      ogattMap.append( [ orid, thisAttValList ] )
+      ogattMap.append( [ thisorid, thisAttValList ] )
 
     return ogattMap
 

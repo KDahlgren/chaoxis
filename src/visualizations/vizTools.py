@@ -67,14 +67,13 @@ def generateBuggyProvGraphs( parsedResults, eot, irCursor, iter_count ) :
   # populate prov tree
   for goal in validGoals :
     for seedRecord in parsedResults[ goal ] :
-      newProvTree = provTree_buggy.generateProvTree( goal, seedRecord )
-      provTree_buggy.subtrees.append( newProvTree )
-
-  provTree_buggy.createGraph( "buggyGraph", iter_count )
+      if str(eot) in seedRecord[-1] :
+        newProvTree = provTree_buggy.generateProvTree( goal, seedRecord )
+        provTree_buggy.subtrees.append( newProvTree )
 
   # ------------------------------------------------------------- #
   # output the progenance graphs in a single render.
-  # //
+  provTree_buggy.createGraph( "buggyGraph", iter_count )
 
 
 #########
