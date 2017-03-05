@@ -49,7 +49,7 @@ or simply run the following command for a sparse determination of execution succ
 ```
 bash run.sh
 ```
-Image ouput:
+Provenance graph :
 ![provtree_render_05-03-2017_10hrs-59mins-44secs_0](https://cloud.githubusercontent.com/assets/16612428/23590379/849e1680-0193-11e7-8bb2-d90451211abd.png)
 
 ----
@@ -57,7 +57,7 @@ Image ouput:
 ```
 python ../../src/drivers/driver1.py -n a,b,c -f ./fun_example_1.ded --evaluator c4
 ```
-Image output:
+Provenance graph :
 ![provtree_render_05-03-2017_10hrs-42mins-39secs_0](https://cloud.githubusercontent.com/assets/16612428/23590386/a2d46974-0193-11e7-8f86-25ddf88eb7b4.png)
 
 ----
@@ -65,7 +65,7 @@ Image output:
 ```
 python ../../src/drivers/driver1.py -n a,b,c -f ./fun_example_2.ded --evaluator c4
 ```
-Image output:
+Provenance graph :
 ![provtree_render_05-03-2017_10hrs-42mins-48secs_0](https://cloud.githubusercontent.com/assets/16612428/23590382/932a2c84-0193-11e7-8420-085448bed22e.png)
 
 
