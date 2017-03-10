@@ -312,14 +312,15 @@ def copyProg( oldProgPath, testpath, newProgPath ) :
     sys.exit( "FATAL ERROR: cannot open old C4 Overlog program at : " + oldProgPath )
 
   # assumes program is formatted as a single line of concatenated program statements (may be c4 specific)
-  programLines = programLines[0].split( ";" )
+  #programLines = programLines[0].split( ";" )
 
   newProgLines = []
   for line in programLines :
     if not line.startswith( "clock(" ) :
       newProgLines.append( line )
 
-  newProg = "; ".join( newProgLines )
+  #newProg = "; ".join( newProgLines ) # <--- use this if program formatted as a series of concatenated lines.
+  newProg = "".join( newProgLines ) # <--- use this if lines are delimited by carriage returns.
 
   ##############################################
   # save the new c4 program
@@ -357,7 +358,7 @@ def finalizeNewProg( testpath, newProgSavePath, irCursor ) :
     # replace any single quotes with double quotes
     src  = src.replace(  '"', "'" )
     dest = dest.replace( '"', "'" )
-    newClockLine = 'clock("' + src + '","' + dest + '",' + str( sndTime ) + "," + str( delivTime ) + ") ; "
+    newClockLine = 'clock("' + src + '","' + dest + '",' + str( sndTime ) + "," + str( delivTime ) + ") ;\n"
     newClockFacts.append( newClockLine )
 
   # concatenate all clock facts into a single line

@@ -23,7 +23,7 @@ sys.path.append( packagePath )
 from utils import tools
 # **************************************** #
 
-
+DEBUG = True
 
 ##########################
 #  CLASS SOLVER PYCOSAT  #
@@ -57,11 +57,16 @@ class Solver_PYCOSAT :
   ###############
   def solutions( self ) :
     print "solutions: self.satformula = " + str( self.satformula )
-    print "len( pycosat.itersolve( self.satformula ) ) = " + str( len( list( pycosat.itersolve( self.satformula ) ) ) )
 
-    self.numsolns = len( list( pycosat.itersolve( self.satformula ) ) )
+    # DEVELOPER's NOTE: calculating numsolns is _VERY_ SLOW. only run on small examples. 
+    #self.numsolns = len( list( pycosat.itersolve( self.satformula ) ) )
+    # print "self.numsolns = " + str(self.numsolns) 
 
+    if DEBUG :
+      print "running itersolve( self.satformula) in for loop..."
     for soln in pycosat.itersolve( self.satformula ) :
+        if DEBUG :
+          print "saving soln = " + str(soln)
         yield frozenset( map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) ) # using yield because soln set could be huge
         #return map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) # not using yield because generators are a headache and a half.
 

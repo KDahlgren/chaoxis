@@ -27,13 +27,18 @@ CLOCKTOOLS_DEBUG = False
 # input the list of attributes form the first subgoal in the rule, IR db cursor
 # output nothing, modified IR DB
 def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv, cursor ) :
-  baseAtt = firstSubgoalAtts[0]
+
+  # grab a non-constant attribute
+  for att in firstSubgoalAtts :
+    if (not '"' in att) and (not "'" in att) :
+      baseAtt = att
 
   if CLOCKTOOLS_DEBUG :
     print "CLOCKTOOLS_DEBUG: For rule : " + str( dumpers.reconstructRule( rid, cursor ) + "\n    firstSubgoalAtts = " + str(firstSubgoalAtts) )
 
+  # iterate over all first atts
   for c in firstSubgoalAtts :
-    if not c == baseAtt :
+    if (not c == baseAtt) and ( (not '"' in att) and (not "'" in att) ) :
       sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in deductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
 
   # get first att in first subgoal, assume specifies 'sender' node
@@ -95,7 +100,7 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
 
   for c in firstSubgoalAtts :
     if not c == baseAtt :
-      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in deductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
+      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in inductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
 
   # get first att in first subgoal, assume specifies 'sender' node
   firstAtt = baseAtt
@@ -156,7 +161,7 @@ def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAt
 
   for c in firstSubgoalAtts :
     if not c == baseAtt :
-      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in deductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
+      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in async rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
 
   # get first att in first subgoal, assume specifies 'sender' node
   firstAtt = baseAtt

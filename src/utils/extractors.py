@@ -6,14 +6,15 @@ extractors.py
   and subgoal information from Dedalus facts and rules.
 '''
 
-import os, random, sqlite3, sys
+import inspect, os, random, re, sqlite3, sys
+from types import *
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-#from utils import tools
+from utils import tools
 # ------------------------------------------------------ #
 
 #############
@@ -22,13 +23,14 @@ sys.path.append( packagePath )
 EXTRACTORS_DEBUG = False
 
 specialOps = ["notin"] # TODO: make this configurable
+eqnOps     = [ "+", "-", "*", "/", ">", "<", "<=", ">=", "==", "!=" ]
 
-########################
-#  CHECK IF LAST ITEM  #
-########################
+##################
+#  IS LAST ITEM  #
+##################
 # input index and array length
 # output boolean
-def checkIfLastItem( i, num ) :
+def isLastItem( i, num ) :
   if i == num-1 :
     return True
   else :
@@ -43,9 +45,15 @@ def checkIfLastItem( i, num ) :
 def extractAdditionalArgs( parsedSubgoal ) :
   addList    = []
 
-  for t in parsedSubgoal : # additional args are special ops
+  if type( parsedSubgoal ) == list :
+    for t in parsedSubgoal : # additional args are special ops
+      for op in specialOps :
+        if op in t :
+          addList.append( op )
+
+  elif type( parsedSubgoal ) == str :
     for op in specialOps :
-      if op in t :
+      if op in parsedSubgoal :
         addList.append( op )
 
   return addList
@@ -69,24 +77,15 @@ def extractGoal( parsedLine ) :
   return goal
 
 
-##################
-#  CHECK IF EQN  #
-##################
-def checkIfEqn( substr ) :
-  containsOpenParen = False
-  containsClosedParen = False
+############
+#  IS EQN  #
+############
+def isEqn( substr ) :
+  for op in eqnOps :
+    if op in substr :
+      return True
+  return False
 
-  for c in substr :
-    if c == "(" :
-      containsOpenParen = True
-    elif c == ")" :
-      containsClosedParen = True
-
-  # subgoal
-  if containsOpenParen and containsClosedParen :
-    return False
-  else : # eqn
-    return True
 
 ######################
 #  EXTRACT EQN LIST  #
@@ -95,63 +94,14 @@ def checkIfEqn( substr ) :
 # ouput list of eqn strings
 
 def extractEqnList( parsedLine ) :
-  if EXTRACTORS_DEBUG :
-    print "extractEqnList: parsedLine = " + str(parsedLine)
 
-  eqnList = []
-  opsList = ["+", "-", "*", "/", "<", ">", "<=", ">="]  #TODO: Make this configurable
+  groupedComponents = bodyParse( parsedLine )
 
-  line = []
-
-  # collect body only
-  for i in range(0, len(parsedLine)) :
-    if parsedLine[i] == ":-" :
-      line = parsedLine[i+1:]
-
-  # compile list of subgoals and eqns as strings
-  subList = []
-  currSub = ""
-  for i in range(0, len(line)) :
-    currChar = line[i]
-    afterOpen = False
-
-    if currChar == "(" :
-      afterOpen = True
-      currSub += currChar
-
-    elif currChar == ")" :
-      afterOpen = False
-      currSub += currChar
-
-    elif (currChar == ",") or (i == (len(line) - 1)) :
-      if afterOpen and (currChar == ",") :
-        currSub += currChar
-
-      elif (i == (len(line) - 1)) :
-        currSub += currChar
-        subList.append( currSub )
-        currSub = ""
-        continue
-
-      else :
-        subList.append( currSub )
-        currSub = ""
-        continue
-
-    else :
-      currSub += currChar
-
-  # gather equantions from list
-  for substr in subList :
-    if checkIfEqn( substr ) :
-      eqnList.append( substr )
-
-  # check for bugs
-  if EXTRACTORS_DEBUG :
-    print "subList = " + str(subList)
-    print "eqnList = " + str(eqnList)
+  # only take eqns
+  eqnList = [ comp for comp in groupedComponents if isEqn(comp) ]
 
   return eqnList
+
 
 ##########################
 #  EXTRACT SUBGOAL LIST  #
@@ -160,7 +110,21 @@ def extractEqnList( parsedLine ) :
 # ouput list of subgoal arrays
 
 def extractSubgoalList( parsedLine ) :
-  subgoalList = []
+
+  groupedComponents = bodyParse( parsedLine )
+
+  # only take subgoals
+  subgoalList = [ comp for comp in groupedComponents if ("(" in comp) and (")" in comp) ]
+
+  return subgoalList
+
+
+################
+#  BODY PARSE  #
+################
+# group the contents of the rule body into subgoals and equantions/fmlas
+# return list of groupings.
+def bodyParse( parsedLine ) :
 
   # remove spaces for clarity
   newLine = []
@@ -180,57 +144,68 @@ def extractSubgoalList( parsedLine ) :
       body = parsedLine[i:]    # save rest of list as body
       break
 
-  # iterate over body, subgoals delimited by commas
-  oneSubgoal   = []
-  inSubgoal    = False
-  inTimeArg    = False
-  endOfSubgoal = False
+  # collect body components
+  componentList = []
+  oneComponent  = []
+
+  # transform into string for ease of use 
+  # (Pssstt...This means the parser is doing to much work >.> )
+  # (TODO: tweak the parser or improve body processing)
+  # (macabre language not intended.)
+  body = "".join(body)
+
+  # remove all @ args to prevent headaches
+  body = re.sub( r'@[a-zA-Z0-9]', "", body )
+
+  # split list on subgoal closed parens
+  body = body.split( ")," )
+  tmp = []
   for i in range(0,len(body)) :
-    currItem = body[i]
+    newComp = body[i]
+    if i < len(body)-1 :
+      newComp = newComp + ")"
+    tmp.append( newComp )
+  body = tmp
 
-    if EXTRACTORS_DEBUG :
-      print "currItem   = " + str(currItem)
-      print "oneSubgoal = " + str(oneSubgoal)
+  # check for equations in body
+  yesEqns = False
+  for comp in body :
+    for op in eqnOps :
+      if op in comp :
+        yesEqns = True
 
-    if not checkIfEqn( currItem ) :
-      print "here!"
-      continue
+  # case rule has equations
+  if yesEqns :
+    for comp in body :
+      if hasOp( comp ) :
+        line = comp.split( "," )
+        for i in range(0,len(line)) :
+          item = line[i]
+          if hasOp( item ) :
+            componentList.append( item ) # save the equation
+          else : # hit the start of a subgoal
+            sub = ",".join( line[i:] )
+            componentList.append( sub ) # save the subgoal
+      else :
+        componentList.append( comp )
 
-    if currItem == "(" :
-      inSubgoal = True
-    elif currItem == ")" :
-      inSubgoal = False
-    elif currItem == "@" :
-      inTimeArg = True
-    elif (currItem == ",") and (not inSubgoal) :
-      inTimeArg    = False
-      endOfSubgoal = True
+  # case no equations
+  else :
+    componentList = body
 
-    if checkIfLastItem( i, len(body) ) :
-      oneSubgoal.append( currItem )
-      subgoalList.append( oneSubgoal )
-      oneSubgoal = []
-    if endOfSubgoal :
-      subgoalList.append( oneSubgoal )
-      oneSubgoal = []
-      endOfSubgoal = False
-      inSubgoal    = False
-      inTimeArg    = False
-    else :
-      oneSubgoal.append( currItem )
+  return componentList
 
-  # double check for equations
-  temp = []
-  for c in subgoalList :
-    if "(" in c :
-      temp.append(c)
-  subgoalList = temp
 
-  if EXTRACTORS_DEBUG :
-    print "extractors: subgoalList = " + str(subgoalList)
+############
+#  HAS OP  #
+############
+def hasOp( substr ) :
 
-  return subgoalList
+  for op in eqnOps :
+    if op in substr :
+      return True
 
+  return False
 
 ######################
 #  EXTRACT TIME ARG  #
@@ -241,12 +216,28 @@ def extractSubgoalList( parsedLine ) :
 def extractTimeArg( parsedLine ) :
   timeArg = ""
 
-  for i in range(0, len(parsedLine)) : # time arg immediately succeeds an ampersand
-    if parsedLine[i] == "@" :
-      try :
-        timeArg = parsedLine[i+1]
-      except :
-        sys.exit( "ERROR: Missing time argument after '@' in " + str(parsedLine) )
+  # case list, which will occur for facts
+  if type( parsedLine ) == list :
+    for i in range(0, len(parsedLine)) : # time arg immediately succeeds an ampersand
+      if parsedLine[i] == "@" :
+        try :
+          timeArg = parsedLine[i+1]
+        except :
+          sys.exit( "ERROR: Missing time argument after '@' in " + str(parsedLine) )
+
+  # case string, which will occur for rules
+  elif type( parsedLine ) == str :
+    aString = parsedLine
+    for i in range(0,len(aString)) :
+      aChar = aString[i]
+      if aChar == "@" :
+        try :
+          timeArg = parsedLine[i+1]
+        except :
+          sys.exit( "ERROR: Missing time argument after '@' in " + str(parsedLine) )
+
+  else :
+    tools.bp( __name__, inspect.stack()[0][3], "parsedLine in not a list or a string: " + str(parsedLine) )
 
   return timeArg
 
@@ -258,21 +249,54 @@ def extractTimeArg( parsedLine ) :
 # output attribute list
 
 def extractAttList( parsedLine ) :
-  saveFlag  = False
-  skipChars = [ ",", "'", '"', " ", ";" ]
   attList   = []
+
+  if type(parsedLine) is list : # occurs when parsed line is a fact
+    saveFlag  = False
+    skipChars = [ ",", "'", '"', " ", ";" ]
  
-  for item in parsedLine : # save everything except the skip chars
-    if item == '(' :
-      saveFlag = True
-      continue
-    elif item == ')' :
-      saveFlag = False
-      continue
-    elif item in skipChars :
-      continue
-    elif saveFlag :
-      attList.append( item )
+    for item in parsedLine : # save everything except the skip chars
+      if item == '(' :
+        saveFlag = True
+        continue
+      elif item == ')' :
+        saveFlag = False
+        continue
+      elif item in skipChars :
+        continue
+      elif saveFlag :
+        attList.append( item )
+
+  elif type(parsedLine) is str : # occurs when parsedLine is a rule
+    aString = parsedLine
+
+    # .................................. #
+    #if "@" in aString :
+    #  print "aString = " + str(aString)
+    #  tools.bp( __name__, inspect.stack()[0][3], "attList = " + str(attList) )
+    # .................................. #
+
+    for i in range(0,len(aString)) :
+      aChar = aString[i]
+      if aChar == "(" :
+
+        for j in range(i, len(aString)) :
+          if aString[j] == ")" :
+
+            attList = aString[ i+1 : j ]
+            attList = attList.split( "," )
+
+            # .................................. #
+            if "@" in aString :
+              print "aString = " + str(aString)
+              tools.bp( __name__, inspect.stack()[0][3], "attList = " + str(attList) )
+            # .................................. #
+
+            return attList
+
+
+  else :
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : parsedLine is not a list or a string:\n" + str(parsedLine) + "\ntype(parsedLine) = " + str(type(parsedLine)) )
 
   return attList
 
@@ -283,10 +307,13 @@ def extractAttList( parsedLine ) :
 # input parsed subgoal
 # output name of subgoal
 
-def extractSubgoalName( parsedSubgoal ) :
-  for t in parsedSubgoal :
-    if not t in specialOps : # assume special operations only precede subgoal names
-      return t
+def extractSubgoalName( substr ) :
+
+  for i in range(0,len(substr)) :
+    if substr[i] == "(" :
+      return substr[:i]
+
+  return None # hit an equation
 
 
 ##################

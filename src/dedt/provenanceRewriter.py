@@ -6,7 +6,7 @@ provenanceRewriter.py
    to the datalog program.
 '''
 
-import os, sys
+import inspect, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -132,7 +132,10 @@ def regProv( regRule, nameAppend, cursor ) :
   # get subgoal array
   subgoalArray = extractors.extractSubgoalList( parsedRule[1] )
 
-  #sys.exit( "BREAKPOINT: subgoalArray = " + str(subgoalArray) )
+  # ................................... #
+  #if goalName.startswith( "pre_prov" ) :
+  #  tools.bp( __name__, inspect.stack()[0][3], "subgoalArray = " + str(subgoalArray) )
+  # ................................... #
 
   # check for bugs
   if PROVENANCEREWRITE_DEBUG :

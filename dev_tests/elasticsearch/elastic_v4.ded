@@ -6,15 +6,14 @@ group("c", "G")@1;
 group("C", "G")@1;
 group("G", "G")@1;
 group(M, G)@next :- group(M, G);
-group(M, "G") :- 
-		cchange(M, "A", "G"),
-		notin group(M, "G");
+group(M, "G") :- cchange(M, "A", "G"), notin group(M, "G");
 
 //Used as part of initialisation logic
 begin("a")@1;
 begin("b")@1;
 begin("c")@1;
 begin("G")@1;
+begin( X ) :- begin(X) ; //KDADDED
 
 // Nodes are assigned nodeids at the beginning of each run
 nodeid("G", "a", 1)@1;
@@ -42,13 +41,16 @@ primary("a", "c")@1;
 primary("b", "c")@1;
 primary("c", "c")@1;
 primary("C", "c")@1;
+primary(X,Y) :- primary(X,Y); //KDADDED
 
 // Primary node is the first node to be part of ISR
 member("G", "c")@1;
+member( X,Y) :- member(X,Y) ; //KDADDED
 
 // write stream.  
 write_request_outgoing("C", "Data1", "c", 1)@2;
 write_request_outgoing("C", "Data2", "b", 2)@7;
+write_request_outgoing(W,X,Y,Z) :- write_request_outgoing(W,X,Y,Z) ; //KDADDED
 
 // Maintain sequence numbers
 seq("a", 1)@1;
@@ -152,7 +154,8 @@ client_known_reg(C, M)@next :- clients(C), member(C, M);
 
 client_known(M, C)@next :- client_known(M, C), notin crash(M, C, _);
 
-client_known(M, C)@next :- client_known(M, C), crash(M, C, Time), now(G, Now), Now < Time;
+//client_known(M, C)@next :- client_known(M, C), crash(M, C, Time), noM(G, Now), Now < Time;
+client_known(M, C)@next :- client_known(M, C), crash(M, C, Time), now(M, Now), Now < Time;
 
 // Primry promotion, with the node with the max nodieid being promoted.
 // This is the reverse order to the order in which staggered replica 
@@ -209,7 +212,7 @@ seq_max(Node, max<Seq>) :- member(Node, Node), term_max(Node, Term), history(Nod
 // This ensures that a message goes out from client to one of the replicas
 write_request_incoming(Node, Data, Client, Value)@async :- 
 write_request_outgoing(Client, Data, Node, Value),
-clients(Client);
+//clients(Client);
 
 write_queue(Node, Data, Client, Value) :- write_request_incoming(Node, Data, Client, Value);
 

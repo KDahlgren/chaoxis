@@ -6,7 +6,7 @@ tools.py
    sanity-check particular properties.
 '''
 
-import os, random, re, string, sys, numbers
+import inspect, os, random, re, string, sys, numbers
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -110,8 +110,17 @@ def getEvalResults_file_c4( path ) :
 def checkIfRewrittenAlready( rid, cursor ) :
   cursor.execute( "SELECT rewritten FROM Rule WHERE rid == '" + rid + "'" )
   flag = cursor.fetchone()
-  flag = flag[0]
-  if flag == 0 :
+
+  #print "checkIfRewrittenAlready : rid = " + rid
+  if flag == None :
+    cursor.execute( "SELECT * FROM Rule WHERE rid=='" + rid + "'" )
+    info = cursor.fetchall()
+    info = toAscii_multiList( info )
+    print "info = \n" + str(info)
+    tools.bp( __name__, inspect.stack()[0][3], "flag is none" )
+
+  #print "flag = " + str(flag)
+  if flag[0] == "False" :
     return False
   else :
     if TOOLS_DEBUG :

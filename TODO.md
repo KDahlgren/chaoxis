@@ -2,11 +2,11 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
-* Support buggy provenance graph generation.
+* Handle number of crashes as input.
 
-* Fix bug wrt mapping post records to post_prov records
+* Why do 'node' and 'bcast' goals in simplelog lack descendants?
 
-* Make overall design not specific to c4!
+* Make overall design _less specific_ to c4!
 
 * Insert a check in the parser to make sure users do not name tables with strings starting with "clock".
 

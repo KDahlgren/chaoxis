@@ -6,14 +6,14 @@ Rule.py
    Establishes all relevant attributes and get/set methods.
 '''
 
-import os, sqlite3, sys
+import inspect, os, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from utils import tools
+from utils import extractors, tools
 # ------------------------------------------------------ #
 
 opList = [ "notin" ] # TODO: make this configurable
@@ -208,8 +208,8 @@ class Rule :
 
   # set goal name and time arg
   def setGoalInfo( self, name, timeArg, rewrittenFlag ) :
-    if timeArg == None :
-      timeArg = asyn
+    #if timeArg == None :
+    #  timeArg = 'async'
     self.cursor.execute("INSERT INTO Rule (rid, goalName, goalTimeArg, rewritten) VALUES ('" + self.rid + "','" + name + "','" + timeArg + "','" + str(rewrittenFlag) + "')")
 
   # set goal attribute list

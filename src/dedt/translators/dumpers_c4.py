@@ -5,7 +5,7 @@ dumpers_c4.py
    Methods for dumping specific contents from the database.
 '''
 
-import os, sys
+import inspect, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -53,7 +53,7 @@ def dumpSingleFact_c4( fid, cursor ) :
   if not factTimeArg == "" :
     fact += "," + factTimeArg
 
-  fact += ");" # end all facts with a semicolon
+  fact += ");" + "\n" # end all facts with a semicolon
 
   return fact
 
@@ -128,12 +128,12 @@ def dumpSingleRule_c4( rid, cursor ) :
       subAtts = tools.toAscii_list( subAtts )
 
       # get subgoal time arg
-      cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid == '" + rid + "' AND sid == '" + s + "'" ) # get list of sids for this rule
-      subTimeArg = cursor.fetchone() # assume only one additional arg
+      cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid == '" + rid + "' AND sid == '" + s + "'" )
+      subTimeArg = cursor.fetchone() # assume only one time arg
       subTimeArg = tools.toAscii_str( subTimeArg )
 
       # get subgoal additional args
-      cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + rid + "' AND sid == '" + s + "'" ) # get list of sids for this rule
+      cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + rid + "' AND sid == '" + s + "'" )
       subAddArg = cursor.fetchone() # assume only one additional arg
       if not subAddArg == None :
         subAddArg = tools.toAscii_str( subAddArg )
@@ -179,7 +179,12 @@ def dumpSingleRule_c4( rid, cursor ) :
 
   # --------------------------------------------------------------- #
 
-  rule += " ;" # end all rules with a semicolon
+  rule += " ;" + "\n" # end all rules with a semicolon
+
+  # .................................. #
+  #if goalName == "pre" :
+  #  tools.bp( __name__, inspect.stack()[0][3], "rule = " + rule )
+  # .................................. #
 
   return rule
 
@@ -216,7 +221,7 @@ def dump_clock( cursor ) :
         clockF += str(currData)
         if i < len(c)-1 :
           clockF += ","
-    clockF += ");"
+    clockF += ");" + "\n" # all clock facts end with a semicolon
     formattedClockFactsList.append( clockF )
 
   return formattedClockFactsList
