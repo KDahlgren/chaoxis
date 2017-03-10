@@ -2,6 +2,8 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+* Boost robustness of parser to ensure wildcards do not appear in goal attributes.
+
 * Handle number of crashes as input.
 
 * Why do 'node' and 'bcast' goals in simplelog lack descendants?

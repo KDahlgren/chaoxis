@@ -110,9 +110,9 @@ def rewriteDeductive( cursor ) :
         timeArg = tools.toAscii_str( timeArg )
 
         if timeArg.isdigit() :
-          cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeArg + "')")
+          cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeArg + "','int')")
         else :
-          cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt_snd + "')")
+          cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt_snd + "','int')")
 
       else :
         tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : current rule goal has no attributes:\n" + dumpers.reconstructRule( rid, cursor ) )
@@ -142,7 +142,7 @@ def rewriteDeductive( cursor ) :
         cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
         rawMaxID = cursor.fetchone() # int type
         newAttID = int(rawMaxID[0] + 1)
-        cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "')")
+        cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "','int')")
 
         # replace subgoal time attribute with numeric time arg
         if timeArg.isdigit() :
@@ -262,7 +262,7 @@ def rewriteInductive( cursor ) :
         timeArg = tools.toAscii_str( timeArg )
 
         # add attribute 'SndTime+1' to head
-        cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt_snd + "+1" + "')")
+        cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt_snd + "+1" + "','int')")
       else :
         tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : current rule goal has no attributes:\n" + dumpers.reconstructRule( rid, cursor ) )
 
@@ -280,7 +280,7 @@ def rewriteInductive( cursor ) :
       cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
       rawMaxID = cursor.fetchone()
       newAttID = int(rawMaxID[0] + 1)
-      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "')")
+      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "','int')")
 
       # while we're here, collect the first attribute of this subgoal
       cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE SubgoalAddArgs.rid == '" + rid + "' AND SubgoalAddArgs.sid == '" + s + "'"  )
@@ -349,7 +349,7 @@ def rewriteAsynchronous( cursor ) :
       cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
       rawMaxID = cursor.fetchone()
       newAttID = int(rawMaxID[0] + 1)
-      cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt_deliv + "')")
+      cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt_deliv + "','int')")
   
   # add attribute 'SndTime' to all subgoals and add clock subgoal
   for rid in asynchronousRuleIDs :
@@ -361,7 +361,7 @@ def rewriteAsynchronous( cursor ) :
       cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
       rawMaxID = cursor.fetchone()
       newAttID = int(rawMaxID[0] + 1)
-      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "')")
+      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "','int')")
 
       # while we're here, collect the first attribute of this subgoal
       cursor.execute("SELECT attName FROM SubgoalAtt WHERE SubgoalAtt.sid == '" + s + "' AND SubgoalAtt.attID == '" + str(0) + "'")

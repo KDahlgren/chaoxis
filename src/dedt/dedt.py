@@ -12,9 +12,9 @@ IR SCHEMA:
 Fact           (fid text, name text, timeArg text)
 FactAtt        (fid text, attID int, attName text)
 Rule           (rid text, goalName text, goalTimeArg text, rewritten text)
-GoalAtt        (rid text, attID int, attName text)
+GoalAtt        (rid text, attID int, attName text, attType text)
 Subgoals       (rid text, sid text, subgoalName text, subgoalTimeArg text)
-SubgoalAtt     (rid text, sid text, attID int, attName text)
+SubgoalAtt     (rid text, sid text, attID int, attName text, attType text)
 SubgoalAddArgs (rid text, sid text, argName text)
 Equation       (rid text, eid text, eqn text)
 Clock          (src text, dest text, sndTime int, delivTime int, simInclude text)
@@ -22,7 +22,6 @@ Clock          (src text, dest text, sndTime int, delivTime int, simInclude text
 '''
 
 import inspect, os, string, sqlite3, sys
-import dedtTools
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -201,10 +200,9 @@ def dedToIR( filename, cursor ) :
         print "newRule.display() = " + newRule.display()
 
   # ----------------------------------------------------------- #
-  # update rule meta data to replace constant attributes with
-  # equivalent equation representations.
-  # no return -> updates database directly.
-  #dedtTools.removeConstants( cursor )
+  # set goal attribute types for all rules
+  for rule in ruleMeta :
+    rule.setAttTypes()
 
   return ( factMeta, ruleMeta )
 
@@ -277,9 +275,9 @@ def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS Fact       (fid text, name text, timeArg text)''')    # fact names
   cursor.execute('''CREATE TABLE IF NOT EXISTS FactAtt    (fid text, attID int, attName text)''')   # fact attributes list
   cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text, rewritten text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text, attType text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalName text, subgoalTimeArg text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text, attType text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Equation  (rid text, eid text, eqn text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime int, delivTime int, simInclude text)''')

@@ -68,21 +68,6 @@ def parse( dedLine ) :
   arg = Optional( Literal ("@") + Word( alphanums ) )
 
   # //////////////////////////////////////////////////////////// #
-  #                         GOAL SYNTAX                          #
-  # //////////////////////////////////////////////////////////// #
-  #
-  # take goals as units, including name, parens, and attibutues.
-  # erases quotes.
-  # !!!! WORKS IN OTHER CASES !!!!
-  #goal = Word( alphanums + "_" + "(" + ")" + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "==" + "!=" )
-
-  # goal definition attempt no.234769873156798 ... >.>
-  goalname = Word( alphanums + "_" ) + ZeroOrMore( "_" )
-  #attribs  = ZeroOrMore( '"' ) + ZeroOrMore( "'" ) + Word( alphanums + "_" + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "==" + "!=" ) + ZeroOrMore( '"' ) + ZeroOrMore( "'" ) + ZeroOrMore( "," )
-  attribs  = Word( alphanums + "_" + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "==" + "!=" + "'" + '"' ) + ZeroOrMore( '"' ) + ZeroOrMore( "'" ) + ZeroOrMore( "," )
-  goal     = goalname + Word( "(" ) + OneOrMore( attribs ) + Word( ")" ) + Optional(arg)
-
-  # //////////////////////////////////////////////////////////// #
   #                         FMLA SYNTAX                          #
   # //////////////////////////////////////////////////////////// #
   #
@@ -105,6 +90,23 @@ def parse( dedLine ) :
   fmla1    = Optional( quotes_d ) + Word( alphanums ) + Optional( quotes_d ) + op + Optional( quotes_d ) + Word( alphanums ) + Optional( quotes_d )
 
   fmla_base  = fmla0 | fmla1
+
+  # //////////////////////////////////////////////////////////// #
+  #                         GOAL SYNTAX                          #
+  # //////////////////////////////////////////////////////////// #
+  #
+  # take goals as units, including name, parens, and attibutues.
+  # erases quotes.
+  # !!!! WORKS IN OTHER CASES !!!!
+  #goal = Word( alphanums + "_" + "(" + ")" + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "==" + "!=" )
+
+  # goal definition attempt no.234769873156798 ... >.>
+  goalname  = Word( alphanums + "_" ) + ZeroOrMore( "_" )
+  #attribs  = ZeroOrMore( '"' ) + ZeroOrMore( "'" ) + Word( alphanums + "_" + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "==" + "!=" ) + ZeroOrMore( '"' ) + ZeroOrMore( "'" ) + ZeroOrMore( "," )
+  attribs   = Word( alphanums + "_" + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "==" + "!=" + "'" + '"' ) + ZeroOrMore( '"' ) + ZeroOrMore( "'" ) + ZeroOrMore( "," )
+  goal_base = goalname + Word( "(" ) + OneOrMore( attribs ) + Word( ")" ) + Optional(arg)
+  #goal = goal_base + ZeroOrMore( Word(",") + fmla_base ) # allows presence of equations in rule head
+  goal = goal_base                                        # disallows presence of equations in rule head
 
   # //////////////////////////////////////////////////////////// #
   #                      SUBGOAL SYNTAX                          #
@@ -197,9 +199,10 @@ def parse( dedLine ) :
 
       except :
         #raise Exception("\nERROR: Invalid syntax in rule line : \n      " + dedLine + "\n     Note rule attributes cannot have quotes.\n")
-        print "\nERROR: Invalid syntax in rule line : \n      " + dedLine + "\n     Note rule attributes cannot have quotes.\n"
-        traceback.print_exc()
-        sys.exit()
+        sys.exit("\nERROR: Invalid syntax in rule line : \n      " + dedLine + "\n     Note rule attributes cannot have quotes.\n")
+        #print "\nERROR: Invalid syntax in rule line : \n      " + dedLine + "\n     Note rule attributes cannot have quotes.\n"
+        #traceback.print_exc()
+        #sys.exit()
 
     # ------------------------------------------------------------- #
     #                         FACTS                                 #
@@ -238,6 +241,7 @@ def parse( dedLine ) :
         sys.exit( "\nERROR: Invalid syntax in fact line : \n      " + dedLine + "\n     Note fact attributes must be surrounded by quotes.\n" )
   else :
     return None
+
 
 ###################
 #  PARSE DEDALUS  #

@@ -94,6 +94,10 @@ def aggProv( aggRule, nameAppend, cursor ) :
   firingsRule.setSingleSubgoalAttList(   sid, subgoalAttList_final             )
   firingsRule.setSingleSubgoalAddArgs(   sid, subgoalAddArgs                   )
 
+  # ----------------------------------------------------------- #
+  # set goal attribute types for all rules
+  firingsRule.setAttTypes()
+
 
 #######################
 #  REGULAR RULE PROV  #
@@ -197,7 +201,6 @@ def regProv( regRule, nameAppend, cursor ) :
     print ">>>>>>>> goalAttList final = " + str(goalAttList)
 
   # -------------------------------------------------- #
-
   # get eqn array
   eqnArray = regRule.getEquationListArray()
 
@@ -210,12 +213,14 @@ def regProv( regRule, nameAppend, cursor ) :
     firingsRule.setSingleEqn( eid, eqn )
 
   # -------------------------------------------------- #
-
   # save firings rule goal
   firingsRule.setGoalInfo(     goalName, goalTimeArg, rewrittenFlag  )
   firingsRule.setGoalAttList(  goalAttList                           )
 
-  #sys.exit( "BREAKPOINT: firingsRule = " + str(firingsRule.display()) )
+  # ----------------------------------------------------------- #
+  # set goal attribute types for all rules
+  firingsRule.setAttTypes()
+
   return firingsRule
 
 
@@ -242,6 +247,10 @@ def rewriteProvenance( ruleMeta, cursor ) :
       aggProv( rule, "_bindings", cursor )
     else :
       regProv( rule, "_prov", cursor )
+
+    # ----------------------------------------------------------- #
+    # set goal attribute types for all rules
+    rule.setAttTypes()
 
   if PROVENANCEREWRITE_DEBUG :
     print " ... done rewriteProvenance ... "

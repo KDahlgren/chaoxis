@@ -36,6 +36,13 @@ def bp( filename, funcname, msg ) :
 def getID() :
   return "".join( random.choice('abcdefghijklmnopqrstuvwxyz') for i in range(16) )
 
+#########################
+#  GET RANDOM ATT NAME  #
+#########################
+# input nothing
+# output random 16 char alphanumeric id (all uppercase)
+def getRandomAttName() :
+  return "".join( random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ') for i in range(16) )
 
 #########################
 #  GET EVAL RESULTS C4  #

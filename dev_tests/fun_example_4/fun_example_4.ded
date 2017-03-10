@@ -1,0 +1,57 @@
+//
+// author: Dahlgren
+//
+// a fun example designed to test a subset of targetted functionality.
+// the program tests equality and NOT support
+// 
+
+// awesome facts
+a1( "a", "a" )@1 ;
+a1( "a", "b" )@1 ;
+a1( "a", "c" )@1 ;
+
+a2( "a", "p" )@1 ;
+a2( "a", "x" )@1 ;
+a2( "b", "q" )@1 ;
+a2( "c", "r" )@1 ;
+
+a3( "a", "x" )@1 ;
+a3( "b", "y" )@1 ;
+a3( "c", "z" )@1 ;
+
+// brilliant rules
+//
+// apparently need to describe the fact tables as rules.
+// also works without the @next ops.
+a1( X, Y )@next :- a1( X, Y ) ;
+a2( X, Y )@next :- a2( X, Y ) ;
+a3( X, Y )@next :- a3( X, Y ) ;
+
+
+// WORKS:
+//a_table( X, Y, Z ) :- a1( X, Y ), a2( X, Z ), Z == "x" ;
+
+////////////////////////////////////////////////////////////////////////////////
+//ERROR: Undefined variable "Thisisavar"
+//a_table( X, Y, Thisisavar ) :- a1( X, Y ), a2( X, Z ), Thisisavar == "x" ;
+
+//Parse error: syntax error, unexpected TBL_IDENT
+//a_table( X, Y, thisisavar ) :- a1( X, Y ), a2( X, Z ), thisisavar == "x" ;
+
+// ERROR: Don't care variables ("_") cannot appear in the head of a rule
+//a_table( X, Y, _ ) :- a1( X, Y ), a2( X, Z ) ;
+//a_table( X, Y, Thisisavar ) :- a_table( X, Y, Thisisavar ), Thisisavar=="stuff" ;
+
+// after modifying parser:
+// ERROR: Undefined variable "Thisisavar"
+//a_table( X, Y, Thisisavar ), Thisisavar == "x" :- a1( X, Y ), a2( X, Z ) ;
+////////////////////////////////////////////////////////////////////////////////
+
+
+//a_table( X, Y, W ) :- a1( X, Y ), a2( X, Z ), EXTRATABLE( W ), W == "x" ;
+a_table( X, Y, "x" ) :- a1( X, Y ), a2( X, Z )
+
+ pre( X, Y, Z ) :- a_table( X, Y, Z ) ;
+post( X, Y, Z ) :- a_table( X, Y, Z ) ;
+
+
