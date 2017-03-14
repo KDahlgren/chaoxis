@@ -5,7 +5,7 @@ c4.py
    Tools for producig c4 datalog programs from the IR in the dedt compiler.
 '''
 
-import os, string, sqlite3, sys
+import inspect, os, re, string, sqlite3, sys
 import dumpers_c4
 
 # ------------------------------------------------------ #
@@ -14,13 +14,16 @@ packagePath  = os.path.abspath( __file__ + "/../../.." )
 sys.path.append( packagePath )
 
 from utils import tools
+from dedt  import Rule
 # ------------------------------------------------------ #
+
 
 #############
 #  GLOBALS  #
 #############
 C4_TRANSLATOR_DEBUG   = True
 C4_TRANSLATOR_DEBUG_1 = True
+
 
 #####################
 #  EXISTING DEFINE  #
@@ -30,10 +33,19 @@ C4_TRANSLATOR_DEBUG_1 = True
 # output boolean
 
 def existingDefine( name, definesList ) :
+
   for d in definesList :
-    if name in d :
+
+    # preprocess string to get the table name only
+    d = d.replace( "define(", "" ) # remove prepended define
+    d = re.sub( r',{.*$\s', "", d )  # remove all the type info and the newline
+
+    # check equality
+    if name == d :
       return True
+
   return False
+
 
 ################
 #  C4 DATALOG  #
@@ -42,6 +54,9 @@ def existingDefine( name, definesList ) :
 # output the full path for the intermediate file containing the c4 datalog program.
 
 def c4datalog( cursor ) :
+
+  goalName         = None
+  provGoalNameOrig = None
 
   tableListStr = "" # collect all table names delmited by a single comma only.
 
@@ -61,20 +76,24 @@ def c4datalog( cursor ) :
     goalName = cursor.fetchone()
     goalName = tools.toAscii_str( goalName )
 
+    # if it's a prov rule, get the original goal name
     provGoalNameOrig = None
     if "_prov" in goalName :
       provGoalNameOrig = goalName.split( "_prov" )
       provGoalNameOrig = provGoalNameOrig[0]
 
+    # populate table string
     tableListStr += goalName + ","
 
-    # prevent duplicates
+    # ////////////////////////////////////////////////////////// #
+    # populate defines list for rule goals
     print "In c4datalog: definesList = " + str(definesList)
-    if not existingDefine( goalName, definesList ) :
+    if not existingDefine( goalName, definesList ) : # prevent duplicates
+
       # get goal attribute list
-      cursor.execute( "SELECT attName From GoalAtt WHERE rid = '" + rid + "'" )
+      cursor.execute( "SELECT attID,attType From GoalAtt WHERE rid = '" + rid + "'" )
       goalAttList = cursor.fetchall()
-      goalAttList = tools.toAscii_list( goalAttList )
+      goalAttList = tools.toAscii_multiList( goalAttList )
 
       if C4_TRANSLATOR_DEBUG_1 :
         print "* goalName = " + goalName + ", goalAttList " + str( goalAttList )
@@ -82,30 +101,11 @@ def c4datalog( cursor ) :
       # populate type list for rule
       typeList = []
       for k in range(0,len(goalAttList)) :
-        att = goalAttList[ k ]
-        if "Time" in att : # TODO: not generalizable. Also does not combine hints from multiple appearances of the same sub/goal to combat underscores.
-          typeList.append( "int" )
-        elif tools.isFact( goalName, cursor ) or (provGoalNameOrig and tools.isFact( provGoalNameOrig, cursor )) :
-          # get fact attribs
-          cursor.execute( "SELECT Fact.fid,attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(goalName) + "'")
-          if provGoalNameOrig :
-            cursor.execute( "SELECT Fact.fid,attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(provGoalNameOrig) + "'")
-          attFIDsIDsNames = cursor.fetchall()
-          attFIDsIDsNames = tools.toAscii_multiList( attFIDsIDsNames )
-          if C4_TRANSLATOR_DEBUG_1 :
-            print "****\ngoalName = " + str(goalName)
-            print "attFIDsIDsNames = " + str(attFIDsIDsNames)
-            for att in attFIDsIDsNames :
-              attName = att[2]
-              print "attName = " + str(attName)
-          # if kth fact attrib is int, then append int
-          if attFIDsIDsNames[k][2].isdigit() :
-            print "YES" + "is digit true " + attFIDsIDsNames[k][2]
-            typeList.append( "int" )
-          else :
-            typeList.append( "string" )
-        else :
-          typeList.append( "string" )
+        att     = goalAttList[ k ]
+        attID   = att[0]
+        attType = att[1]
+
+        typeList.append( attType )
 
       # populate new c4 define statement
       newDefine += "define("
@@ -117,10 +117,12 @@ def c4datalog( cursor ) :
         if i < len(typeList) - 1 :
           newDefine += ","
         else :
-          newDefine += "});"
+          newDefine += "});" + "\n"
 
       # save new c4 define statement
-      definesList.append( newDefine )
+      if not newDefine in definesList :
+        definesList.append( newDefine )
+    # ////////////////////////////////////////////////////////// #
 
   # ----------------------------------------------------------- #
   # create remaining subgoal defines
@@ -142,21 +144,32 @@ def c4datalog( cursor ) :
 
       if not existingDefine( subgoalName, definesList ) :
         typeList       = []
-        cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid = '" + rid + "' AND sid = '" + sid + "'" )
+        cursor.execute( "SELECT attID,attType FROM SubgoalAtt WHERE rid = '" + rid + "' AND sid = '" + sid + "'" )
         subgoalAttList = cursor.fetchall()
-        subgoalAttList = tools.toAscii_list( subgoalAttList )
+        subgoalAttList = tools.toAscii_multiList( subgoalAttList )
+
+        # sanity check: all subgoal atts need a type
+        for att in subgoalAttList :
+          if "UNDEFINEDTYPE" in att[1] :
+            tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : subgoal '" + subgoalName + "' still has UNDEFINED attribute types:\nsubgoalAttList = " + str(subgoalAttList) )
 
         if C4_TRANSLATOR_DEBUG_1 :
           print "* subgoalName = " + subgoalName + ", subgoalAttList " + str( subgoalAttList )
 
+        for att in subgoalAttList :
+          attID   = att[0]
+          attType = att[1]
+          typeList.append( attType )
+
+        # ................................................... #
+        # handle clock define separately. Kind of hacky...
         if subgoalName == "clock" :
-          typeList = [ "string", "string", "int", "int" ]
-        else :
-          for att in subgoalAttList :
-            if "Time" in att :
-              typeList.append( "int" )
-            else :
-              typeList.append( "string" )
+          cursor.execute( "SELECT * FROM SubgoalAtt WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+          res = cursor.fetchall()
+          res = tools.toAscii_multiList( res )
+          #tools.bp( __name__, inspect.stack()[0][3], "res = " + str(res) )
+        #  continue
+        # ................................................... #
 
         newDefine += "define("
         newDefine += subgoalName + ",{"
@@ -164,9 +177,10 @@ def c4datalog( cursor ) :
           if i < len(typeList) - 1 :
             newDefine += typeList[i] + ","
           else :
-            newDefine += typeList[i] + "});"
+            newDefine += typeList[i] + "}); //added in translator..." + "\n"
 
-        definesList.append( newDefine )
+        if not newDefine in definesList :
+          definesList.append( newDefine )
 
   # ----------------------------------------------------------- #
   # add facts
@@ -183,7 +197,6 @@ def c4datalog( cursor ) :
   # ----------------------------------------------------------- #
   # add clock facts
 
-  print "HEREE!!!!!!"
   clockFactList = dumpers_c4.dump_clock( cursor )
   if C4_TRANSLATOR_DEBUG :
     print "c4_translator: clockFactList = " + str( clockFactList )

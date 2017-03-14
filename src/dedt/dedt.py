@@ -11,17 +11,17 @@ IR SCHEMA:
 
 Fact           (fid text, name text, timeArg text)
 FactAtt        (fid text, attID int, attName text)
-Rule           (rid text, goalName text, goalTimeArg text, rewritten int)
-GoalAtt        (rid text, attID int, attName text)
+Rule           (rid text, goalName text, goalTimeArg text, rewritten text)
+GoalAtt        (rid text, attID int, attName text, attType text)
 Subgoals       (rid text, sid text, subgoalName text, subgoalTimeArg text)
-SubgoalAtt     (rid text, sid text, attID int, attName text)
+SubgoalAtt     (rid text, sid text, attID int, attName text, attType text)
 SubgoalAddArgs (rid text, sid text, argName text)
 Equation       (rid text, eid text, eqn text)
-Clock          (src text, dest text, sndTime int, delivTime int)
+Clock          (src text, dest text, sndTime int, delivTime int, simInclude text)
 
 '''
 
-import os, string, sqlite3, sys
+import inspect, os, string, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -116,7 +116,7 @@ def dedToIR( filename, cursor ) :
       goalName      = extractors.extractName(    goal    )
       goalAttList   = extractors.extractAttList( goal    )
       goalTimeArg   = extractors.extractTimeArg( goal    )
-      rewrittenFlag = 0     # all new goals have not yet been rewritten
+      rewrittenFlag = "False" # all new goals have not yet been rewritten
 
       # check for bugs
       if DEDT_DEBUG :
@@ -148,6 +148,11 @@ def dedToIR( filename, cursor ) :
 
         # generate random ID for subgoal
         sid = tools.getID()
+
+        # ................................. #
+        if "@" in sub :
+          tools.bp( __name__, inspect.stack()[0][3], "sub = " + str(sub) )
+        # ................................. #
 
         subgoalName    = extractors.extractSubgoalName(    sub )
         subgoalAttList = extractors.extractAttList(        sub ) # returns list
@@ -187,7 +192,7 @@ def dedToIR( filename, cursor ) :
         print "newRule.getEquationList() = " + newRule.getEquationListStr()
 
       # --------------------------- #
-
+      # save new rule
       ruleMeta.append( newRule )
 
       # check for bugs
@@ -195,8 +200,12 @@ def dedToIR( filename, cursor ) :
         print "newRule.display() = " + newRule.display()
 
   # ----------------------------------------------------------- #
+  # set goal attribute types for all rules
+  for rule in ruleMeta :
+    rule.setAttTypes()
 
   return ( factMeta, ruleMeta )
+
 
 #################
 #  IR TO CLOCK  #
@@ -265,14 +274,14 @@ def runTranslator( cursor, dedFile, argDict, datalogProgPath, evaluator ) :
 def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS Fact       (fid text, name text, timeArg text)''')    # fact names
   cursor.execute('''CREATE TABLE IF NOT EXISTS FactAtt    (fid text, attID int, attName text)''')   # fact attributes list
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text, rewritten int)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text, rewritten text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text, attType text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalName text, subgoalTimeArg text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text, attType text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Equation  (rid text, eid text, eqn text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime int, delivTime int)''')
-  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime)''') # make all clock row unique
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime int, delivTime int, simInclude text)''')
+  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime, simInclude)''') # make all clock rows unique
 
 
 ##############

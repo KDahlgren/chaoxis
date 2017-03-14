@@ -69,7 +69,7 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   for attName in subgoalAttList :
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
-    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "')")
+    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
     newAttID += 1
 
   # save subgoal additional args
@@ -129,7 +129,7 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   for attName in subgoalAttList :
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
-    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "')")
+    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
     newAttID += 1
 
   # save subgoal additional args
@@ -184,7 +184,7 @@ def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAt
   for attName in subgoalAttList :
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
-    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "')")
+    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
     newAttID += 1
 
   # save subgoal additional args

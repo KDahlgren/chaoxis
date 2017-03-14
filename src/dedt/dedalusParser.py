@@ -5,7 +5,7 @@ dedalusParser.py
    Define the functionality for parsing Dedalus files.
 '''
 
-import os, string, sys
+import inspect, os, string, sys, traceback
 from pyparsing import *
 
 # ------------------------------------------------------ #
@@ -13,7 +13,7 @@ from pyparsing import *
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-#from utils import tools, parseCommandLineInput
+from utils import tools
 # ------------------------------------------------------ #
 
 #############
@@ -44,6 +44,9 @@ def cleanResult( result ) :
 # output parsed line
 def parse( dedLine ) :
 
+  ################################################################
+  #             PREPROCESS STRINGS TO AVOID MIGRAINES            #
+  ################################################################
   # search and replace prepend keywords.
   for k in keywords :
     if k in dedLine :
@@ -52,43 +55,91 @@ def parse( dedLine ) :
   # make sure input line contains no whitespace
   dedLine = dedLine.translate(None, string.whitespace)
 
+
+  ################################################################
+  #                    ESTABLISH DEFINITIONS                     #
+  ################################################################
+
   # ------------------------------------------------------------- #
   #                          RULES                                #
+  # ------------------------------------------------------------- #
 
-  goal = Word( alphanums + "_" + "(" + ")" + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" )
-  subgoal = goal
+  # syntax for arguments (goal/subgoal/fact decorators with time info)
   arg = Optional( Literal ("@") + Word( alphanums ) )
-  fmla = Word( alphanums + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" )
 
-  rule0 = goal + arg + ":-" + ZeroOrMore(OneOrMore(subgoal + arg) + ZeroOrMore( fmla ))
-  rule1 = goal + arg + ":-" + ZeroOrMore(ZeroOrMore( fmla ) + OneOrMore(subgoal + arg) + ZeroOrMore( fmla ))
-  rule  = rule0 | rule1
+  # //////////////////////////////////////////////////////////// #
+  #                         FMLA SYNTAX                          #
+  # //////////////////////////////////////////////////////////// #
+  #
+  add      = Literal( "+" )
+  subtract = Literal( "-" )
+  multiply = Literal( "*" )
+  divide   = Literal( "/" )
+  gt       = Literal( ">" )
+  gte      = Literal( ">=" )
+  lt       = Literal( "<" )
+  lte      = Literal( "<=" )
+  eq       = Literal( "==" )
+  neq      = Literal( "!=" )
+  op       = add | subtract | multiply | divide | gt | gte | lt | lte | eq | neq
 
-  #secondParse = Optional(Word(",")) + Word(alphanums + "_" ) + Word("(") + Word( alphanums + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" ) + Word(")") + Optional( Optional(Word(",")) + Word( alphanums + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" ) )
+  quotes_s = Literal( "'" )
+  quotes_d = Literal( '"' )
 
-  # describes second pass
-  opt_comma         = Optional(Word(","))
-  name              = Word(alphanums + "_" )
-  open_paren        = Word("(")
-  closed_paren      = Word(")")
-  att_list          = Word( alphanums + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "_" )
+  fmla0    = Optional( quotes_s ) + Word( alphanums ) + Optional( quotes_s ) + op + Optional( quotes_s ) + Word( alphanums ) + Optional( quotes_s )
+  fmla1    = Optional( quotes_d ) + Word( alphanums ) + Optional( quotes_d ) + op + Optional( quotes_d ) + Word( alphanums ) + Optional( quotes_d )
 
-  # subgoal followed by zero or more subgoals or zero or more fmlas
-  subgoal_2 = opt_comma + name + open_paren + att_list + closed_paren + ZeroOrMore( Word(",") + name + open_paren + att_list + closed_paren ) + Optional( opt_comma + fmla )
+  fmla_base  = fmla0 | fmla1
 
-  # fmla followed by zero or more subgoals or zero or more fmlas
-  fmla_2 = opt_comma + fmla + ZeroOrMore( Word(",") + name + open_paren + att_list + closed_paren ) + ZeroOrMore( Word(",") + fmla )
+  # //////////////////////////////////////////////////////////// #
+  #                         GOAL SYNTAX                          #
+  # //////////////////////////////////////////////////////////// #
+  #
+  # take goals as units, including name, parens, and attibutues.
+  # erases quotes.
+  # !!!! WORKS IN OTHER CASES !!!!
+  #goal = Word( alphanums + "_" + "(" + ")" + "," + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "==" + "!=" )
 
-  secondParse = subgoal_2 | fmla_2
+  # goal definition attempt no.234769873156798 ... >.>
+  goalname  = Word( alphanums + "_" ) + ZeroOrMore( "_" )
+  #attribs  = ZeroOrMore( '"' ) + ZeroOrMore( "'" ) + Word( alphanums + "_" + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "==" + "!=" ) + ZeroOrMore( '"' ) + ZeroOrMore( "'" ) + ZeroOrMore( "," )
+  attribs   = Word( alphanums + "_" + "+" + "-" + "*" + "/" + ">" + "<" + "<=" + ">=" + "==" + "!=" + "'" + '"' ) + ZeroOrMore( '"' ) + ZeroOrMore( "'" ) + ZeroOrMore( "," )
+  goal_base = goalname + Word( "(" ) + OneOrMore( attribs ) + Word( ")" ) + Optional(arg)
+  #goal = goal_base + ZeroOrMore( Word(",") + fmla_base ) # allows presence of equations in rule head
+  goal = goal_base                                        # disallows presence of equations in rule head
+
+  # //////////////////////////////////////////////////////////// #
+  #                      SUBGOAL SYNTAX                          #
+  # //////////////////////////////////////////////////////////// #
+  #
+  #subgoal       = goal
+  subgoal_first = goal | fmla_base
+  subgoal_next  = Word( "," ) + subgoal_first
+  subgoalList   = subgoal_first + ZeroOrMore( subgoal_next )
+
+  # //////////////////////////////////////////////////////////// #
+  #                         RULE SYNTAX                          #
+  # //////////////////////////////////////////////////////////// #
+  #
+  rule = goal + ":-" + subgoalList
+
+  # //////////////////////////////////////////////////////////// #
 
 
   # ------------------------------------------------------------- #
   #                          FACTS                                #
+  # ------------------------------------------------------------- #
 
   fact = Word( alphanums + "_" ) + Word("(") + Word( alphanums + "_" + "," + '"' + "'" ) + Word(")") + Optional(arg)
 
+
+  ################################################################
+  #                      DO THE PARSING !                        #
+  ################################################################
+
   # ------------------------------------------------------------- #
   #                         RULES                                 #
+  # ------------------------------------------------------------- #
 
   # return tuples
   if (";" in dedLine) and (not "include" in dedLine) :
@@ -98,6 +149,7 @@ def parse( dedLine ) :
       try :
         if DEDALUSPARSER_DEBUG :
           print "dedLine = " + dedLine
+        print "dedLine = " + dedLine
 
         result = rule.parseString( dedLine )
         ret    = cleanResult( result )
@@ -141,9 +193,16 @@ def parse( dedLine ) :
 
         if DEDALUSPARSER_DEBUG :
           print "*** finalParsed = " + str(finalParsed)
+
+        #tools.bp( __name__, inspect.stack()[0][3], "finalParsed = " + str(finalParsed) )
         return ("rule", finalParsed)
+
       except :
-        sys.exit( "\nERROR: Invalid syntax in rule line : \n      " + dedLine + "\n     Note rule attributes cannot have quotes.\n")
+        #raise Exception("\nERROR: Invalid syntax in rule line : \n      " + dedLine + "\n     Note rule attributes cannot have quotes.\n")
+        sys.exit("\nERROR: Invalid syntax in rule line : \n      " + dedLine + "\n     Note rule attributes cannot have quotes.\n")
+        #print "\nERROR: Invalid syntax in rule line : \n      " + dedLine + "\n     Note rule attributes cannot have quotes.\n"
+        #traceback.print_exc()
+        #sys.exit()
 
     # ------------------------------------------------------------- #
     #                         FACTS                                 #
@@ -183,6 +242,7 @@ def parse( dedLine ) :
   else :
     return None
 
+
 ###################
 #  PARSE DEDALUS  #
 ###################
@@ -211,6 +271,7 @@ def parseDedalus( dedFile ) :
     sys.exit( "ERROR: File at " + dedFile + " does not exist.\nAborting..." )
 
   return parsedLines
+
 
 ##########
 #  MAIN  #

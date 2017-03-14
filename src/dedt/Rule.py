@@ -35,6 +35,7 @@ class Rule :
 
   # ------------------------------------- #
   #                GET                    #
+  # ------------------------------------- #
 
   ###################
   #  GET GOAL NAME  #
@@ -203,22 +204,36 @@ class Rule :
 
     return eqnList
 
+
+
   # ------------------------------------- #
   #                SET                    #
+  # ------------------------------------- #
 
+  ###################
+  #  SET GOAL INFO  #
+  ###################
   # set goal name and time arg
   def setGoalInfo( self, name, timeArg, rewrittenFlag ) :
     if timeArg == None :
       timeArg = asyn
     self.cursor.execute("INSERT INTO Rule (rid, goalName, goalTimeArg, rewritten) VALUES ('" + self.rid + "','" + name + "','" + timeArg + "','" + str(rewrittenFlag) + "')")
 
+
+  #######################
+  #  SET GOAL ATT LIST  #
+  #######################
   # set goal attribute list
   def setGoalAttList( self, attList ) :
     attID = 0  # allows duplicate attributes in attList
     for attName in attList :
-      self.cursor.execute("INSERT INTO GoalAtt VALUES ('" + self.rid + "','" + str(attID) + "','" + attName + "')")
+      self.cursor.execute("INSERT INTO GoalAtt VALUES ('" + self.rid + "','" + str(attID) + "','" + attName + "','UNDEFINEDTYPE')")
       attID += 1
 
+
+  #############################
+  #  SET SINGLE SUBGOAL INFO  #
+  #############################
   # set single subgoal name and time argument
   def setSingleSubgoalInfo( self, sid, subgoalName, subgoalTimeArg ) :
     # replace any ops with empty
@@ -229,25 +244,185 @@ class Rule :
 
     self.cursor.execute("INSERT INTO Subgoals VALUES ('" + self.rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')")
 
+
+  #################################
+  #  SET SINGLE SUBGOAL ATT LIST  #
+  #################################
   # set single subgoal attribute list
   def setSingleSubgoalAttList( self, sid, subgoalAttList ) :
     attID = 0 # allows duplicate attributes in list
     for attName in subgoalAttList :
-      self.cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + self.rid + "','" + sid + "','" + str(attID) + "','" + attName + "')")
+      self.cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + self.rid + "','" + sid + "','" + str(attID) + "','" + attName + "','UNDEFINEDTYPE')")
       attID += 1
 
+
+  ########################
+  #  SET SINGLE SUBGOAL  #
+  ########################
   # set single subgoal additional arguments
   def setSingleSubgoalAddArgs( self, sid, subgoalAddArgs ) :
     for addArg in subgoalAddArgs :
       self.cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + self.rid + "','" + sid + "','" + addArg + "')")
 
+
+  ####################
+  #  SET SINGLE EQN  #
+  ####################
   # set single equation
   def setSingleEqn( self, eid, eqn ) :
     self.cursor.execute("INSERT INTO Equation VALUES ('" + self.rid + "','" + eid + "','" + eqn + "')")
 
+
+  ###################
+  #  SET ATT TYPES  #
+  ###################
+  def setAttTypes( self ) :
+
+    # ----------------------------------------------------------- #
+    # set the types for rule subgoal atts
+    # get goal name
+    self.cursor.execute( "SELECT goalName FROM Rule WHERE rid = '" + self.rid + "'" )
+    goalName = self.cursor.fetchone()
+    goalName = tools.toAscii_str( goalName )
+
+    # if it's a prov rule, get the original goal name
+    provGoalNameOrig = None
+    if "_prov" in goalName :
+      provGoalNameOrig = goalName.split( "_prov" )
+      provGoalNameOrig = provGoalNameOrig[0]
+
+    # get goal attribute list
+    self.cursor.execute( "SELECT attID,attName From GoalAtt WHERE rid = '" + self.rid + "'" )
+    goalAttList = self.cursor.fetchall()
+    goalAttList = tools.toAscii_multiList( goalAttList )
+
+    # iterate over goal atts for this rule and set types
+    for k in range(0,len(goalAttList)) :
+      att     = goalAttList[ k ]
+      attID   = att[0]
+      attName = att[1]
+
+      # TODO: not generalizable. Also does not combine hints 
+      # from multiple appearances of the same sub/goal 
+      # to combat underscores.
+      #
+      # Time references are always integers.
+      if "Time" in attName :
+        self.cursor.execute( "UPDATE GoalAtt SET attType=='int' WHERE rid=='" + self.rid + "' AND attID==" + str(attID) )
+
+      # use types of data in fact definitions as clues for table definition field types
+      elif tools.isFact( goalName, self.cursor ) or tools.isFact( provGoalNameOrig, self.cursor ) :
+
+        # case working with an original rule definition
+        if goalName :
+          self.cursor.execute( "SELECT Fact.fid,attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(goalName) + "'")
+#
+        # case working with a provenance rule definition
+        if provGoalNameOrig :
+          self.cursor.execute( "SELECT Fact.fid,attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(provGoalNameOrig) + "'")
+
+        attFIDsIDsNames = self.cursor.fetchall()
+        attFIDsIDsNames = tools.toAscii_multiList( attFIDsIDsNames )
+
+        # extract types from fact definitions
+        # if kth fact attrib is int, then append int
+        try :
+          if attFIDsIDsNames[k][2].isdigit() :
+            self.cursor.execute( "UPDATE GoalAtt SET attType=='int' WHERE rid=='" + self.rid + "' AND attID==" + str(attID) )
+            continue # <---- NEEDED!!!! OR ELSE ADDS EXTRA STRING TYPES !!!!
+        except :
+          self.cursor.execute( "UPDATE GoalAtt SET attType=='string'  WHERE rid=='" + self.rid + "' AND attID==" + str(attID) )
+
+        # if it's not an integer, then it's a string
+        else :
+          self.cursor.execute( "UPDATE GoalAtt SET attType=='string'  WHERE rid=='" + self.rid + "' AND attID==" + str(attID) )
+
+      # otherwise, assume it's a string
+      else :
+        self.cursor.execute( "UPDATE GoalAtt SET attType=='string'  WHERE rid=='" + self.rid + "' AND attID==" + str(attID) )
+
+      # //////////////////////////////////////////////////////// #
+      # sanity check: all goal atts should have a type
+      self.cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid = '" + self.rid + "'" )
+      post_goalAttList = self.cursor.fetchall()
+      post_goalAttList = tools.toAscii_multiList( post_goalAttList )
+      for att in post_goalAttList :
+        if "UNDEFINEDTYPE" in att[1] :
+          tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : goal '" + goalName + "' still has UNDEFINED attribute types:\npost_goalAttList = " + str(post_goalAttList) )
+      # //////////////////////////////////////////////////////// #
+
+    # ----------------------------------------------------------- #
+    # set the types for rule subgoal atts
+
+    # get list of all subgoal ids for the current rule
+    self.cursor.execute( "SELECT sid FROM Subgoals WHERE rid = '" + self.rid + "'" )
+    subIDList = self.cursor.fetchall()
+    subIDList = tools.toAscii_list( subIDList )
+
+    for sid in subIDList :
+      self.cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid = '" + self.rid + "' AND sid = '" + sid + "'" )
+      subgoalName = self.cursor.fetchone()
+      subgoalName = tools.toAscii_str( subgoalName )
+
+      self.cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid = '" + self.rid + "' AND sid = '" + sid + "'" )
+      subgoalAttList = self.cursor.fetchall()
+      subgoalAttList = tools.toAscii_multiList( subgoalAttList )
+
+      # ................................................... #
+      if subgoalName == "cchange" :
+        print "$$$$$$$$$$$$$ BEFORE $$$$$$$$$$$$$$$"
+        print "subgoalName = " + subgoalName
+        self.cursor.execute( "SELECT * FROM SubgoalAtt WHERE rid=='" + self.rid + "' AND sid=='" + sid + "'" )
+        res = self.cursor.fetchall()
+        res = tools.toAscii_multiList( res )
+        print res
+      # ................................................... #
+
+      if subgoalName == "clock" :
+        self.cursor.execute( "UPDATE SubgoalAtt SET attType=='string'  WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==0" )
+        self.cursor.execute( "UPDATE SubgoalAtt SET attType=='string'  WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==1" )
+        self.cursor.execute( "UPDATE SubgoalAtt SET attType=='int'     WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==2" )
+        self.cursor.execute( "UPDATE SubgoalAtt SET attType=='int'     WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==3" )
+      else :
+        for att in subgoalAttList :
+          attID   = att[0]
+          attName = att[1]
+
+          if "Time" in attName :
+            self.cursor.execute( "UPDATE SubgoalAtt SET attType=='int'     WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==" + str(attID) )
+          else :
+            self.cursor.execute( "UPDATE SubgoalAtt SET attType=='string'  WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==" + str(attID) )
+
+      # //////////////////////////////////////////////////////// #
+      # sanity check: all subgoal atts should have a type
+      self.cursor.execute( "SELECT attID,attType FROM SubgoalAtt WHERE rid = '" + self.rid + "' AND sid = '" + sid + "'" )
+      post_subgoalAttList = self.cursor.fetchall()
+      post_subgoalAttList = tools.toAscii_multiList( post_subgoalAttList )
+      for att in post_subgoalAttList :
+        if "UNDEFINEDTYPE" in att[1] :
+          tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : subgoal '" + subgoalName + "' still has UNDEFINED attribute types:\npost_subgoalAttList = " + str(post_subgoalAttList) )
+      # //////////////////////////////////////////////////////// #
+
+      # ................................................... #
+      if subgoalName == "cchange" :
+        print "$$$$$$$$$$$$$ AFTER $$$$$$$$$$$$$$$"
+        print "subgoalName = " + subgoalName
+        self.cursor.execute( "SELECT * FROM SubgoalAtt WHERE rid=='" + self.rid + "' AND sid=='" + sid + "'" )
+        res = self.cursor.fetchall()
+        res = tools.toAscii_multiList( res )
+        print res
+      # ................................................... #
+
+    return None
+
+
   # ------------------------------------- #
   #              DISPLAY                  #
+  # ------------------------------------- #
 
+  #############
+  #  DISPLAY  #
+  #############
   # print rule to stdout
   def display( self ) :
     prettyRule = ""
