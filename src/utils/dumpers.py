@@ -124,23 +124,14 @@ def ruleDump( cursor ) :
     # --------------------------------------------------------------- #
     #                         EQUATIONS                               #
 
-    # get list of sids for the subgoals of this rule
-    cursor.execute( "SELECT eid FROM Equation" ) # get list of eids for this rule
-    eqnIDs = cursor.fetchall()
-    eqnIDs = tools.toAscii_list( eqnIDs )
+    cursor.execute( "SELECT eid,eqn FROM Equation WHERE rid=='" + i + "'" ) # get list of eids for this rule
+    eqnList = cursor.fetchall()
+    eqnList = tools.toAscii_multiList( eqnList )
 
-    for e in range(0,len(eqnIDs)) :
-      currEqnID = eqnIDs[e]
-    
-      # get associated equation
-      if not currEqnID == None :
-        cursor.execute( "SELECT eqn FROM Equation WHERE rid == '" + str(i) + "' AND eid == '" + str(currEqnID) + "'" )
-        eqn = cursor.fetchone()
-        if not eqn == None :
-          eqn = tools.toAscii_str( eqn )
-
-          # convert eqn info to pretty string
-          newRule.append( "," + str(eqn) )
+    for e in eqnList :
+      eid = e[0]
+      eqn = e[1]
+      newRule.append( "," + str(eqn) )
 
     # --------------------------------------------------------------- #
 
@@ -327,21 +318,14 @@ def reconstructRule( rid, cursor ) :
   #                         EQUATIONS                               #
   # --------------------------------------------------------------- #
 
-  # get list of eids for the equations/fmlas included in this rule
-  cursor.execute( "SELECT eid FROM Equation WHERE rid == '" + rid + "'" ) 
-  eqnIDs = cursor.fetchall()
-  eqnIDs = tools.toAscii_list( eqnIDs )
+  cursor.execute( "SELECT eid,eqn FROM Equation WHERE rid=='" + rid + "'" ) # get list of eids for this rule
+  eqnList = cursor.fetchall()
+  eqnList = tools.toAscii_multiList( eqnList )
 
-  eqn = None
-  for e in range(0,len(eqnIDs)) :
-    # get associated equation
-    cursor.execute( "SELECT eqn FROM Equation WHERE eid == '" + str(e) + "'" )
-    if eqn :
-      eqn = cursor.fetchone()
-      eqn = tools.toAscii_str( eqn )
-
-      # convert eqn info to string
-      rule += "," + str(eqn)
+  for e in eqnList :
+    eid = e[0]
+    eqn = e[1]
+    rule += "," + str(eqn)
 
   # --------------------------------------------------------------- #
 

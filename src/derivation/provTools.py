@@ -21,12 +21,13 @@ C4_RESULTS_PATH = os.path.abspath( __file__ + "/../../../save_data/c4Output/c4du
 ##################
 #  GET ORIG RID  #
 ##################
+# how did this even run??? attList_gname is undefined. =[
 def getOrigRID( provRID, provName, cursor ) :
   rid = None
 
   # ------------------------------------------------------- #
   # get complete attList for provRID
-  cursor.execute( "SELECT SubgoalAtt.attID,SubgoalAtt.attName FROM Rule,Subgoals,SubgoalAtt WHERE Rule.rid==Subgoals.rid AND Subgoals.sid==SubgoalAtt.sid AND Rule.ridi='" + provRID + "'" )
+  cursor.execute( "SELECT SubgoalAtt.attID,SubgoalAtt.attName FROM Rule,Subgoals,SubgoalAtt WHERE Rule.rid==Subgoals.rid AND Subgoals.sid==SubgoalAtt.sid AND Rule.rid='" + provRID + "'" )
   attList_provRID = cursor.fetchall()
   attList_provRID = tools.toAscii_multiList( attList_provRID )
 
@@ -68,8 +69,8 @@ def getOrigRID( provRID, provName, cursor ) :
       print "returning candid = " + candid
       return candid
 
-  # otherwise, no provenance rule matches =[
-  tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: could not find matching provenance rule for " + gname )
+  # otherwise, no original rule matches =[
+  tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: could not find matching original rule for " + provName )
 
   return rid
 
@@ -393,10 +394,10 @@ def get_prov_rid_info( gname, record, fullResults, cursor ) :
 # is a subset of the complete att list of the candidate
 # provenance rule (future work: should probably be an
 # equivalent set)
-def checkEquality( attList_gname, attList_candid ) :
+def checkEquality( list1, list2 ) :
 
-  for att in attList_gname :
-    if not att in attList_candid :
+  for item in list1 :
+    if not item in list2 :
       return False
 
   return True
