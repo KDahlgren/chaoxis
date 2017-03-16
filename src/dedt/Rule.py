@@ -16,7 +16,10 @@ sys.path.append( packagePath )
 from utils import dumpers, extractors, tools
 # ------------------------------------------------------ #
 
+DEBUG = True
+
 opList = [ "notin" ] # TODO: make this configurable
+operators = [ "+", "-", "*", "/", "<", ">", "<=", ">=" ]
 
 class Rule :
 
@@ -88,6 +91,7 @@ class Rule :
   #############################
   #  GET SUBGOAL LIST STRING  #
   #############################
+  # return the body of the rule as a string
   def getSubgoalListStr( self ) :
     self.cursor.execute( "SELECT sid FROM Subgoals WHERE rid = '" + self.rid + "'" )
     subIDList = self.cursor.fetchall()
@@ -137,6 +141,67 @@ class Rule :
         # conclude with time arg, if applicable
         if not subTimeArg == "" :
           currSubgoal += "@" + subTimeArg
+
+        # cap with a comma, if applicable
+        if k < len( subIDList ) - 1 :
+          currSubgoal += ","
+
+      subgoalList += currSubgoal
+      currSubgoal = ""
+
+    return subgoalList
+
+
+  ######################################################
+  #  GET SUBGOAL LIST STRING NO TIME ARGS NO ADD ARGS  #
+  ######################################################
+  # return the body of the rule as a string sans subgoal time args
+  def getSubgoalListStr_noTimeArgs_noAddArgs( self ) :
+    self.cursor.execute( "SELECT sid FROM Subgoals WHERE rid = '" + self.rid + "'" )
+    subIDList = self.cursor.fetchall()
+    subIDList = tools.toAscii_list( subIDList )
+
+    subgoalList = ""
+    currSubgoal = ""
+
+    # iterate over sids
+    for k in range(0,len(subIDList)) :
+      sid = subIDList[ k ]
+
+      # get subgoal name
+      self.cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid == '" + self.rid + "' AND sid == '" + sid + "'" )
+      subgoalName = self.cursor.fetchone()
+
+      if not subgoalName == None :
+        subgoalName = tools.toAscii_str( subgoalName )
+
+        # get subgoal attribute list
+        subAtts = self.cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid == '" + self.rid + "' AND sid == '" + sid + "'" )
+        subAtts = tools.toAscii_list( subAtts )
+
+        # get subgoal time arg
+        self.cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid == '" + self.rid + "' AND sid == '" + sid + "'" ) # get list of sids for this rule
+        subTimeArg = self.cursor.fetchone() # assume only one additional arg
+        subTimeArg = tools.toAscii_str( subTimeArg )
+
+        ## get subgoal additional args
+        self.cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + self.rid + "' AND sid == '" + sid + "'" ) # get list of sids for this rule
+        subAddArg = self.cursor.fetchone() # assume only one additional arg
+        if not subAddArg == None :
+          subAddArg = tools.toAscii_str( subAddArg )
+
+        currSubgoal += subgoalName + "("
+
+        # add in all attributes
+        for i in range(0,len(subAtts)) :
+          if i < (len(subAtts) - 1) :
+            currSubgoal += subAtts[i] + ","
+          else :
+            currSubgoal += subAtts[i] + ")"
+
+        # conclude with time arg, if applicable
+        #if not subTimeArg == "" :
+        #  currSubgoal += "@" + subTimeArg
 
         # cap with a comma, if applicable
         if k < len( subIDList ) - 1 :
@@ -281,198 +346,338 @@ class Rule :
   # if goal is a fact, consult fact data
   # else goal is an IDB, so gather types recursively.
   def setAttTypes( self ) :
+    body_str       = self.getSubgoalListStr_noTimeArgs_noAddArgs()
+    allAttTypeMaps = self.allAttTypeMapsDriver( body_str )
+    #tools.bp( __name__, inspect.stack()[0][3], "allAttTypeMaps = " + str(allAttTypeMaps) )
 
-    # ----------------------------------------------------------- #
-    # set the types for rule goal atts
-    # get goal name
-    self.cursor.execute( "SELECT goalName FROM Rule WHERE rid = '" + self.rid + "'" )
-    goalName = self.cursor.fetchone()
-    goalName = tools.toAscii_str( goalName )
+    # transform into dicionary for convenience
+    typeDict = {}
+    for record in allAttTypeMaps :
+      for mapping in record :
+        att = mapping[0]
+        val = mapping[1]
+        typeDict[ att ] = val
 
-    # if it's a prov rule, get the original goal name
-    provGoalNameOrig = None
-    if "_prov" in goalName :
-      provGoalNameOrig = goalName.split( "_prov" )
-      provGoalNameOrig = provGoalNameOrig[0]
+    if DEBUG :
+      print "typeDict = " + str(typeDict)
 
-    # get goal attribute list
-    self.cursor.execute( "SELECT attID,attName From GoalAtt WHERE rid = '" + self.rid + "'" )
-    goalAttList = self.cursor.fetchall()
-    goalAttList = tools.toAscii_multiList( goalAttList )
+    # set in db
+    # get all attIDs
+    self.cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + self.rid + "'" )
+    allAtts = self.cursor.fetchall()
+    allAtts = tools.toAscii_multiList( allAtts )
 
-    # iterate over goal atts for this rule and set types
-    for k in range(0,len(goalAttList)) :
-      att     = goalAttList[ k ]
+    for att in allAtts :
       attID   = att[0]
       attName = att[1]
 
-      # TODO: not generalizable. Also does not combine hints 
-      # from multiple appearances of the same sub/goal 
-      # to combat underscores.
-      #
-      # Time references are always integers.
-      if "Time" in attName :
-        self.cursor.execute( "UPDATE GoalAtt SET attType=='int' WHERE rid=='" + self.rid + "' AND attID==" + str(attID) )
+      print "attName        = " + attName,
+      print "operators      = " + str(operators),
+      for op in operators :
+        print " op in attName = " + str( op in attName )
+      # TODO : hacky soln for circumventing operators in att names.
+      for op in operators :
+        if op in attName :
+          attType = 'int'
+        else :
+          attType = typeDict[ attName ]
+        break
 
-      # use types of data in fact definitions as clues for table definition field types
-      elif tools.isFact( goalName, self.cursor ) or tools.isFact( provGoalNameOrig, self.cursor ) :
+      self.cursor.execute( "UPDATE GoalAtt SET attType=='" + attType + "' WHERE rid=='" + self.rid + "' AND attID==" + str(attID) + " AND attName=='" + attName + "'" )
 
-        # case working with an original rule definition
-        if goalName :
-          self.cursor.execute( "SELECT Fact.fid,attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(goalName) + "'")
-#
-        # case working with a provenance rule definition
-        elif provGoalNameOrig :
-          attFIDsIDsNames = None
-          self.cursor.execute( "SELECT Fact.fid,attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(provGoalNameOrig) + "'")
 
-        attFIDsIDsNames = self.cursor.fetchall()
-        attFIDsIDsNames = tools.toAscii_multiList( attFIDsIDsNames )
+  ##############################
+  #  ALL ATT TYPE MAPS DRIVER  #
+  ##############################
+  # return the type maps for all attribute vars appearing in the body of a rule.
+  def allAttTypeMapsDriver( self, body_str ) :
+    subgoals_namesAndAtts = self.getInfo_subgoals_namesAndAtts( body_str )
 
-        # extract types from fact definitions
-        # if kth fact attrib is int, then append int
-        if attFIDsIDsNames :
-          if attFIDsIDsNames[k][2].isdigit() :
-            self.cursor.execute( "UPDATE GoalAtt SET attType=='int' WHERE rid=='" + self.rid + "' AND attID==" + str(attID) )
-            continue # <---- NEEDED!!!! OR ELSE ADDS EXTRA STRING TYPES !!!!
+    # iterate over parsed subgoals
+    allAttTypeMaps = []
+    for sub in subgoals_namesAndAtts :
+      allAttTypeMaps.append( self.getTypeMap( sub ) )
+
+    return allAttTypeMaps
+
+
+  ##################
+  #  GET TYPE MAP  #
+  ##################
+  # return a list of attribute name, attribute type maps in the form of arrays
+  def getTypeMap( self, subNameAndAtts ) :
+    subname = subNameAndAtts[0]
+    subatts = subNameAndAtts[1]
+
+    atts_inRuleBody = subatts
+
+    print "subNameAndAtts = " + str(subNameAndAtts)
+
+    # --------------------------------------------------- #
+    #     BASE CASE 1 !!! => subgoal references a fact
+    # --------------------------------------------------- #
+    if tools.isFact( subname, self.cursor ) :
+      list_dataTypes_fromFact = self.getFactDataTypes( subname )
+      atts_inRuleBody_typeMap = self.mapTypes_raw( atts_inRuleBody, list_dataTypes_fromFact )
+
+    # --------------------------------------------------- #
+    #     BASE CASE 2 !!! => subgoal references a fact
+    # --------------------------------------------------- #
+    elif subname == 'clock' :
+      atts_inRuleBody_typeMap = self.mapTypes_raw( atts_inRuleBody, [ 'string', 'string', 'int', 'int' ] )
+
+    # --------------------------------------------------- #
+    #     RECURSIVE CASE !!! => subgoal is an idb
+    # --------------------------------------------------- #
+    else :
+      sub_as_rule     = self.getRuleHeadAtts( subname )
+
+      print "subname     = " + str(subname)
+      print "subatts     = " + str(subatts)
+      print "sub_as_rule = " + str(sub_as_rule)
+
+      chosen_rid      = sub_as_rule[0]
+      atts_asRuleHead = sub_as_rule[1]
+
+      subRule                 = Rule( chosen_rid, self.cursor )
+      bodyparse               = subRule.getSubgoalListStr_noTimeArgs_noAddArgs()
+      allAttTypeMaps          = self.allAttTypeMapsDriver( bodyparse )
+      atts_asRuleHead_typeMap = self.mapTypes_preprocessed( atts_asRuleHead, allAttTypeMaps )
+
+      print "subRule                 = " + str(subRule)
+      print "bodyparse               = " + str(bodyparse)
+      print "allAttTypeMaps          = " + str(allAttTypeMaps)
+      print "atts_asRuleHead_typeMap = " + str(atts_asRuleHead_typeMap)
+
+      # following statement only works if atts_asRuleHead_types maintains ordering!!!
+      orderedListOfTypes = [ mapping[1] for mapping in atts_asRuleHead_typeMap]
+      print "orderedListOfTypes = " + str(orderedListOfTypes)
+
+      #tools.bp( __name__, inspect.stack()[0][3], "orderedListOfTypes = " + str(orderedListOfTypes) + "\natts_asRuleHead_typeMap = " + str(atts_asRuleHead_typeMap) )
+      atts_inRuleBody_typeMap = self.mapTypes_raw( atts_inRuleBody, orderedListOfTypes )
+      print "atts_inRuleBody_typeMap = " + str(atts_inRuleBody_typeMap)
+
+    #tools.bp( __name__, inspect.stack()[0][3], "atts_inRuleBody_typeMap = " + str(atts_inRuleBody_typeMap) )
+    return atts_inRuleBody_typeMap
+
+
+  ############################
+  #  MAP TYPES PREPROCESSED  #
+  ############################
+  # map attribute vars to types based on ordering.
+  # only use for subgoals referencing facts.
+  def mapTypes_preprocessed( self, attList, typeMapList ) :
+
+    attList = [ att[1] for att in attList ] # remove attIDs
+
+    # check sanity : attributes defined across type maps should have the same type.
+    attDict = {}
+    for mappingList in typeMapList :
+      for mapping in mappingList :
+        att = mapping[0]
+        val = mapping[1]
+
+        if att in attDict.keys() :
+          if attDict[att] == val :
+            pass
           else :
-            self.cursor.execute( "UPDATE GoalAtt SET attType=='string'  WHERE rid=='" + self.rid + "' AND attID==" + str(attID) )
+            tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : inconsistent type assignments for attribute " + str(att) + "\n" + str(attDict[att]) + " is not the same as " + str(val) )
+        else :
+          attDict[att] = val
 
-      # //////////////////////////////////////////////////////// #
-      # sanity check: all goal atts should have a type
-      self.cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid = '" + self.rid + "'" )
-      post_goalAttList = self.cursor.fetchall()
-      post_goalAttList = tools.toAscii_multiList( post_goalAttList )
-      for att in post_goalAttList :
-        if "UNDEFINEDTYPE" in att[1] :
-          tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : goal '" + goalName + "' still has UNDEFINED attribute types:\npost_goalAttList = " + str(post_goalAttList) )
-      # //////////////////////////////////////////////////////// #
+    # otherwise ... 
+    finalMapping = []
+    for att in attList : # maintains ordering!!!!
+      print "att          = " + str(att)
+      print "attDict[att] = " + str( attDict[att] )
+      finalMapping.append( [ att, attDict[att] ] )
 
-    # ----------------------------------------------------------- #
-    # set the types for rule subgoal atts
+    return finalMapping
 
-    # get list of all subgoal ids for the current rule
-    self.cursor.execute( "SELECT sid FROM Subgoals WHERE rid = '" + self.rid + "'" )
-    subIDList = self.cursor.fetchall()
-    subIDList = tools.toAscii_list( subIDList )
 
-    for sid in subIDList :
-      self.cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid = '" + self.rid + "' AND sid = '" + sid + "'" )
-      subgoalName = self.cursor.fetchone()
-      subgoalName = tools.toAscii_str( subgoalName )
+  ###################
+  #  MAP TYPES RAW  #
+  ###################
+  # map attribute vars to types based on ordering.
+  # only use for subgoals referencing facts.
+  def mapTypes_raw( self, attList, orderedListOfTypes ) :
 
-      self.cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid = '" + self.rid + "' AND sid = '" + sid + "'" )
-      subgoalAttList = self.cursor.fetchall()
-      subgoalAttList = tools.toAscii_multiList( subgoalAttList )
+    # check sanity : arity of the facts should equal the arity of the referencing sub rule
+    if len(attList) > len(orderedListOfTypes) :
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : more attribute variables than data types:\natt vars = " + str(attList) + "\ndata types = " + str(orderedListOfTypes) )
 
-      if subgoalName == "clock" :
-        self.cursor.execute( "UPDATE SubgoalAtt SET attType=='string'  WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==0" )
-        self.cursor.execute( "UPDATE SubgoalAtt SET attType=='string'  WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==1" )
-        self.cursor.execute( "UPDATE SubgoalAtt SET attType=='int'     WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==2" )
-        self.cursor.execute( "UPDATE SubgoalAtt SET attType=='int'     WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==3" )
-      else :
-        for att in subgoalAttList :
-          attID   = att[0]
-          attName = att[1]
+    # fewer atts may occur if subgoal appears in a rule without the time argument.
+    # accordingly, because the reference to the subgoal is written without reference to 
+    # the time argument, it is ok to just take the first N data types from the ordered type list,
+    # where N is the arity of the subgoal reference.
+    #elif len(attList) < len(orderedListOfTypes) :
+    #  tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : fewer attribute variables than data types:\natt vars = " + str(attList) + "\ndata types = " + str(orderedListOfTypes)  )
 
-          if "Time" in attName :
-            self.cursor.execute( "UPDATE SubgoalAtt SET attType=='int'     WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==" + str(attID) )
-          elif attName.isdigit() :
-            self.cursor.execute( "UPDATE SubgoalAtt SET attType=='int'     WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==" + str(attID) )
+    # otherwise ... 
+    finalMapping = []
+    for i in range(0,len(attList)) :
+      finalMapping.append( [ attList[i], orderedListOfTypes[i] ] )
+
+    return finalMapping
+
+
+  #########################
+  #  GET FACT DATA TYPES  #
+  #########################
+  # return an array containing an ordered list of the data types of
+  # all components included in a fact
+  def getFactDataTypes( self, subname ) :
+
+    if subname == "clock" :
+      return [ 'string', 'string', 'int', 'int' ]
+
+    # retrieve all facts assocaited with the subname
+    self.cursor.execute( "SELECT fid FROM Fact WHERE name=='" + subname + "'" )
+    allFIDs = self.cursor.fetchall()
+    allFIDs = tools.toAscii_list( allFIDs )
+
+    factData_all = []
+    for fid in allFIDs :
+
+      # get timing data
+      self.cursor.execute( "SELECT timeArg FROM Fact WHERE fid=='" + fid + "'" )
+      timeData = self.cursor.fetchone()
+      timeData = tools.toAscii_str( timeData )
+      if not timeData.isdigit() :
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : timeing argument for a " + subname + " fact is not an integer:\n" + timeData + " is not an integer. =["  )
+
+      # get input data
+      self.cursor.execute( "SELECT attID,attName FROM FactAtt WHERE fid=='" + fid + "'" )
+      factData = self.cursor.fetchall()
+      factData = tools.toAscii_multiList( factData )
+
+      # create and save full fact
+      fullFact = [ data[1] for data in factData ]
+      fullFact.append( timeData )
+      factData_all.append( fullFact )
+
+    if DEBUG :
+      print "subname = " + subname,
+      print "factData_all = " + str(factData_all)
+
+    # pass 1: collect data type lists per fact record.
+    factTypesList = []
+    for data in factData_all :
+      typeList = []
+      for component in data :
+        if ("'" in component) or ('"' in component) :
+          typeList.append( 'string' )
+        elif component.isdigit() :
+          typeList.append( 'int' )
+        else :
+          tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR:\nencountered data of unrecognized type :\n data record " + data + "\n for table " + subname + " contains unregognized component " + str(component) + ". pyLDFI currently only supports strings and integers.\nDouble or single quotes must encapsulate the contents of a string.." )
+      factTypesList.append( typeList )
+
+    # pass 2: terminate if any type lists are inconsistent.
+    for typeList1 in factTypesList :
+      for typeList2 in factTypesList :
+        for i in range(0,len(typeList)) :
+          if typeList1[i] == typeList2[i] :
+            pass
           else :
-            self.cursor.execute( "UPDATE SubgoalAtt SET attType=='string'  WHERE rid=='" + self.rid + "' AND sid=='" + sid + "' AND attID==" + str(attID) )
+            tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: type inconsistency in facts for table " + subname + "\n" + typeList1[i] + " does not equal " + typeList2[i]  )
 
-      # //////////////////////////////////////////////////////// #
-      # sanity check: all subgoal atts should have a type
-      self.cursor.execute( "SELECT attID,attType FROM SubgoalAtt WHERE rid = '" + self.rid + "' AND sid = '" + sid + "'" )
-      post_subgoalAttList = self.cursor.fetchall()
-      post_subgoalAttList = tools.toAscii_multiList( post_subgoalAttList )
-      for att in post_subgoalAttList :
-        if "UNDEFINEDTYPE" in att[1] :
-          tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : subgoal '" + subgoalName + "' still has UNDEFINED attribute types:\npost_subgoalAttList = " + str(post_subgoalAttList) )
-      # //////////////////////////////////////////////////////// #
+    #tools.bp( __name__, inspect.stack()[0][3], "factTypesList = " + str(factTypesList) )
+    return factTypesList[0]
 
-    # ----------------------------------------------------------- #
-    # verify sanity of types wrt rule equations
-    # 1. for each eqn associated with this rule
-    # 2. extract the lhs and rhs
-    # 3. if the types match, then pass
-    # 4. otherwise, print a warning and generalize the 
-    #    more restrictive type (int in all current cases) 
-    #    to a string
-    # 5. also, modify the equation so the offending side is also
-    #    a string.
-    operators = [ "+", "-", "*", "/", "<", ">", "<=", ">=", "==", "!=" ]
 
-    # get all eqns associated with this rule
-    self.cursor.execute( "SELECT eid,eqn FROM Equation WHERE rid=='" + self.rid + "'" )
-    eqnList = self.cursor.fetchall()
-    eqnList = tools.toAscii_multiList( eqnList )
+  ########################
+  #  GET RULE HEAD ATTS  #
+  ########################
+  # return a binary array containing the chosen rid for the subgoal rule
+  # and the list of all attribute var names used in the goal/head of that
+  # particular rule definition.
+  def getRuleHeadAtts( self, subname ) :
 
-    # only consider rules with eqns
-    if len(eqnList) > 0 :
+    allRIDs = self.getAllRIDs( subname )
 
-      #if goalName == "update_term" :
-      #  tools.bp( __name__, inspect.stack()[0][3], "eqnList = " + str(eqnList) )
+    subList = []
+    for rid in allRIDs :
+      sublist = self.getSubList_namesOnly( rid )
 
-      # iterate over eqns
-      for e in eqnList :
-        eid = e[0]
-        eqn = e[1]
+      if not subname in subList :
+        return [ rid, self.getHeadAtts( rid ) ]
 
-        # split eqn into lhs and rhs
-        lhs = None
-        rhs = None
-        eqnComps = None
-        for op in operators :
-          if op in eqn :
-            eqnComps = eqn.split( op )
 
-        print "eqnComps = " + str( eqnComps )
-        lhs = eqnComps[0]
-        rhs = eqnComps[1]
+  ##################
+  #  GET ALL RIDS  #
+  ##################
+  # return the complete list of rids associated with the given subgoal name.
+  def getAllRIDs( self, subname ) :
 
-        # /////////////////////////////////////////////////// #
-        # sanity check : both lhs and rhs must exist
-        if not lhs :
-          tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : an input equation does not possess a left-hand side :\n" + eqn + "Please check the input and try again. Aborting...\n" )
-        elif not rhs :
-          tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : an input equation does not possess a right-hand side :\n" + eqn + "Please check the input and try again. Aborting...\n" )
-          tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : parser detected an equation for this rule, but no equation exists: " + dumpers.reconstructRule( self.rid, self.cursor ) + "\nThe equation list for this rule is:" + str(eqnList) + "\nDetected lhs = " + lhs + "\nDetected rhs = " + rhs + "\nPlease check the input and try again. Aborting..." )
-        # /////////////////////////////////////////////////// #
+    self.cursor.execute( "SELECT rid FROM Rule WHERE goalName=='" + subname + "'" )
+    allRIDs = self.cursor.fetchall()
+    allRIDs = tools.toAscii_list( allRIDs )
 
-        # get the types for both lhs and rhs
-        lhs_type = self.getType( lhs )
-        rhs_type = self.getType( rhs )
+    return allRIDs
 
-        #tools.bp( __name__, inspect.stack()[0][3], "lhs = " + lhs + "\nlhs_type = " + lhs_type + "\nrhs = " + rhs + "\nrhs_type = " + rhs_type )
 
-        if lhs_type == rhs_type :
+  #############################
+  #  GET SUB LIST NAMES ONLY  #
+  #############################
+  # return an array of the subgoal names contained within the given rule.
+  def getSubList_namesOnly( self, rid ) :
+
+    self.cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid=='" + rid + "'" )
+    subList_namesOnly = self.cursor.fetchall()
+    subList_namesOnly = tools.toAscii_list( subList_namesOnly )
+
+    return subList_namesOnly
+
+
+  ###################
+  #  GET HEAD ATTS  #
+  ###################
+  # return an array of the goal attribues for the given rule.
+  def getHeadAtts( self, rid ) :
+
+    self.cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + rid + "'" )
+    headAtts = self.cursor.fetchall()
+    headAtts = tools.toAscii_multiList( headAtts )
+
+    return headAtts
+
+
+  ######################################
+  #  GET INFO SUBGOALS NAMES AND ATTS  #
+  ######################################
+  # for a given rule body string, return an array of binary arrays
+  # st the binary arrays contain a subgoal name and an array of the corresponding
+  # attribute variable strings.
+  def getInfo_subgoals_namesAndAtts( self, body_str_no_time_args ) :
+    subsAndAtts = body_str_no_time_args.split( ")," )
+
+    # remove parens and commas
+    temp_list = []
+    for sub in subsAndAtts :
+      temp_sub = ""
+      for c in sub :
+        if c == "(" :
+          temp_sub += "___STARTHERE___"
+        elif c == "," :
+          temp_sub += "___COMMAHERE___"
+        elif c == ")" :
           pass
         else :
-          print "WARNING : type mismatch in eqn : " + eqn + ". lhs is of type " + lhs_type + " and rhs is of type " + rhs_type
+          temp_sub += c
+      temp_list.append( temp_sub )
 
-          sideFlag = None
-          if not lhs_type is "string" :
-            print "Promoting lhs '" + lhs + "' to string type."
-            sideFlag = "left"
-          elif not rhs_type is "string" :
-            print "Promoting rhs '" + rhs + "' to string type."
-            sideFlag = "right"
-          else :
-            tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : lhs and rhs of eqn '" + eqn + "' possess a type mismatch, but both are strings. Specifically, lhs is of type " + lhs_type + " and rhs is of type " + rhs_type + ".\nAborting because universe exploded. Bye..." )
+    # convert into binary arrays containing subname and parsed array of sub atts.
+    temp_list_2 = []
+    for sub in temp_list :
+      temp_sub       = sub.split( "___STARTHERE___" )
+      subname        = temp_sub[0]
+      subAttList_str = temp_sub[1]
+      subAttList     = subAttList_str.split( "___COMMAHERE___" )
+      temp_list_2.append( [ subname, subAttList ] )
+    subNamesAndAtts = temp_list_2
 
-          # promote the component
-          if sideFlag == "left" :
-            self.promoteComponent( lhs, op, rhs, eid, "lhs" )
-
-          elif sideFlag == "right" :
-            self.promoteComponent( lhs, op, rhs, eid, "rhs" )
-
-          else :
-            tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : both the lhs and rhs of eqn '" + eqn + "' are strings, but are not strings:\nlhs is of type " + lhs_type + " and rhs is of type " + rhs_type + "\nAborting..." )
-
-    return None
+    return subNamesAndAtts
 
 
   ##############
