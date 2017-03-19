@@ -1,4 +1,5 @@
 .DS_Store
+*.swp
 
 src/evaluators/programFiles/*.txt
 src/evaluators/programFiles/*.olg

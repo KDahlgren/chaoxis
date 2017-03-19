@@ -164,11 +164,8 @@ def c4datalog( cursor ) :
         # ................................................... #
         # handle clock define separately. Kind of hacky...
         if subgoalName == "clock" :
-          cursor.execute( "SELECT * FROM SubgoalAtt WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
-          res = cursor.fetchall()
-          res = tools.toAscii_multiList( res )
-          #tools.bp( __name__, inspect.stack()[0][3], "res = " + str(res) )
-        #  continue
+          typeList = [ 'string', 'string', 'int', 'int' ]
+          #tools.bp( __name__, inspect.stack()[0][3], "typeList = " + str(typeList) )
         # ................................................... #
 
         newDefine += "define("
