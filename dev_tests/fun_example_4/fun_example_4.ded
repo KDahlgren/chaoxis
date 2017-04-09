@@ -49,7 +49,8 @@ a3( X, Y )@next :- a3( X, Y ) ;
 
 
 //a_table( X, Y, W ) :- a1( X, Y ), a2( X, Z ), EXTRATABLE( W ), W == "x" ;
-a_table( X, Y, "x" ) :- a1( X, Y ), a2( X, Z )
+//a_table( X, Y, "x" ) :- a1( X, Y ), a2( X, Z ) ; //syntax in head not supported
+a_table( X, Y, Z ) :- a1( X, Y ), a2( X, Z ), Z=="x" ; //works!
 
  pre( X, Y, Z ) :- a_table( X, Y, Z ) ;
 post( X, Y, Z ) :- a_table( X, Y, Z ) ;

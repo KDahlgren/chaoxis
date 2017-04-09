@@ -4,6 +4,8 @@
 cmd="python ../../src/drivers/driver1.py -n a,b,c -f ./simpleLog.ded --evaluator c4"
 opt_cmd="cmd"
 
+rm ./IR.db
+
 if [ "$1" = "$opt_cmd" ]
 then
   # run command an do not hide stdout

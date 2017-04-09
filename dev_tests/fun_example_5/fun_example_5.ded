@@ -2,7 +2,10 @@
 // author: Dahlgren
 //
 // a fun example designed to test a subset of targetted functionality.
-// the program tests equality and NOT support
+// the program tests comparison of string and int
+//
+//
+// this program should fail and through an error!!!
 // 
 
 // awesome facts
@@ -28,7 +31,8 @@ a2( X, Y )@next :- a2( X, Y ) ;
 a3( X, Y )@next :- a3( X, Y ) ;
 
 
-a_table( X, Y, Z ) :- a1( X, Y ), a2( X, Z ), Z == Y ;
+// should fail and throw an error!
+a_table( X, Y, Z ) :- a1( X, Y ), a2( X, Z ), Z == Y ; //comparing str and int
 
  pre( X, Y, Z ) :- a_table( X, Y, Z ) ;
 post( X, Y, Z ) :- a_table( X, Y, Z ) ;

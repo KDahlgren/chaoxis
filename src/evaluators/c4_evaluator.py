@@ -32,7 +32,7 @@ def cleanTableStr( tableStr ) :
   for i in tableStr :
     if not i in arr :
       arr.append( i )
-  newStr = ",".join( arr[:-1] ) # delete extra space
+  newStr = ",".join( arr )
 
   return newStr
 
@@ -51,7 +51,7 @@ def getTables( table_path ) :
   else :
     sys.exit( "Table list for C4 Overlog input file for pyLDFI program not found at : " + table_path + "\nAborting..." )
 
-  tableListStr = cleanTableStr( tableListStr )
+  #tableListStr = cleanTableStr( tableListStr )
 
   return tableListStr
 
