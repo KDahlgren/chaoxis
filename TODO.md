@@ -2,6 +2,8 @@
 
 An unordered log of some todo items associated with the development of pyLDFI.
 
+* Support input of string constants in rule atoms. example: a_table( X, Y, "x" ) :- a1( X, Y ), a2( X, Z )
+
 * Boost robustness of parser to ensure wildcards do not appear in goal attributes.
 
 * Handle number of crashes as input.

@@ -32,19 +32,12 @@ C4_TRANSLATOR_DEBUG_1 = True
 # determine if a define already exists for the relation indicated by the subgoal
 # output boolean
 
-def existingDefine( name, definesList ) :
+def existingDefine( name, definesNames ) :
 
-  for d in definesList :
-
-    # preprocess string to get the table name only
-    d = d.replace( "define(", "" ) # remove prepended define
-    d = re.sub( r',{.*$\s', "", d )  # remove all the type info and the newline
-
-    # check equality
-    if name == d :
-      return True
-
-  return False
+  if name in definesNames :
+    return True
+  else :
+    return False
 
 
 ################
@@ -63,11 +56,15 @@ def c4datalog( cursor ) :
   # ----------------------------------------------------------- #
   # create goal defines
 
+  # get all rids
   cursor.execute( "SELECT rid FROM Rule" )
   ridList = cursor.fetchall()
   ridList = tools.toAscii_list( ridList )
 
-  definesList = []
+  definesNames = []
+  definesList  = []
+  # ////////////////////////////////////////////////////////// #
+  # populate defines list for rules
   for rid in ridList :
     newDefine   = ""
 
@@ -88,7 +85,7 @@ def c4datalog( cursor ) :
     # ////////////////////////////////////////////////////////// #
     # populate defines list for rule goals
     print "In c4datalog: definesList = " + str(definesList)
-    if not existingDefine( goalName, definesList ) : # prevent duplicates
+    if not existingDefine( goalName, definesNames ) : # prevent duplicates
 
       # get goal attribute list
       cursor.execute( "SELECT attID,attType From GoalAtt WHERE rid = '" + rid + "'" )
@@ -108,6 +105,7 @@ def c4datalog( cursor ) :
         typeList.append( attType )
 
       # populate new c4 define statement
+      newDefine = ""
       newDefine += "define("
       newDefine += goalName
       newDefine += ",{"
@@ -121,63 +119,82 @@ def c4datalog( cursor ) :
 
       # save new c4 define statement
       if not newDefine in definesList :
+        definesNames.append( goalName )
         definesList.append( newDefine )
     # ////////////////////////////////////////////////////////// #
 
   # ----------------------------------------------------------- #
-  # create remaining subgoal defines
+  # create fact defines
 
-  for rid in ridList :
-    newDefine = ""
+  # get all fact ids
+  cursor.execute( "SELECT fid FROM Fact" )
+  fidList = cursor.fetchall()
+  fidList = tools.toAscii_list( fidList )
 
-    # get list of all subgoal ids for the current rule
-    cursor.execute( "SELECT sid FROM Subgoals WHERE rid = '" + rid + "'" )
-    subIDList = cursor.fetchall()
-    subIDList = tools.toAscii_list( subIDList )
+  for fid in fidList :
 
-    for sid in subIDList :
-      cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid = '" + rid + "' AND sid = '" + sid + "'" )
-      subgoalName = cursor.fetchone()
-      subgoalName = tools.toAscii_str( subgoalName )
+    # get goal name
+    cursor.execute( "SELECT name FROM Fact WHERE fid = '" + fid + "'" )
+    factName = cursor.fetchone()
+    factName = tools.toAscii_str( factName )
 
-      tableListStr += subgoalName + ","
+    print "**> factName = " + factName
 
-      if not existingDefine( subgoalName, definesList ) :
-        typeList       = []
-        cursor.execute( "SELECT attID,attType FROM SubgoalAtt WHERE rid = '" + rid + "' AND sid = '" + sid + "'" )
-        subgoalAttList = cursor.fetchall()
-        subgoalAttList = tools.toAscii_multiList( subgoalAttList )
+    print "In c4datalog: definesList = " + str(definesList)
+    if not existingDefine( factName, definesNames ) : # prevent duplicates
 
-        # sanity check: all subgoal atts need a type
-        for att in subgoalAttList :
-          if "UNDEFINEDTYPE" in att[1] :
-            tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : subgoal '" + subgoalName + "' still has UNDEFINED attribute types:\nsubgoalAttList = " + str(subgoalAttList) )
+      # populate table string
+      tableListStr += factName + ","
 
-        if C4_TRANSLATOR_DEBUG_1 :
-          print "* subgoalName = " + subgoalName + ", subgoalAttList " + str( subgoalAttList )
+      # get goal attribute list
+      cursor.execute( "SELECT attID,attType From FactAtt WHERE fid = '" + fid + "'" )
+      factAttList = cursor.fetchall()
+      factAttList = tools.toAscii_multiList( factAttList )
 
-        for att in subgoalAttList :
-          attID   = att[0]
-          attType = att[1]
-          typeList.append( attType )
+      if C4_TRANSLATOR_DEBUG_1 :
+        print "* factName = " + factName + ", factAttList " + str( factAttList )
 
-        # ................................................... #
-        # handle clock define separately. Kind of hacky...
-        if subgoalName == "clock" :
-          typeList = [ 'string', 'string', 'int', 'int' ]
-          #tools.bp( __name__, inspect.stack()[0][3], "typeList = " + str(typeList) )
-        # ................................................... #
+      # populate type list for fact
+      typeList = []
+      for k in range(0,len(factAttList)) :
+        att     = factAttList[ k ]
+        attID   = att[0]
+        attType = att[1]
 
-        newDefine += "define("
-        newDefine += subgoalName + ",{"
-        for i in range(0, len(typeList)) :
-          if i < len(typeList) - 1 :
-            newDefine += typeList[i] + ","
-          else :
-            newDefine += typeList[i] + "}); //added in translator..." + "\n"
+        typeList.append( attType )
 
-        if not newDefine in definesList :
-          definesList.append( newDefine )
+      # check for time argument
+      cursor.execute( "SELECT timeArg FROM Fact WHERE fid='" + fid + "'" )
+      timeArg = cursor.fetchone()
+      timeArg = tools.toAscii_str( timeArg )
+
+      if timeArg :
+        typeList.append( "int" )
+
+      # populate new c4 define statement
+      newDefine = ""
+      newDefine += "define("
+      newDefine += factName
+      newDefine += ",{"
+
+      for i in range(0,len(typeList)) :
+        newDefine += typeList[i]
+        if i < len(typeList) - 1 :
+          newDefine += ","
+        else :
+          newDefine += "});" + "\n"
+
+      # save new c4 define statement
+      if not newDefine in definesList :
+        definesNames.append( factName )
+        definesList.append( newDefine )
+  # ////////////////////////////////////////////////////////// #
+
+  # ----------------------------------------------------------- #
+  # add clock define
+
+  definesList.append( "define(clock,{string,string,int,int});\n" )
+  tableListStr += "clock"
 
   # ----------------------------------------------------------- #
   # add facts
@@ -191,12 +208,14 @@ def c4datalog( cursor ) :
     newFact = dumpers_c4.dumpSingleFact_c4( fid, cursor )
     factList.append( newFact )
 
+
   # ----------------------------------------------------------- #
   # add clock facts
 
   clockFactList = dumpers_c4.dump_clock( cursor )
   if C4_TRANSLATOR_DEBUG :
     print "c4_translator: clockFactList = " + str( clockFactList )
+
 
   # ----------------------------------------------------------- #
   # add rules
@@ -207,8 +226,22 @@ def c4datalog( cursor ) :
 
   ruleList = []
   for rid in ridList :
-    newRule = dumpers_c4.dumpSingleRule_c4( rid, cursor )
-    ruleList.append( newRule )
+    # verify data type compatibility for rules with equations
+    verificationResults = tools.checkDataTypes( rid, cursor ) # returns array
+
+    yesCompatible = verificationResults[0]
+    offensiveEqn  = verificationResults[1]
+    lhsType       = verificationResults[2]
+    rhsType       = verificationResults[3]
+
+    if yesCompatible :
+      newRule = dumpers_c4.dumpSingleRule_c4( rid, cursor )
+      ruleList.append( newRule )
+
+    else : # data types are incompatible
+      # throw error and abort
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: DATA TYPE INCOMPATABILITY\nAttempting to evaluate an equation in which variables possess incomparable types.\nERROR in line: " + dumpers_c4.dumpSingleRule_c4( rid, cursor )+ "\nERROR in eqn: " + offensiveEqn + "\nlhs is of type " + lhsType + " and rhs is of type " + rhsType )
+
 
   # ----------------------------------------------------------- #
   # save table list

@@ -10,7 +10,7 @@ dedt.py
 IR SCHEMA:
 
 Fact           (fid text, name text, timeArg text)
-FactAtt        (fid text, attID int, attName text)
+FactAtt        (fid text, attID int, attName text, attType text)
 Rule           (rid text, goalName text, goalTimeArg text, rewritten text)
 GoalAtt        (rid text, attID int, attName text, attType text)
 Subgoals       (rid text, sid text, subgoalName text, subgoalTimeArg text)
@@ -89,6 +89,7 @@ def dedToIR( filename, cursor ) :
       newFact = Fact.Fact( fid, cursor )
       newFact.setFactInfo( name, timeArg )
       newFact.setAttList(  attList       )
+      newFact.setAttTypes() # set types for all fact components first.
 
       # save fact metadata (aka object)
       factMeta.append( newFact )
@@ -273,7 +274,7 @@ def runTranslator( cursor, dedFile, argDict, datalogProgPath, evaluator ) :
 ##############################
 def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS Fact       (fid text, name text, timeArg text)''')    # fact names
-  cursor.execute('''CREATE TABLE IF NOT EXISTS FactAtt    (fid text, attID int, attName text)''')   # fact attributes list
+  cursor.execute('''CREATE TABLE IF NOT EXISTS FactAtt    (fid text, attID int, attName text, attType text)''')   # fact attributes list
   cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text, rewritten text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text, attType text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalName text, subgoalTimeArg text)''')

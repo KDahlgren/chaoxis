@@ -16,6 +16,8 @@ sys.path.append( packagePath )
 import dumpers
 # ------------------------------------------------------ #
 
+operators = [ "+", "-", "*", "/", "<", ">", "<=", ">=", "==" ]
+
 #############
 #  GLOBALS  #
 #############
@@ -311,9 +313,11 @@ def attSearchPass2( pydatalogRule ) :
 
   return wildList
 
+
 #############
 #  IS FACT  #
 #############
+# check if a particular string corresponds to the name of a fact table.
 def isFact( goalName, cursor ) :
     attIDsName = None
     cursor.execute( "SELECT attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name == '" + str(goalName) + "'" )
@@ -329,6 +333,176 @@ def isFact( goalName, cursor ) :
       return True
     else :
       return False
+
+
+######################
+#  CHECK DATA TYPES  #
+######################
+# given a rule id, if the rule has one or more equations,
+# make sure the data types of the variables in the equations are compatible.
+# returns an array of relevant data
+def checkDataTypes( rid, cursor ) :
+
+  # initialization for clarity
+  verificationResults = []
+  verificationResults.append( None ) # boolean indicating data type comparability
+  verificationResults.append( None ) # string of offensive eqn, None otherwise
+  verificationResults.append( None ) # lhs data type in offensive eqn, None otherwise
+  verificationResults.append( None ) # rhs data type of offensive eqn, None otherwise
+
+  # first check if the rule has at least one eqn
+  if containsEqn( rid, cursor ) :
+    # get all eqn info (redundant, but only mildly suboptimal assuming small number of eqns per rule)
+    cursor.execute( "SELECT eqn FROM Equation WHERE rid=='" + rid + "'" )
+    allEqns = cursor.fetchall()
+    allEqns = toAscii_list( allEqns )
+
+    # for each eqn, get the variables
+    for eqn in allEqns :
+      varList = None
+      for op in operators :
+        if op in eqn :
+          varList = eqn.split( op )
+      if varList :
+        print "varList = " + str(varList)
+        # for each variable, get the types.
+        typeList = []
+        for var in varList :
+          varType = getVarType( var, rid, cursor ) # 'string' or 'int'
+          typeList.append( varType )
+
+        #bp( __name__, inspect.stack()[0][3], "typeList = " + str(typeList) )
+
+        flag    = True # glass half full =]
+        lhsType = typeList[0] # assume equations will always be binary
+        rhsType = typeList[1] # assume equations will always be binary
+        for t1 in typeList :
+          for t2 in typeList :
+            if not t1 == t2 :
+              flag = False # encountered a type mismatch
+
+        # hit a type incompatibility
+        if not flag :
+          if not lhsType :
+            bp( __name__, inspect.stack()[0][3], "hit a type incompatibility, but lhsType is None" )
+          elif not rhsType :
+            bp( __name__, inspect.stack()[0][3], "hit a type incompatibility, but rhsType is None" )
+          else :
+            verificationResults[0] = False
+            verificationResults[1] = eqn
+            verificationResults[2] = lhsType
+            verificationResults[3] = rhsType
+
+            return verificationResults
+
+      else :
+        bp( __name__, inspect.stack()[0][3], "FATAL ERROR: eqn " + eqn + " has no variables.\nAborting..." )
+
+
+    # made it to here without returning, therefore, no type incompatibilities.
+    verificationResults[0] = True
+
+  # no equations => no danger of type incompatibility.
+  else :
+    verificationResults[0] = True
+
+  return verificationResults
+
+
+###############
+#  IS STRING  #
+###############
+def isString( var ) :
+  if "'" in var or '"' in var :
+    return True
+  else :
+    return False
+
+
+############
+#  IS INT  #
+############
+def isInt( var ) :
+  if var.isdigit() :
+    return True
+  else :
+    return False
+
+
+##################
+#  GET VAR TYPE  #
+##################
+# look up the type from the goal or fact table (or clock schema, if subgoal name is 'clock')
+def getVarType( var, rid, cursor ) :
+
+  if isString( var ) :
+    return "string"
+
+  elif isInt( var ) :
+    return "int"
+
+  else :
+    # get info for subgoal containing var
+    cursor.execute( "SELECT subgoalName,attID,attName FROM Subgoals,SubgoalAtt WHERE Subgoals.rid=='" + rid + "' AND Subgoals.rid==SubgoalAtt.rid AND Subgoals.sid==SubgoalAtt.sid AND SubgoalAtt.attName=='" + var + "'" )
+    info = cursor.fetchall()
+    info = toAscii_multiList( info )
+
+    if TOOLS_DEBUG :
+      print "info = " + str(info)
+  
+    typeList = []
+    for subgoal in info :
+      subgoalName = subgoal[0]
+      attID       = subgoal[1]
+  
+      if subgoalName == "clock" :
+        if attID == 0 :
+          typeList.append( "string" )
+        elif attID == 1 :
+          typeList.append( "string" )
+        elif attID == 2 :
+          typeList.append( "string" )
+        elif attID == 3 :
+          typeList.append( "string" )
+        else :
+          bp( __name__, inspect.stack()[0][3], "FATAL ERROR: clock only has schema arity 4, attempting to access index " + attID )
+  
+      elif isFact( subgoalName, cursor ) :
+        cursor.execute( "SELECT attType FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + subgoalName + "' AND FactAtt.attID=='" + str(attID) + "'" )
+        thisType = cursor.fetchone()
+        thisType = toAscii_str( thisType )
+        typeList.append( thisType )
+  
+      else : # it's a rule
+        cursor.execute( "SELECT attType FROM Rule,GoalAtt WHERE Rule.rid==GoalAtt.rid AND Rule.goalName=='" + subgoalName + "' AND GoalAtt.attID=='" + attID + "'" )
+        thisType = cursor.fetchone()
+        thisType = toAscii_str( thisType )
+        typeList.append( thisType )
+  
+    # make sure all types in type list agree
+    for t1 in typeList :
+      for t2 in typeList :
+        if not t1 == t2 :
+          bp( __name__, inspect.stack()[0][3], "FATAL ERROR : single variable has multiple type representations: " + str(typeList) + "\nAborting..." )
+  
+    return typeList[0]
+
+
+##################
+#  CONTAINS EQN  #
+##################
+# given a rule id, check if the rule has at least one equantion
+def containsEqn( rid, cursor ) :
+  # get all eqn info
+  cursor.execute( "SELECT eqn FROM Equation WHERE rid=='" + rid + "'" )
+  allEqns = cursor.fetchall()
+  allEqns = toAscii_list( allEqns )
+
+  if len( allEqns ) > 0 :
+    return True
+  else :
+    return False
+
 
 #########
 #  EOF  #
