@@ -1,0 +1,40 @@
+//
+// author: Dahlgren
+//
+// a fun example designed to test a subset of targetted functionality.
+// the program tests comparison of string and int
+//
+//
+// this program should fail and through an error!!!
+// 
+
+// awesome facts
+a1( "a", 1 )@1 ;
+a1( "a", 2 )@1 ;
+a1( "a", 3 )@1 ;
+
+a2( "a", "p" )@1 ;
+a2( "a", "x" )@1 ;
+a2( "b", "q" )@1 ;
+a2( "c", "r" )@1 ;
+
+a3( "a", "x" )@1 ;
+a3( "b", "y" )@1 ;
+a3( "c", "z" )@1 ;
+
+// brilliant rules
+//
+// apparently need to describe the fact tables as rules.
+// also works without the @next ops.
+a1( X, Y )@next :- a1( X, Y ) ;
+a2( X, Y )@next :- a2( X, Y ) ;
+a3( X, Y )@next :- a3( X, Y ) ;
+
+
+// should fail and throw an error!
+a_table( X, Y, Z ) :- a1( X, Y ), a2( X, Z ), Z == Y ; //comparing str and int
+
+ pre( X, Y, Z ) :- a_table( X, Y, Z ) ;
+post( X, Y, Z ) :- a_table( X, Y, Z ) ;
+
+

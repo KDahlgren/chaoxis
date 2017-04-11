@@ -5,16 +5,9 @@ dumpers.py
    Methods for dumping specific contents from the database.
 '''
 
-import os, sys
+import inspect, os, sys
 import tools
 
-# ------------------------------------------------------ #
-# import sibling packages HERE!!!
-#packagePath  = os.path.abspath( __file__ + "/../.." )
-#sys.path.append( packagePath )
-
-#from utils import *
-# ------------------------------------------------------ #
 
 #############
 #  GLOBALS  #
@@ -131,23 +124,14 @@ def ruleDump( cursor ) :
     # --------------------------------------------------------------- #
     #                         EQUATIONS                               #
 
-    # get list of sids for the subgoals of this rule
-    cursor.execute( "SELECT eid FROM Equation" ) # get list of eids for this rule
-    eqnIDs = cursor.fetchall()
-    eqnIDs = tools.toAscii_list( eqnIDs )
+    cursor.execute( "SELECT eid,eqn FROM Equation WHERE rid=='" + i + "'" ) # get list of eids for this rule
+    eqnList = cursor.fetchall()
+    eqnList = tools.toAscii_multiList( eqnList )
 
-    for e in range(0,len(eqnIDs)) :
-      currEqnID = eqnIDs[e]
-    
-      # get associated equation
-      if not currEqnID == None :
-        cursor.execute( "SELECT eqn FROM Equation WHERE rid == '" + str(i) + "' AND eid == '" + str(currEqnID) + "'" )
-        eqn = cursor.fetchone()
-        if not eqn == None :
-          eqn = tools.toAscii_str( eqn )
-
-          # convert eqn info to pretty string
-          newRule.append( "," + str(eqn) )
+    for e in eqnList :
+      eid = e[0]
+      eqn = e[1]
+      newRule.append( "," + str(eqn) )
 
     # --------------------------------------------------------------- #
 
@@ -221,11 +205,11 @@ def factDump( cursor ) :
 # input db cursor
 # output nothing, print all clock entries to stdout
 def clockDump( cursor ) :
-  if DUMPERS_DEBUG :
-    print "********************\nProgram Clock :"
-  clock = cursor.execute('''SELECT * FROM Clock''')
 
   if DUMPERS_DEBUG :
+    print "********************\nProgram Clock :"
+    clock = cursor.execute('''SELECT * FROM Clock''')
+
     for c in clock :
       print c
 
@@ -241,7 +225,8 @@ def reconstructRule( rid, cursor ) :
 
   # -------------------------------------------------------------- #
   #                           GOAL                                 #
-
+  # -------------------------------------------------------------- #
+  #
   # get goal name
   cursor.execute( "SELECT goalName FROM Rule WHERE rid == '" + rid + "'" ) # get goal name
   goalName    = cursor.fetchone()
@@ -257,7 +242,7 @@ def reconstructRule( rid, cursor ) :
   goalTimeArg = cursor.fetchone()
   goalTimeArg = tools.toAscii_str( goalTimeArg )
 
-  # convert goal info to pretty string
+  # convert goal info to string
   rule += goalName + "("
   for j in range(0,len(goalList)) :
     if j < (len(goalList) - 1) :
@@ -271,9 +256,11 @@ def reconstructRule( rid, cursor ) :
 
   # --------------------------------------------------------------- #
   #                         SUBGOALS                                #
+  # --------------------------------------------------------------- #
+  #
 
   # get list of sids for the subgoals of this rule
-  cursor.execute( "SELECT sid FROM Subgoals WHERE rid == '" + str(rid) + "'" ) # get list of sids for this rule
+  cursor.execute( "SELECT sid FROM Subgoals WHERE rid == '" + rid + "'" ) # get list of sids for this rule
   subIDs = cursor.fetchall()
   subIDs = tools.toAscii_list( subIDs )
 
@@ -303,9 +290,10 @@ def reconstructRule( rid, cursor ) :
       subTimeArg = tools.toAscii_str( subTimeArg )
 
       # get subgoal additional args
+      subAddArg = None
       cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + rid + "' AND sid == '" + s + "'" ) # get list of sids for this rule
       subAddArg = cursor.fetchone() # assume only one additional arg
-      if not subAddArg == None :
+      if subAddArg :
         subAddArg = tools.toAscii_str( subAddArg )
         subAddArg += " "
         newSubgoal += subAddArg
@@ -328,24 +316,16 @@ def reconstructRule( rid, cursor ) :
 
   # --------------------------------------------------------------- #
   #                         EQUATIONS                               #
+  # --------------------------------------------------------------- #
 
-  # get list of sids for the subgoals of this rule
-  cursor.execute( "SELECT eid FROM Equation" ) # get list of eids for this rule
-  eqnIDs = cursor.fetchall()
-  eqnIDs = tools.toAscii_list( eqnIDs )
+  cursor.execute( "SELECT eid,eqn FROM Equation WHERE rid=='" + rid + "'" ) # get list of eids for this rule
+  eqnList = cursor.fetchall()
+  eqnList = tools.toAscii_multiList( eqnList )
 
-  for e in range(0,len(eqnIDs)) :
-    currEqnID = eqnIDs[e]
-   
-    # get associated equation
-    if not currEqnID == None :
-      cursor.execute( "SELECT eqn FROM Equation WHERE rid == '" + rid + "' AND eid == '" + str(currEqnID) + "'" )
-      eqn = cursor.fetchone()
-      if not eqn == None :
-        eqn = tools.toAscii_str( eqn )
-
-        # convert eqn info to pretty string
-        rule += "," + str(eqn)
+  for e in eqnList :
+    eid = e[0]
+    eqn = e[1]
+    rule += "," + str(eqn)
 
   # --------------------------------------------------------------- #
 

@@ -33,7 +33,11 @@ def getAPR_list() :
 ########################
 #  DE DUPLICATE SETUP  #
 ########################
-def deDuplicateSetup() :
+# this script modifies the contents of FindAPR.cmake in the c4 submodule
+# prior to compilation.
+# need to ensure only one SET command exists in FindAPR.cmake after discovering
+# a valid apr library.
+def deduplicateSetup() :
   # http://stackoverflow.com/questions/4710067/deleting-a-specific-line-in-a-file-python
   # protect against multiple runs of setup
   f = open( C4_FINDAPR_PATH, "r+" )
@@ -55,6 +59,7 @@ def setAPR( path ) :
   #cmd = "echo '" + newCmd + "' | cat - " + C4_FINDAPR_PATH + " > temp && mv temp " + C4_FINDAPR_PATH
   cmd = "(head -48 " + C4_FINDAPR_PATH + "; " + "echo '" + newCmd + "'; " + "tail -n +49 " + C4_FINDAPR_PATH + ")" + " > temp ; mv temp " + C4_FINDAPR_PATH + ";"
   os.system( cmd )
+  os.system( "make deps" )
   os.system( "make c4" )
 
 
@@ -74,12 +79,23 @@ def checkForMakeError( path ) :
     os.system( "rm ./c4_out.txt" ) # clean up
   return flag
 
+
 ##########
 #  MAIN  #
 ##########
 def main() :
-  print "Running pyLDFI setup with : \n" + str(sys.argv)
-  
+  print "Running pyLDFI setup with args : \n" + str(sys.argv)
+
+  # clean any existing libs
+  os.system( "make clean" )
+
+  # download submodules
+  os.system( "make get-submodules" )
+  # copy over template c4 main
+  print "Copying template c4 main ..."
+  os.system( "cp ./src/templateFiles/c4i_template.c ./lib/c4/src/c4i/c4i.c" )
+  print "...done copying template c4 main."
+
   # ---------------------------------------------- #
   # run make for c4
   # find candidate apr locations
@@ -88,8 +104,13 @@ def main() :
   # set correct apr location
   flag    = True
   for path in apr_path_cands :
-    deDuplicateSetup()
+    try :
+      deduplicateSetup()
+    except IOError :
+      setAPR( path )
+
     setAPR( path )
+
     try :
       flag = checkForMakeError( path )
     except IOError :
@@ -99,14 +120,10 @@ def main() :
     if flag :
       print ">>> C4 installed successfully <<<"
       print "... Done installing C4 Datalog evaluator"
+      print "C4 install using APR path : " + path
       break
-    print "C4 install using APR path : " + path
+  # ---------------------------------------------- #
 
-  # ---------------------------------------------- #
-  # copy over template c4 main
-  os.system( "cp ./src/templateFiles/c4i_template.c ./lib/c4/src/c4i/c4i.c" )
- 
-  # ---------------------------------------------- #
   # run make for everything else
   os.system( "make" )
   

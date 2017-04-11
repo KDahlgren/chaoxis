@@ -27,13 +27,18 @@ CLOCKTOOLS_DEBUG = False
 # input the list of attributes form the first subgoal in the rule, IR db cursor
 # output nothing, modified IR DB
 def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv, cursor ) :
-  baseAtt = firstSubgoalAtts[0]
+
+  # grab a non-constant attribute
+  for att in firstSubgoalAtts :
+    if (not '"' in att) and (not "'" in att) :
+      baseAtt = att
 
   if CLOCKTOOLS_DEBUG :
     print "CLOCKTOOLS_DEBUG: For rule : " + str( dumpers.reconstructRule( rid, cursor ) + "\n    firstSubgoalAtts = " + str(firstSubgoalAtts) )
 
+  # iterate over all first atts
   for c in firstSubgoalAtts :
-    if not c == baseAtt :
+    if (not c == baseAtt) and ( (not '"' in att) and (not "'" in att) ) :
       sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in deductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
 
   # get first att in first subgoal, assume specifies 'sender' node
@@ -65,11 +70,13 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   # save subgoal attributes
   cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
   rawMaxID = cursor.fetchone()
-  newAttID = int(rawMaxID[0]) + 1
+  #newAttID = int(rawMaxID[0]) + 1
+  newAttID = 0
   for attName in subgoalAttList :
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
-    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
+    #cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
+    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
     newAttID += 1
 
   # save subgoal additional args
@@ -94,7 +101,7 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
 
   for c in firstSubgoalAtts :
     if not c == baseAtt :
-      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in deductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
+      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in inductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
 
   # get first att in first subgoal, assume specifies 'sender' node
   firstAtt = baseAtt
@@ -125,11 +132,13 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   # save subgoal attributes
   cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
   rawMaxID = cursor.fetchone()
-  newAttID = int(rawMaxID[0]) + 1
+  #newAttID = int(rawMaxID[0]) + 1
+  newAttID = 0
   for attName in subgoalAttList :
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
-    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
+    #cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
+    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
     newAttID += 1
 
   # save subgoal additional args
@@ -139,6 +148,7 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   # reset variables for next async rule
   firstSubgoalAtts = []
   firstGoalAtt     = ""
+
 
 #############################
 #  ADD CLOCK SUBGOAL ASYNC  #
@@ -153,7 +163,7 @@ def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAt
 
   for c in firstSubgoalAtts :
     if not c == baseAtt :
-      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in deductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
+      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in async rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
 
   # get first att in first subgoal, assume specifies 'sender' node
   firstAtt = baseAtt
@@ -180,11 +190,13 @@ def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAt
   # save subgoal attributes
   cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
   rawMaxID = cursor.fetchone()
-  newAttID = int(rawMaxID[0]) + 1
+  #newAttID = int(rawMaxID[0]) + 1
+  newAttID = 0
   for attName in subgoalAttList :
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
-    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
+    #cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
+    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
     newAttID += 1
 
   # save subgoal additional args

@@ -6,17 +6,16 @@
 #  IMPORTS  #
 #############
 # standard python packages
-import os, sys
+import inspect, os, sys
 
-# import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/.." )
-sys.path.append( packagePath )
-import DerivTree
+import DerivTree, provTools, GoalNode, FactNode
+
+packagePath1  = os.path.abspath( __file__ + "/.." )
+sys.path.append( packagePath1 )
 from Node import Node
 
-packagePath1  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath1 )
-
+packagePath2  = os.path.abspath( __file__ + "/../.." )
+sys.path.append( packagePath2 )
 from utils import tools
 
 # **************************************** #
@@ -25,95 +24,223 @@ DEBUG = True
 
 class RuleNode( Node ) :
 
+  # --------------------------------- #
   #####################
   #  SPECIAL ATTRIBS  #
   #####################
-  ruleInfo    = None   # dictionary of all data related to the rule
-  descendants = []
+  descendants   = []
+  prid          = None
+  provAttMap    = None
+  triggerRecord = None
+
+  # --------------------------------- #
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, name, ruleInfo, record , bindings ) :
-    Node.__init__( self, "rule", name, record, bindings )
-    self.ruleInfo = ruleInfo
+  def __init__( self, name, prid, provAttMap, record, results, cursor ) :
 
-  #######################
-  #  CLEAR DESCENDANTS  #
-  #######################
-  def clearDescendants( self ) :
-    self.descendants = []
+    # ///////////////////////////////////////////////////////// #
+    # NODE CONSTRUCTOR: treeType, name, isNeg, record, program results, db cursor
+    Node.__init__( self, "rule", name, False, record, results, cursor )
 
-  #####################
-  #  GET DESCENDANTS  #
-  #####################
-  def getDescendants( self ) :
-    return self.descendants
+    # ///////////////////////////////////////////////////////// #
+    # collect parent goal data
+    self.prid          = prid
+    self.provAttMap    = provAttMap
+    self.triggerRecord = record
 
-  ################
-  #  PRINT TREE  #
-  ################
-  def printTree( self ) :
-    print "********************************"
-    print "           RULE NODE"
-    print "********************************"
-    print "ruleInfo :" + str( self.ruleInfo )
-    print "record   :" + str( self.record   )
-    print "bindings :" + str( self.bindings )
-    print "[ DESCENDANTS ]"
-    for d in self.descendants :
-      d.printDerivTree()
+    # ///////////////////////////////////////////////////////// #
+    # fill in provenance attribute mapping Nones with data from 
+    # the trigger record.
+    fullProvMap = self.getFullMap()
 
-  ################
-  #  PRINT NODE  #
-  ################
-  def printNode( self ) :
-    return "RULENODE: " + str( self.ruleInfo ) + "; \nbindings = " + str( self.bindings )
+    #tools.bp( __name__, inspect.stack()[0][3], "fullProvMap = " + str(fullProvMap) )
 
-  ########################
-  #  GET ORIG RULE DATA  #
-  ########################
-  def getRuleInfo( self ) :
-    return self.ruleInfo
+    # ///////////////////////////////////////////////////////// #
+    # get all subgoal info:
+    #   subgoal names and subgoal attribute mappings, given 
+    #   the fullProvMap
+    subgoalInfo = self.getSubgoalInfo( fullProvMap )
+
+    # ///////////////////////////////////////////////////////// #
+    # extract subgoal trigger records based on the subgoal 
+    # att maps
+    subgoalSeedRecords = self.getSubgoalSeedRecords( subgoalInfo )
+
+    # ///////////////////////////////////////////////////////// #
+    # launch descendants
+    self.descendants = [] # needed or else pyDot creates WAAAAAAAAY too many edges for some reason??? <.<
+    self.setDescendants( subgoalSeedRecords )
+
+    if DEBUG :
+      print "RULE NODE " + str( self.name ) + str(self.record) + " has " + str( len( self.descendants ) ) + " descendants.>"
+      for d in self.descendants :
+        print "   d = " + str( d.root )
+
+
+  #############
+  #  __STR__  #
+  #############
+  # the string representation of a RuleNode
+  def __str__( self ) :
+    return "rule-> "+ self.name + "(" + str(self.record) + ")"
+
+
+  ##################
+  #  GET FULL MAP  #
+  ##################
+  # return a version of the provAttMap with all None's replaced with 
+  # appropriate data from the trigger record
+  def getFullMap( self ) :
+
+    # sanity check
+    # the arity of the provenance schema must equal
+    # the arity of the trigger record.
+    if not len( self.provAttMap ) == len( self.triggerRecord ) :
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : the arity of the provenance schema does not equal the arity of the provenance trigger record...You got serious probs =[\nself.provAttMap = " + str(self.provAttMap) + "\nself.triggerRecord = " + str(self.triggerRecord) )
+
+    fullProvAttMap = []
+    for i in range(0,len(self.provAttMap)) :
+      attValPair = self.provAttMap[ i ]
+      att = attValPair[0]
+      val = attValPair[1]
+      recval = self.triggerRecord[ i ]
+
+      if val == None :
+        fullProvAttMap.append( [ att, recval ] )
+      elif val == recval :
+        fullProvAttMap.append( attValPair )
+      else :
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : the attribute mappings for the provenance rule do not agree with the data in the provenance trigger rule...You got serious probs, mate =[\nself.provAttMap = " + str(self.provAttMap) + "\nself.triggerRecord = " + str(self.triggerRecord) )
+      
+    return fullProvAttMap
+
+
+  ######################
+  #  GET SUBGOAL INFO  #
+  ######################
+  # return an array of binary arrays connecting each subgoal name
+  # with a corresponding array of binary arrays connecting 
+  # the subgoal attributes with appropriate values, as specified 
+  # by the fullProvMap.
+  def getSubgoalInfo( self, fullProvMap ) :
+    # ------------------------------------------------------------- #
+    # Transform the provAttMap into a dictionary for convenience.
+    fullProvDict = {}
+    for arr in fullProvMap :
+      att = arr[0]
+      val = arr[1]
+
+      # sanity check
+      if att in fullProvDict.keys() and not val == fullProvDict[ att ] :
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : multiple data values exist for the same attribute.\nattribute = " + att + "\nval = " + val + " and ogattDict[ att ] = " + fullProvDict[ att ] )
+      else : # add to dictionary
+        fullProvDict[ att ] = val
+    # ------------------------------------------------------------- #
+
+    subgoalInfo = []
+
+    # get the list of subgoals
+    self.cursor.execute( "SELECT sid,subgoalName FROM Subgoals WHERE rid=='" + self.prid + "'" )
+    subIDNameList = self.cursor.fetchall()
+    subIDNameList = tools.toAscii_multiList( subIDNameList )
+
+    # for each sid, grab the subgoal attribute list and the isNeg
+    for idNamePair in subIDNameList :
+      sid     = idNamePair[0]
+      subname = idNamePair[1]
+
+      # get the attribute list for this subgoal
+      self.cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid=='" + self.prid + "' AND sid=='" + sid + "'" )
+      attList = self.cursor.fetchall()
+      attList = tools.toAscii_multiList( attList )
+      attList = [ idNamePair[1] for idNamePair in attList ]
+
+      # get the isNeg information
+      self.cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid=='" + self.prid + "' AND sid=='" + sid + "'" )
+      isNeg = self.cursor.fetchone()
+      if isNeg :
+        isNeg = tools.toAscii_str( isNeg )
+      else :
+        isNeg = ""
+
+      # ///////////////////////////////////////////////////////// #
+      # Map each attribute to a value based on the mappings from 
+      # the full provAttMap.
+      thisSubAttMap = []
+      for att in attList :
+        #if att == "__WILDCARD__" :
+        if att == "_" :
+          thisSubAttMap.append( [ att, None ] )
+        elif att in fullProvDict.keys() :
+          thisSubAttMap.append( [ att, fullProvDict[ att ] ] )
+        else :
+          thisSubAttMap.append( [ att, None ] )
+
+      subgoalInfo.append( [ subname, isNeg, thisSubAttMap ] )
+      # ///////////////////////////////////////////////////////// #
+
+    return subgoalInfo
+
+
+  ##############################
+  #  GET SUBGOAL SEED RECORDS  #
+  ##############################
+  # return subgoal trigger records, as suggested by the subgoal att mappings
+  def getSubgoalSeedRecords( self, subgoalInfo ) :
+
+    subgoalSeedRecords = []
+
+    for subgoal in subgoalInfo :
+      subname = subgoal[0]
+      isNeg   = subgoal[1]
+      attMap  = subgoal[2]
+
+      triggerRec = []
+      for attPair in attMap :
+        attName = attPair[0]
+        val     = attPair[1]
+
+        if attName == "_" :
+          triggerRec.append( "_" )
+        else :
+          triggerRec.append( val )
+
+      subgoalSeedRecords.append( [ subname, isNeg, triggerRec ] )
+
+    return subgoalSeedRecords
+
 
   #####################
   #  SET DESCENDANTS  #
   #####################
-  def setDescendants( self, results, cursor ) :
-    if DEBUG :
-      print "self.ruleInfo = " + str(self.ruleInfo)
-      #sys.exit( "self.ruleInfo = " + str(self.ruleInfo) )
+  # rule nodes have one or more descendants.
+  # all descendants are goal nodes.
+  def setDescendants( self, subgoalSeedRecords ) :
 
-    for sub in self.ruleInfo :
-      isNeg   = sub[0]
-      name    = sub[1]
-      attList = sub[2]
+    # iterate over subgoals
+    for subgoal in subgoalSeedRecords :
+      subName    = subgoal[0]
+      seedRecord = subgoal[2]
 
-      if DEBUG :
-        print "sub              = " + str(sub)
-        print "self.descendants = " + str(self.descendants)
-
-      # fact descendants
-      if tools.isFact( name, cursor ) :
-        newFactNode = DerivTree.DerivTree( name, "fact", isNeg, self.record, results, cursor, attList, self.bindings )
-        self.descendants.append( newFactNode )
-
-      # goal descendants
+      # handle isNeg for this subgoal
+      isNeg_str = subgoal[1]
+      if isNeg_str == "" :
+        isNeg = False
       else :
-        newGoalNode = DerivTree.DerivTree( name, "goal", isNeg, self.record, results, cursor, attList, self.bindings )
-        self.descendants.append( newGoalNode )
+        isNeg = True
 
-    if DEBUG :
-      print ">>> DEBUGGING RULE INFO <<<"
-      print "RULE : name = " + self.name + ", record = " + str(self.record)
-      print "self.descendants = " + str(self.descendants)
-      descList = self.descendants
-      for desc in descList :
-        print "treeType = " + desc.root.treeType
-        print desc.root.printNode()
-      print "********************************"
+      # spawn the descendant goal node
+      self.spawnNode( subName, isNeg, seedRecord )
 
-    #sys.exit( "BREAKPOINT" )
+
+  ################
+  #  SPAWN NODE  #
+  ################
+  def spawnNode( self, subName, isNeg, seedRecord ) :
+    self.descendants.append( DerivTree.DerivTree( subName, None, "goal", isNeg, None, seedRecord, self.results, self.cursor ) )
+
 
 #########
 #  EOF  #

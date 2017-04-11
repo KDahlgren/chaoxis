@@ -6,7 +6,7 @@ tools.py
    sanity-check particular properties.
 '''
 
-import os, random, re, string, sys, numbers
+import inspect, os, random, re, string, sys, numbers
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -23,6 +23,12 @@ operators = [ "+", "-", "*", "/", "<", ">", "<=", ">=", "==" ]
 #############
 TOOLS_DEBUG = False
 
+
+#####################
+#  BREAKPOINT (bp)  #
+#####################
+def bp( filename, funcname, msg ) :
+  sys.exit( "BREAKPOINT in file " + filename + " at function " + funcname + " :\n>>> " + msg )
 
 ############
 #  GET ID  #
@@ -113,8 +119,17 @@ def getEvalResults_file_c4( path ) :
 def checkIfRewrittenAlready( rid, cursor ) :
   cursor.execute( "SELECT rewritten FROM Rule WHERE rid == '" + rid + "'" )
   flag = cursor.fetchone()
-  flag = flag[0]
-  if flag == 0 :
+
+  #print "checkIfRewrittenAlready : rid = " + rid
+  if flag == None :
+    cursor.execute( "SELECT * FROM Rule WHERE rid=='" + rid + "'" )
+    info = cursor.fetchall()
+    info = toAscii_multiList( info )
+    print "info = \n" + str(info)
+    tools.bp( __name__, inspect.stack()[0][3], "flag is none" )
+
+  #print "flag = " + str(flag)
+  if flag[0] == "False" :
     return False
   else :
     if TOOLS_DEBUG :
@@ -320,7 +335,7 @@ def attSearchPass2( pydatalogRule ) :
 # check if a particular string corresponds to the name of a fact table.
 def isFact( goalName, cursor ) :
     attIDsName = None
-    cursor.execute( "SELECT attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name == '" + str(goalName) + "'" )
+    cursor.execute( "SELECT attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(goalName) + "'" )
     attIDsNames = cursor.fetchall()
     attIDsNames = toAscii_multiList( attIDsNames )
 
