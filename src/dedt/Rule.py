@@ -526,6 +526,9 @@ class Rule :
         if not t1 == t2 :
           tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : data types not uniform for fact declarations of name '" + factName + "' along index attID = " + str(attID) + "\n typeList = " + str(typeList) )
 
+    if len( typeList ) == 0 :
+      tools.bp( __name__, inspect.stack()[0][3], "factName = " + factName )
+
     return typeList[0]
 
 
