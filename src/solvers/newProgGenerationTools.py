@@ -295,6 +295,31 @@ def setNewClock( parsedClockRecords, irCursor ) :
     # execute query
     irCursor.execute( query )
 
+    # update crash table
+    # (using the long way because the sql statements were tempermental)
+    # (easy future update: make this less clunky)
+
+    # grab all the dropped clock facts
+    irCursor.execute( "SELECT src,dest,sndTime,delivTime,simInclude FROM Clock WHERE simInclude=='False'" )
+    clockTable = irCursor.fetchall()
+    clockTable = tools.toAscii_multiList( clockTable )
+
+    # grab the entire contents of crash
+    irCursor.execute( "SELECT src,dest,sndTime,delivTime,simInclude FROM Crash" )
+    crashTable = irCursor.fetchall()
+    crashTable = tools.toAscii_multiList( crashTable )
+
+    # if the dropped clock fact does not already exist in crash table,
+    # then add the fact to crash table.
+    for row in clockTable :
+      if not row in crashTable :
+        src        = row[0]
+        dest       = row[1]
+        sndTime    = row[2]
+        delivTime  = row[3]
+        simInclude = row[4]
+        irCursor.execute( "INSERT INTO Crash (src,dest,sndTime) VALUES ('" + src + "','" + dest + "','" + str(sndTime) + "')" )
+
 
 ###############
 #  COPY PROG  #

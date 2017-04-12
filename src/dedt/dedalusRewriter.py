@@ -131,52 +131,57 @@ def rewriteDeductive( cursor ) :
         subgoalName = tools.toAscii_str( subgoalName )
         # ......................................... #
 
-        addArg = None
-
-        # get time arg for subgoal
-        cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid = '" + rid + "' AND sid = '" + s + "'" )
-        timeArg = cursor.fetchone()
-        timeArg = tools.toAscii_str( timeArg )
-
-        # add Time as a subgoal attribute
-        cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
-        rawMaxID = cursor.fetchone() # int type
-        newAttID = int(rawMaxID[0] + 1)
-        cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "','int')")
-
-        # replace subgoal time attribute with numeric time arg
-        if timeArg.isdigit() :
-          cursor.execute( "SELECT attName FROM SubgoalAtt WHERE sid = '" + s + "'" )
-          satts = cursor.fetchall()
-          satts = tools.toAscii_list( satts )
-
-          # ......................................... #
-          #if goalName == "pre" :
-          #  if subgoalName == "bcast" :
-          #    print " timeArg = " + str(timeArg)
-          #    print " satts   = " + str(satts)
-          #    tools.bp( __name__, inspect.stack()[0][3], "___ASDFASLKDHFWER" )
-          # ......................................... #
-
-          for i in range(0,len(satts)) :
-            if satts[i] == timeAtt_snd :
-              cursor.execute( "UPDATE SubgoalAtt SET attName='" + timeArg + "' WHERE rid = '" + rid + "' AND sid = '" + s + "' AND attID = '" + str(i) + "'")
-
-        # collect the additional argument (aka notin for c4)
-        cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE SubgoalAddArgs.rid == '" + rid + "' AND SubgoalAddArgs.sid == '" + s + "'"  )
-        addArg = cursor.fetchone()
-        if addArg :
-          addArg = tools.toAscii_str( addArg )
-
-        # while we're here, collect the first attribute of this subgoal
-        cursor.execute("SELECT attName FROM SubgoalAtt WHERE SubgoalAtt.sid == '" + s + "' AND SubgoalAtt.attID == '" + str(0) + "'")
-        firstAtt = cursor.fetchone()
-        if (not firstAtt == None) and (not addArg == "notin") :
-          firstAtt = tools.toAscii_str( firstAtt )
-          firstSubgoalAtts.append( firstAtt )
+        # do not add an extra attribute to crash
+        if subgoalName == "crash" :
+          #tools.bp( __name__, inspect.stack()[0][3], "hit crash" )
+          pass
         else :
-          if DEDALUSREWRITER_DEBUG :
-            print "firstAtt = " + str(firstAtt)
+          addArg = None
+
+          # get time arg for subgoal
+          cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid = '" + rid + "' AND sid = '" + s + "'" )
+          timeArg = cursor.fetchone()
+          timeArg = tools.toAscii_str( timeArg )
+
+          # add Time as a subgoal attribute
+          cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
+          rawMaxID = cursor.fetchone() # int type
+          newAttID = int(rawMaxID[0] + 1)
+          cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "','int')")
+
+          # replace subgoal time attribute with numeric time arg
+          if timeArg.isdigit() :
+            cursor.execute( "SELECT attName FROM SubgoalAtt WHERE sid = '" + s + "'" )
+            satts = cursor.fetchall()
+            satts = tools.toAscii_list( satts )
+
+            # ......................................... #
+            #if goalName == "pre" :
+            #  if subgoalName == "bcast" :
+            #    print " timeArg = " + str(timeArg)
+            #    print " satts   = " + str(satts)
+            #    tools.bp( __name__, inspect.stack()[0][3], "___ASDFASLKDHFWER" )
+            # ......................................... #
+
+            for i in range(0,len(satts)) :
+              if satts[i] == timeAtt_snd :
+                cursor.execute( "UPDATE SubgoalAtt SET attName='" + timeArg + "' WHERE rid = '" + rid + "' AND sid = '" + s + "' AND attID = '" + str(i) + "'")
+
+          # collect the additional argument (aka notin for c4)
+          cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE SubgoalAddArgs.rid == '" + rid + "' AND SubgoalAddArgs.sid == '" + s + "'"  )
+          addArg = cursor.fetchone()
+          if addArg :
+            addArg = tools.toAscii_str( addArg )
+
+          # while we're here, collect the first attribute of this subgoal
+          cursor.execute("SELECT attName FROM SubgoalAtt WHERE SubgoalAtt.sid == '" + s + "' AND SubgoalAtt.attID == '" + str(0) + "'")
+          firstAtt = cursor.fetchone()
+          if (not firstAtt == None) and (not addArg == "notin") :
+            firstAtt = tools.toAscii_str( firstAtt )
+            firstSubgoalAtts.append( firstAtt )
+          else :
+            if DEDALUSREWRITER_DEBUG :
+              print "firstAtt = " + str(firstAtt)
 
       # sanity checking branch
       if len( firstSubgoalAtts ) > 0 :

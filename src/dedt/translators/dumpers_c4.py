@@ -226,6 +226,53 @@ def dump_clock( cursor ) :
 
   return formattedClockFactsList
 
+
+################
+#  DUMP CRASH  #
+################
+# dump and format all clock facts in c4 overlog
+def dump_crash( cursor ) :
+
+  if DUMPERS_C4_DEBUG :
+    print "...running dumpers_c4 dump_crash..."
+
+  formattedCrashFactsList = []
+
+  cursor.execute( "SELECT src, dest, sndTime FROM Crash" )
+  crashFacts = cursor.fetchall()
+  crashFacts = tools.toAscii_multiList( crashFacts )
+
+  if len( crashFacts ) < 1 :
+    #tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : crash table is empty." )
+    cursor.execute( "INSERT INTO Crash (src,dest,sndTime) VALUES ('NULL','NULL','99999999')" )
+    cursor.execute( "SELECT src, dest, sndTime FROM Crash" )
+    crashFacts = cursor.fetchall()
+    crashFacts = tools.toAscii_multiList( crashFacts )
+    if DUMPERS_C4_DEBUG :
+      print "crashFacts = " + str(crashFacts)
+
+  if DUMPERS_C4_DEBUG :
+    print "dump_crash: crashFacts = " + str(crashFacts)
+
+  for c in crashFacts :
+    if DUMPERS_C4_DEBUG :
+      print "c = " + str(c)
+
+    crashF = 'crash('
+    for i in range(0,len(c)) :
+      currData = c[i]
+      if i < 2 :
+        crashF += '"' + currData + '",'
+      else :
+        crashF += str(currData)
+        if i < len(c)-1 :
+          crashF += ","
+    crashF += ");" + "\n" # all crash facts end with a semicolon
+    formattedCrashFactsList.append( crashF )
+
+  return formattedCrashFactsList
+
+
 #########
 #  EOF  #
 ######### 

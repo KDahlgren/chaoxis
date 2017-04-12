@@ -194,7 +194,13 @@ def c4datalog( cursor ) :
   # add clock define
 
   definesList.append( "define(clock,{string,string,int,int});\n" )
-  tableListStr += "clock"
+  tableListStr += "clock,"
+
+  # ----------------------------------------------------------- #
+  # add crash define
+
+  definesList.append( "define(crash,{string,string,int});\n" )
+  tableListStr += "crash"
 
   # ----------------------------------------------------------- #
   # add facts
@@ -216,6 +222,12 @@ def c4datalog( cursor ) :
   if C4_TRANSLATOR_DEBUG :
     print "c4_translator: clockFactList = " + str( clockFactList )
 
+  # ----------------------------------------------------------- #
+  # add crash facts
+
+  crashFactList = dumpers_c4.dump_crash( cursor )
+  if C4_TRANSLATOR_DEBUG :
+    print "c4_translator: crashFactList = " + str( crashFactList )
 
   # ----------------------------------------------------------- #
   # add rules
@@ -276,7 +288,7 @@ def c4datalog( cursor ) :
     print "ruleList :"
     print ruleList
 
-  listOfStatementLists = [ definesList, factList, clockFactList, ruleList ]
+  listOfStatementLists = [ definesList, factList, clockFactList, crashFactList, ruleList ]
   program              = tools.combineLines( listOfStatementLists )
 
   testpath        = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"

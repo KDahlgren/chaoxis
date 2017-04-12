@@ -45,6 +45,8 @@ SOLVE_TREE_CNF_ON       = True  # toggle CNF solve
 C4_DUMP_SAVEPATH        = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
 FINAL_FI_SOLN_SAVEPATH  = os.path.abspath( __file__ + "/../../.." ) + "/save_data/fault_injection_solns/"
 
+CMDLINE_RESULTS_OUTPUT  = True
+
 
 ################
 #  PARSE ARGS  #
@@ -182,6 +184,25 @@ def driver() :
     prevTriedSoln = currentTriedSoln
 
   # =================================================================== #
+
+  if DRIVER_DEBUG :
+    irCursor.execute( "SELECT * FROM Crash" )
+    res = irCursor.fetchall()
+    res = tools.toAscii_multiList( res )
+    print "//////////////////////"
+    print "CONTENTS OF Crash:"
+    for tup in res :
+      print tup
+    print "//////////////////////"
+    print "NUMBER OF CORE ITERATIONS : " + str(ITER_COUNT+1)
+
+  # -------------------------------------------- #
+
+  if CMDLINE_RESULTS_OUTPUT :
+    print "//////////////////////"
+    print "Fault Hypothesis:"
+    print
+    print "//////////////////////"
 
   # -------------------------------------------- #
   # cleanUp saved db stuff

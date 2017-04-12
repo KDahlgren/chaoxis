@@ -22,13 +22,12 @@ log(Node, Pload)@next :- log(Node, Pload) ;
 log(Node2, Pload)@async :- bcast(Node1, Pload), node(Node1, Node2) ;
 
 // if a node sends a message, the event will be recorded in the node's personal log.
-log(Node, Pload) :- bcast(Node, Pload); //asdkjahsdf lkj
+log(Node, Pload) :- bcast(Node, Pload);
 
 // someone has a log, but not me.
-missing_log(A, Pl) :- log(X, Pl), node(X, A), notin log(A, Pl);//, notin crash(_, A, _);
-//missing_log(A, Pl) :- notin log(A, Pl), log(X, Pl), node(X, A) ;
+missing_log(A, Pl) :- log(X, Pl), node(X, A), notin crash(_, A, _), notin log(A, Pl) ;
 
 // invariants
-pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1 ;//, notin crash(X, X, _);
+pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1, notin crash(X, X, _);
 post(X, Pl) :- log(X, Pl), notin missing_log(_, Pl);
 
