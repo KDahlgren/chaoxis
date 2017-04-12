@@ -59,7 +59,7 @@ def setAPR( path ) :
   #cmd = "echo '" + newCmd + "' | cat - " + C4_FINDAPR_PATH + " > temp && mv temp " + C4_FINDAPR_PATH
   cmd = "(head -48 " + C4_FINDAPR_PATH + "; " + "echo '" + newCmd + "'; " + "tail -n +49 " + C4_FINDAPR_PATH + ")" + " > temp ; mv temp " + C4_FINDAPR_PATH + ";"
   os.system( cmd )
-  os.system( "make deps" )
+  #os.system( "make deps" )
   os.system( "make c4" )
 
 
@@ -125,7 +125,7 @@ def main() :
   # ---------------------------------------------- #
 
   # run make for everything else
-  os.system( "make" )
+  #os.system( "make" )
   
 
 
