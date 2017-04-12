@@ -18,7 +18,7 @@ from utils import tools
 #############
 #  GLOBALS  #
 #############
-DUMPERS_C4_DEBUG = True
+DUMPERS_C4_DEBUG = False
 
 #########################
 #  DUMP SINGLE FACT C4  #

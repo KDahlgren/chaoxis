@@ -21,8 +21,8 @@ from dedt  import Rule
 #############
 #  GLOBALS  #
 #############
-C4_TRANSLATOR_DEBUG   = True
-C4_TRANSLATOR_DEBUG_1 = True
+C4_TRANSLATOR_DEBUG   = False
+C4_TRANSLATOR_DEBUG_1 = False
 
 
 #####################
@@ -84,7 +84,9 @@ def c4datalog( cursor ) :
 
     # ////////////////////////////////////////////////////////// #
     # populate defines list for rule goals
-    print "In c4datalog: definesList = " + str(definesList)
+    if C4_TRANSLATOR_DEBUG :
+      print "In c4datalog: definesList = " + str(definesList)
+
     if not existingDefine( goalName, definesNames ) : # prevent duplicates
 
       # get goal attribute list
@@ -138,9 +140,11 @@ def c4datalog( cursor ) :
     factName = cursor.fetchone()
     factName = tools.toAscii_str( factName )
 
-    print "**> factName = " + factName
+    if C4_TRANSLATOR_DEBUG :
+      print "**> factName = " + factName
 
-    print "In c4datalog: definesList = " + str(definesList)
+    if C4_TRANSLATOR_DEBUG :
+      print "In c4datalog: definesList = " + str(definesList)
     if not existingDefine( factName, definesNames ) : # prevent duplicates
 
       # populate table string

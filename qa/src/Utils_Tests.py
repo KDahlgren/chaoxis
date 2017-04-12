@@ -45,7 +45,7 @@ class Utils_Tests( unittest.TestCase ) :
 
   def test_extractSubgoalList_extractors( self ) :
     inputArg  = [ 'node', '(', 'Node', ',', 'Neighbor', ')', '@', 'next', ':-', 'node', '(', 'Node', ',', 'Neighbor', ')' ]
-    outputResult = [ [ 'node', '(', 'Node', ',', 'Neighbor', ')' ] ]
+    outputResult = [ 'node(Node,Neighbor)' ]
     self.assertEqual( extractors.extractSubgoalList( inputArg ), outputResult )
 
   def test_extractTimeArg_extractors( self ) :
@@ -60,7 +60,11 @@ class Utils_Tests( unittest.TestCase ) :
 
   def test_extractSubgoalName_extractors( self ) :
     inputArg  = [ 'node', '(', 'Node', ',', 'Neighbor', ')', ';' ]
-    outputResult = "node"
+    outputResult = ["node"]
+    self.assertEqual( extractors.extractSubgoalName( inputArg ), outputResult )
+    
+    inputArg  = [ 'notin', 'node', '(', 'Node', ',', 'Neighbor', ')', ';' ]
+    outputResult = ["notin", "node"]
     self.assertEqual( extractors.extractSubgoalName( inputArg ), outputResult )
 
   def test_extractName_extractors( self ) :

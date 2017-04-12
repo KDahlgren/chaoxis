@@ -107,7 +107,7 @@ def extractEqnList( parsedLine ) :
 #  EXTRACT SUBGOAL LIST  #
 ##########################
 # input rule
-# ouput list of subgoal arrays
+# ouput list of unparsed subgoal arrays
 
 def extractSubgoalList( parsedLine ) :
 
@@ -311,7 +311,7 @@ def extractSubgoalName( substr ) :
 
   for i in range(0,len(substr)) :
     if substr[i] == "(" :
-      return substr[:i]
+      return substr[:i] # protects prepended args such as 'notin'
 
   return None # hit an equation
 

@@ -80,7 +80,7 @@ def dedToIR( filename, cursor ) :
       attList = attList[0].split( "," )
       timeArg = extractors.extractTimeArg( line[1] )
 
-      if True :
+      if DEDT_DEBUG :
         print "dedt sanity check:"
         print "fact name    = " + name
         print "fact attList = " + str(attList)

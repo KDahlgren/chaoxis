@@ -16,7 +16,7 @@ sys.path.append( packagePath )
 from utils import dumpers, extractors, tools
 # ------------------------------------------------------ #
 
-DEBUG = True
+DEBUG = False
 
 opList = [ "notin" ] # TODO: make this configurable
 arithOps = [ "+", "-", "*", "/" ]
@@ -221,7 +221,7 @@ class Rule :
     eqnIDs = self.cursor.fetchall()
     eqnIDs = tools.toAscii_list( eqnIDs )
 
-    eqnList = ""
+    eqnList = None
 
     # iterate over equations in rule
     for e in range(0,len(eqnIDs)) :
@@ -403,7 +403,8 @@ class Rule :
         allAttTypeMaps[ hatt ] = 'int'
         continue
 
-      print "hatt = " + hatt
+      if DEBUG :
+        print "hatt = " + hatt
 
       candSubs = [] # list of subgoal names containing the hatt attribute and index at which hatt appears.
 
@@ -427,7 +428,9 @@ class Rule :
           subattID = sub[1]
 
           if tools.isFact( subName, self.cursor ) :
-            print "subName = " + subName
+            if DEBUG :
+              print "subName = " + subName
+
             allAttTypeMaps[ hatt ] = self.getFactType( subName, subattID )
             flag_DoNotExit = False
             break # break out of candSubs loop
@@ -542,7 +545,8 @@ class Rule :
 
     atts_inRuleBody = subatts
 
-    print "subNameAndAtts = " + str(subNameAndAtts)
+    if DEBUG :
+      print "subNameAndAtts = " + str(subNameAndAtts)
 
     # --------------------------------------------------- #
     #     BASE CASE 1 !!! => subgoal references a fact
@@ -563,9 +567,10 @@ class Rule :
     else :
       sub_as_rule     = self.getRuleHeadAtts( subname )
 
-      print "subname     = " + str(subname)
-      print "subatts     = " + str(subatts)
-      print "sub_as_rule = " + str(sub_as_rule)
+      if DEBUG :
+        print "subname     = " + str(subname)
+        print "subatts     = " + str(subatts)
+        print "sub_as_rule = " + str(sub_as_rule)
 
       chosen_rid      = sub_as_rule[0]
       atts_asRuleHead = sub_as_rule[1]
@@ -575,18 +580,23 @@ class Rule :
       allAttTypeMaps          = self.allAttTypeMapsDriver( bodyparse )
       atts_asRuleHead_typeMap = self.mapTypes_preprocessed( atts_asRuleHead, allAttTypeMaps )
 
-      print "subRule                 = " + str(subRule)
-      print "bodyparse               = " + str(bodyparse)
-      print "allAttTypeMaps          = " + str(allAttTypeMaps)
-      print "atts_asRuleHead_typeMap = " + str(atts_asRuleHead_typeMap)
+      if DEBUG :
+        print "subRule                 = " + str(subRule)
+        print "bodyparse               = " + str(bodyparse)
+        print "allAttTypeMaps          = " + str(allAttTypeMaps)
+        print "atts_asRuleHead_typeMap = " + str(atts_asRuleHead_typeMap)
 
       # following statement only works if atts_asRuleHead_types maintains ordering!!!
       orderedListOfTypes = [ mapping[1] for mapping in atts_asRuleHead_typeMap]
-      print "orderedListOfTypes = " + str(orderedListOfTypes)
+
+      if DEBUG :
+        print "orderedListOfTypes = " + str(orderedListOfTypes)
 
       #tools.bp( __name__, inspect.stack()[0][3], "orderedListOfTypes = " + str(orderedListOfTypes) + "\natts_asRuleHead_typeMap = " + str(atts_asRuleHead_typeMap) )
       atts_inRuleBody_typeMap = self.mapTypes_raw( atts_inRuleBody, orderedListOfTypes )
-      print "atts_inRuleBody_typeMap = " + str(atts_inRuleBody_typeMap)
+
+      if DEBUG :
+        print "atts_inRuleBody_typeMap = " + str(atts_inRuleBody_typeMap)
 
     #tools.bp( __name__, inspect.stack()[0][3], "atts_inRuleBody_typeMap = " + str(atts_inRuleBody_typeMap) )
     return atts_inRuleBody_typeMap
@@ -960,8 +970,9 @@ class Rule :
 
     # convert rule info to pretty string
     prettyRule += goalName + "(" + goalAttStr + ")" + " :- " + subgoalStr 
-    if not eqnStr == None :
-      prettyRule += "," + eqnStr + " ;"
+    if eqnStr :
+      prettyRule += "," + eqnStr
+    prettyRule += " ;"
 
     #print prettyRule
 
