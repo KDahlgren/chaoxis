@@ -19,7 +19,7 @@ sys.path.append( packagePath )
 
 from Utils_Tests      import *
 from Dedt_Tests       import *
-from DerivTools_Tests import *
+from Derivation_Tests import *
 from Evaluators_Tests import *
 from Solvers_Tests    import *
 from VizTools_Tests   import * 
@@ -45,8 +45,8 @@ if __name__ == "__main__" :
   unittest.TextTestRunner( verbosity=2 ).run( suite )
 
   print "\n\n******************"
-  print ">> DerivTools_Tests"
-  suite = unittest.TestLoader().loadTestsFromTestCase( DerivTools_Tests )
+  print ">> Derivation_Tests"
+  suite = unittest.TestLoader().loadTestsFromTestCase( Derivation_Tests )
   unittest.TextTestRunner( verbosity=2 ).run( suite )
 
   print "\n\n******************"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-DerivTools_Tests.py
+Derivation_Tests.py
   Defines unit tests for derivTools.
 '''
 
@@ -23,7 +23,7 @@ from derivation import *
 ######################
 #  DERIVTOOLS TESTS  #
 ######################
-class DerivTools_Tests( unittest.TestCase ) :
+class Derivation_Tests( unittest.TestCase ) :
 
   def test__derivTools( self ) :
     return None
