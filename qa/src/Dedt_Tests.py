@@ -31,6 +31,10 @@ testPath = os.path.abspath(__file__+"/../../../qa")
 ################
 class Dedt_Tests( unittest.TestCase ) :
 
+  # ///////////////////////////////////////////////// #
+  #                       DEDT                        #
+  # ///////////////////////////////////////////////// #
+
   def test_createDedalusIRTables_dedt( self ) : 
     #testing set up
     testDB = testPath + "/IR.db"
@@ -141,11 +145,12 @@ class Dedt_Tests( unittest.TestCase ) :
     'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2, 'evaluator': 'c4'}
     outputResult = None
     self.assertFalse(dedt.translateDedalus(inputArg)==outputResult)
-    
-    
-#########################
-#  DEDALUSPARSER TESTS  #
-#########################
+
+
+  # ///////////////////////////////////////////////// #
+  #                  DEDALUS PARSER                   #
+  # ///////////////////////////////////////////////// #
+
   def test_cleanResult_dedalusParser(self):
     inputArg  = ('node', '(', 'Node', ',', ' ', 'Neighbor', ')', ';')
     outputResult = ['node', '(', 'Node', ',', ' ', 'Neighbor', ')', ';']
@@ -192,9 +197,11 @@ class Dedt_Tests( unittest.TestCase ) :
       dedalusParser.parseDedalus(inputArg)
     self.assertIn("ERROR",cm.exception.code)
 
-#########################
-#  CLOCKRELATION TESTS  #
-#########################
+
+  # ///////////////////////////////////////////////// #
+  #                   CLOCK RELATION                  #
+  # ///////////////////////////////////////////////// #
+
   def test_initClockRelation_clockRelation(self):
     #testing setup. initClockRelation has dependency
     #on createDedalusIRTables and dedToIR so that's
@@ -245,12 +252,12 @@ class Dedt_Tests( unittest.TestCase ) :
   def test_buildClockRelation_clockRelation(self):
     #Not implemented in src yet
     return None
-    
 
-###########################
-#  DEDALUSREWRITER TESTS  #
-###########################
-   #TODO: clean up and add more specific testcases
+    
+  # ///////////////////////////////////////////////// #
+  #                  DEDALUS REWRITER                 #
+  # ///////////////////////////////////////////////// #
+  #TODO: clean up and add more specific testcases
 
   #testing for the helper functions: getdeductiveRuleIDs,
   #getInductiveRuleIDs and getAsynchronousRuleIDs
@@ -339,10 +346,12 @@ class Dedt_Tests( unittest.TestCase ) :
     
   def test_rewriteDedalus_dedalusRewriter(self):
     return None
-    
-##############################
-#  PROVENANCEREWRITER TESTS  #
-##############################
+
+
+  # ///////////////////////////////////////////////// #
+  #                PROVENANCE REWRITER                #
+  # ///////////////////////////////////////////////// #
+
   def test_aggRuleProv_provenanceRewriter(self):
     return None 
     
@@ -351,8 +360,137 @@ class Dedt_Tests( unittest.TestCase ) :
     
   def test_rewriteProvenance_provenanceRewriter(self):
     return None  
-    
-    
+
+
+  # ///////////////////////////////////////////////// #
+  #                       FACT                        #
+  # ///////////////////////////////////////////////// #
+
+  def test_getName_Fact( self ) :
+    return None
+
+  def test_getAttList_Fact( self ) :
+    return None
+
+  def test_getTimeArg_Fact( self ) :
+    return None
+
+  def test_setFactInfo_Fact( self ) :
+    return None
+
+  def test_setAttList_Fact( self ) :
+    return None
+
+  def test_setAttTypes_Fact( self ) :
+    return None
+
+  def test_getTypeList_Fact( self ) :
+    return None
+
+  def test_display_Fact( self ) :
+    return None
+
+
+  # ///////////////////////////////////////////////// #
+  #                       RULE                        #
+  # ///////////////////////////////////////////////// #
+
+  def test_getGoalName_Rule( self ) :
+    return None
+
+  def test_getRewritten_Rule( self ) :
+    return None
+
+  def test_getGoalAttList_Rule( self ) :
+    return None
+
+  def test_getGoalTimeArg_Rule( self ) :
+    return None
+
+  def test_getSubgoalListStr_Rule( self ) :
+    return None
+
+  def test_getSubgoalListStr_noTimeArgs_noAddArgs_Rule( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
+  def test_( self ) :
+    return None
+
 #########################
 #  THREAD OF EXECUTION  #
 #########################

@@ -29,9 +29,9 @@ class SATVars_PYCOSAT :
   ################
   #  ATTRIBUTES  #
   ################
-  var2num = None
-  num2var = None
-  counter = None
+  var2num = None  # dictionary
+  num2var = None  # dictionary
+  counter = None  # int
 
 
   #################
@@ -50,19 +50,26 @@ class SATVars_PYCOSAT :
   def lookupVar(self, var):
     print "var = " + str( var )
 
-    if not self.var2num.has_key(var) :
+    # check if variable already mapped in var2num
+    if not self.var2num.has_key( var ) :
 
-      # assign the id
-      if "NOT" in var : # negate id if it's a negative variable
-        var = var.replace( "_NOT_", "" ) # cleaning hack for good aesthetics
-        self.var2num[var] = int(-1) * self.counter
+      if not "clock" in var :
+        return None
+
       else :
-        self.var2num[var] = self.counter
+        currID = self.counter
 
-      self.num2var[self.counter] = var
-      self.counter += 1
+        # assign the id
+        if "NOT" in var : # negate id if it's a negative variable
+          var                 = var.replace( "_NOT_", "" ) # cleaning hack for good aesthetics
+          self.var2num[ var ] = int( -1 ) * currID
+        else :
+          self.var2num[ var ] = currID
 
-    return self.var2num[var]
+        self.num2var[ currID ] = var
+        self.counter += 1
+
+      return self.var2num[ var ] # return the list of nums corresponding to vars in the dic
 
 
   ################

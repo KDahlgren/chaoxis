@@ -72,12 +72,24 @@ def checkForMakeError( path ) :
     fo = open( "./c4_out.txt", "r" )
     for line in fo :
       line = line.strip()
-      if "error generated." in line :
+      if containsError( line ) :
         print "failed path apr = " + path
         flag = False
     fo.close()
     os.system( "rm ./c4_out.txt" ) # clean up
   return flag
+
+
+####################
+#  CONTAINS ERROR  #
+####################
+def containsError( line ) :
+  if "error generated." in line :
+    return True
+  #elif "Error" in line :
+  #  return True
+  else :
+    return False
 
 
 ##########
@@ -121,7 +133,8 @@ def main() :
       print ">>> C4 installed successfully <<<"
       print "... Done installing C4 Datalog evaluator"
       print "C4 install using APR path : " + path
-      break
+      sys.exit( "done installing c4." )
+  sys.exit( "failed to install C4. No fully functioning APR found." )
   # ---------------------------------------------- #
 
   # run make for everything else

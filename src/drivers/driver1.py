@@ -98,6 +98,7 @@ def driver() :
   executionStatus  = None
 
   prevTriedSoln    = None
+
   while True :
 
     executionData   = LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, prevTriedSoln, ITER_COUNT )
@@ -112,17 +113,21 @@ def driver() :
     currentTriedSoln = executionData[7]
     executionStatus  = executionData[8]
 
+    tools.bp( __name__, inspect.stack()[0][3], "asdfkjh" )
+
     #if currentTriedSoln :
     #  print "currentTriedSoln = " + str( currentTriedSoln )
     #  tools.bp( __name__, inspect.stack()[0][3], "evalTools.bugFreeExecution( parsedResults, argDict[ 'EOT' ], executionStatus ) = " + str(evalTools.bugFreeExecution( parsedResults, argDict[ 'EOT' ], executionStatus )) )
 
-    ITER_COUNT += 1
+
     # ---------------------------------------------------------------------- #
     # control loop iterations
     if ONE_CORE_ITERATION_ONLY : # only run a single iteration of LDFI (good for debugging)
       break
 
     else :
+
+      # ------------------------------------------------------------------ #
       # sanity check pre and post must appear in the evaluation results.
       if not "pre" in parsedResults :
         dedt.cleanUp( irCursor, saveDB )
@@ -130,12 +135,13 @@ def driver() :
       elif not "post" in parsedResults :
         dedt.cleanUp( irCursor, saveDB )
         tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining post" )
+      # ------------------------------------------------------------------ #
 
       # ****************************************************************** #
       #                          CHECK FOR BUG                             #
       # ****************************************************************** #
       #
-      bugEval     = evalTools.bugFreeExecution( parsedResults, argDict[ 'EOT' ], executionStatus )
+      bugEval     = evalTools.checkForBugs( parsedResults, argDict[ 'EOT' ], executionStatus )
       isBugFree   = bugEval[0]
       explanation = bugEval[1]
 
@@ -183,26 +189,33 @@ def driver() :
 
     prevTriedSoln = currentTriedSoln
 
+    ITER_COUNT += 1 # directly corresponds with number of LDFI Core iterations
+
+  # =================================================================== #
+  #                     END OF INFINTE WHILE LOOP                       #
   # =================================================================== #
 
   if DRIVER_DEBUG :
     irCursor.execute( "SELECT * FROM Crash" )
     res = irCursor.fetchall()
     res = tools.toAscii_multiList( res )
-    print "//////////////////////"
-    print "CONTENTS OF Crash:"
+    print "/////////////////////////"
+    print "CONTENTS OF crash table :"
     for tup in res :
       print tup
-    print "//////////////////////"
+    print "/////////////////////////"
     print "NUMBER OF CORE ITERATIONS : " + str(ITER_COUNT+1)
 
   # -------------------------------------------- #
 
   if CMDLINE_RESULTS_OUTPUT :
-    print "//////////////////////"
-    print "Fault Hypothesis:"
-    print
-    print "//////////////////////"
+    print "/////////////////////////"
+    print "~~~ Fault Hypothesis ~~~"
+    print str(currentTriedSoln)
+    print "/////////////////////////"
+    print "~~~~~ Explanation ~~~~~"
+    print explanation
+    print "/////////////////////////"
 
   # -------------------------------------------- #
   # cleanUp saved db stuff
@@ -218,20 +231,20 @@ def driver() :
 ###############
 def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, triedSolnList, prevTriedSoln, iter_count ) :
 
-
   print
   print "*******************************************************"
   print "                 RUNNING LDFI CORE"
   print "*******************************************************"
   print
 
-  os.system( "rm " + C4_DUMP_SAVEPATH )
+  os.system( "rm " + C4_DUMP_SAVEPATH ) # remove old dump file
 
   # ----------------------------------------------- #
 
   # translate all input dedalus files into a single datalog program
   outputs = None
-  if runTranslator :
+  #if runTranslator :
+  if iter_count == 0 :
     outputs         = dedt.translateDedalus( argDict )
     tableListPath   = outputs[0] # string of table names
     datalogProgPath = outputs[1] # path to datalog program
@@ -261,7 +274,6 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
   # get provenance trees
   if PROV_TREES_ON :
 
-
     if DRIVER_DEBUG :
       print "\n~~~~ BUILDING PROV TREE ~~~~"
 
@@ -272,9 +284,11 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
       # initialize provenance tree structure
       provTreeComplete = ProvTree.ProvTree( "FinalState", parsedResults, irCursor )
 
+      # 000000000000000000000000000000000000000000000000000000000000000000 #
       # grab the set of post records at EOT.
       # assume the right-most attribute/variable/field of the post schema
       # represents the last send time (aka EOT).
+      # should be true b/c of the dedalus rewriter reqs for deductive rules.
       eot = argDict[ "EOT" ]
       postrecords_all = parsedResults[ "post" ]
       postrecords_eot = []
@@ -303,6 +317,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
       # !!! RETURN EARLY IF POST CONTAINS NO EOT RECORDS !!!
       if len( postrecords_eot ) < 1 :
         return ( parsedResults, runTranslator, tableListPath, datalogProgPath, irCursor, saveDB, None, prevTriedSoln, "noMoreEOTPostRecords")
+      # 000000000000000000000000000000000000000000000000000000000000000000 #
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
       # populate prov tree
@@ -324,7 +339,6 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
 
   # -------------------------------------------- #
   # graphs to CNF
-
 
   if TREE_CNF_ON and PROV_TREES_ON :
 
@@ -351,7 +365,8 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
   # solve CNF
   finalSolnList = []
   if SOLVE_TREE_CNF_ON :
-    solns = solverTools.solveCNF( provTree_fmla.cnfformula )
+    #tools.bp( __name__, inspect.stack()[0][3], "provTree_fmla.cnfformula = " + str(provTree_fmla.cnfformula) )
+    solns = solverTools.solveCNF( provTree_fmla.cnfformula ) # returns a Solver_PYCOSAT instance
 
     # sanity check
     if DRIVER_DEBUG :
@@ -362,25 +377,22 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
     # +++++++++++++++++++++++++++++++++++++++++++++ #
     # collect solns and process into legible format
     if solns :
-      numid    = 1
-
-      finalStr = []
+      numid    = 1   # for tracking the current soln number
       for s in solns.solutions() :
-        numsolns = solns.numsolns
-
+        finalStr = []  # stores the legible version of the soln.
         # make pretty
         for var in s :
           finalStr.append( solverTools.toggle_format_str( var, "legible" ) )
 
         if DRIVER_DEBUG :
-          print "SOLN : " + str(numid) + " of " + str( numsolns ) + "\n" + str( finalStr )
+          print "SOLN : " + str(numid) + "\n" + str( finalStr )
           numid += 1
 
         # add soln to soln list and clear temporary save list for the next iteration
         finalSolnList.append( finalStr )
-        finalStr = []
 
       #tools.bp( __name__, inspect.stack()[0][3], "finalSolnList = " + str(finalSolnList) )
+      #print ">>> finalSolnList = " + str(finalSolnList)
 
       # duplicates are annoying.
       tmp = []
@@ -399,7 +411,6 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
             clockOnly = False # hit a non-clock fact
         if clockOnly :
           tmp.append( s )
-
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
       # set final final copy of the solution list
       finalSolnList = tmp
@@ -417,7 +428,7 @@ def LDFICore( argDict, runTranslator, tableListPath, datalogProgPath, irCursor, 
   finalSolnList  = listDiff( finalSolnList, triedSolnList ) # remove triedSolns from final solution list
 
   if DRIVER_DEBUG :
-    print "after: finalSolnList = " + str( finalSolnList )
+    print "after : finalSolnList = " + str( finalSolnList )
     print "triedSolnList = " + str( triedSolnList )
 
   # case the finalSolnList still contains clock-only solns

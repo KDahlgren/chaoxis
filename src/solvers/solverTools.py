@@ -39,11 +39,13 @@ DEBUG = False
 ###############
 def solveCNF( cnfFormula_str ) :
 
-  print
-  print "getConjuncts( cnfFormula_str ) = " + str( getConjuncts( cnfFormula_str ) )
-  print
+  #print
+  #print "getConjuncts( cnfFormula_str ) = " + str( getConjuncts( cnfFormula_str ) )
+  #print
 
-  # get solutions
+  #tools.bp( __name__, inspect.stack()[0][3], "getConjuncts = " + str(getConjuncts( cnfFormula_str )) )
+
+  # create a solver instance
   return Solver_PYCOSAT.Solver_PYCOSAT( cnfFormula_str )
 
 

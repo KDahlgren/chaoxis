@@ -46,10 +46,31 @@ class Solver_PYCOSAT :
     self.fmlaVars   = SATVars_PYCOSAT.SATVars_PYCOSAT()
     self.satformula = []
 
+    if DEBUG :
+      print "----------------------"
+      print " solverTools.getConjuncts( cnf_str ) = "
+      print solverTools.getConjuncts( cnf_str )
+      print "----------------------"
+
     # assign integer ids to variables per disjunctive clause:
     for clause in solverTools.getConjuncts( cnf_str ) :
+
       satclause = map( self.fmlaVars.lookupVar, clause )
+      satclause = [ var for var in satclause if var ] # remove 'None' variables from satclause
+
+      # justification:
+      # Only combinations of clock deletions are interesting.
+      # Removing non-clock facts from CNF clause is equivalent to relegating the value to False.
+      # By defn, False OR p == p.
+      # Therefore, removing the non-clock facts does not affect the outcome, if we're only
+      # interested in the impact of T/F assignments to clock fact variables.
+
       self.satformula.append( list(satclause ) )
+
+      if DEBUG :
+        print "clause     = " + str(clause)
+        print "satclause  = " + str(satclause)
+        print "satformula = " + str(self.satformula)
 
 
   ###############
@@ -59,14 +80,17 @@ class Solver_PYCOSAT :
     print "solutions: self.satformula = " + str( self.satformula )
 
     # DEVELOPER's NOTE: calculating numsolns is _VERY_ SLOW. only run on small examples. 
-    #self.numsolns = len( list( pycosat.itersolve( self.satformula ) ) )
+    # self.numsolns = len( list( pycosat.itersolve( self.satformula ) ) )
     # print "self.numsolns = " + str(self.numsolns) 
 
     if DEBUG :
       print "running itersolve( self.satformula) in for loop..."
+
     for soln in pycosat.itersolve( self.satformula ) :
+
         if DEBUG :
           print "saving soln = " + str(soln)
+
         yield frozenset( map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) ) # using yield because soln set could be huge
         #return map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) # not using yield because generators are a headache and a half.
 
