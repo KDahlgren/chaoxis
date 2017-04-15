@@ -46,7 +46,7 @@ def existingDefine( name, definesNames ) :
 # input cursor for IR db
 # output the full path for the intermediate file containing the c4 datalog program.
 
-def c4datalog( cursor ) :
+def c4datalog( table_list_path, datalog_prog_path, cursor ) :
 
   goalName         = None
   provGoalNameOrig = None
@@ -267,15 +267,10 @@ def c4datalog( cursor ) :
     print "table list str :"
     print tableListStr
 
-  testpath_tables = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
-  tablesFilename  = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/" + "tableListStr.data"
-
-  if os.path.isdir( testpath_tables ) :
-    outfile = open( tablesFilename, "w" )
-    outfile.write( tableListStr )
-    outfile.close()
-  else :
-    sys.exit( "ERROR: directory for saving tables for C4 Overlog program does not exist: " + testpath_tables )
+  # save table list to file
+  outfile = open( table_list_path, "w" )
+  outfile.write( tableListStr )
+  outfile.close()
   
 
   # ----------------------------------------------------------- #
@@ -295,17 +290,10 @@ def c4datalog( cursor ) :
   listOfStatementLists = [ definesList, factList, clockFactList, crashFactList, ruleList ]
   program              = tools.combineLines( listOfStatementLists )
 
-  testpath        = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"
-  programFilename = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/" + "c4program.olg"
-
-  if os.path.isdir( testpath ) :
-    outfile = open( programFilename, "w" )
-    outfile.write( program )
-    outfile.close()
-  else :
-    sys.exit( "ERROR: directory for saving C4 Overlog program does not exist: " + testpath )
-
-  return [ tablesFilename, programFilename ]
+  # save c4 program to file
+  outfile = open( datalog_prog_path, "w" )
+  outfile.write( program )
+  outfile.close()
 
 
 #########

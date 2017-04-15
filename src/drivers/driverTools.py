@@ -78,8 +78,8 @@ def parseArgs( ) :
 #  DEDALUS TO DATALOG  #
 ########################
 # translate all input dedalus files into a single datalog program
-def dedalus_to_datalog( argDict, cursor ) :
-  return dedt.translateDedalus( argDict, cursor )
+def dedalus_to_datalog( argDict, table_list_path, datalog_prog_path, cursor ) :
+  return dedt.translateDedalus( argDict, table_list_path, datalog_prog_path, cursor )
 
 
 ##############
@@ -87,17 +87,17 @@ def dedalus_to_datalog( argDict, cursor ) :
 ##############
 # evaluate the datalog program using some datalog evaluator
 # return some data structure or storage location encompassing the evaluation results.
-def evaluate( evaluatorType, datalogProgPath, tableListPath, savepath ) :
+def evaluate( evaluatorType, table_list_path, datalog_prog_path, savepath ) :
 
   evaluators = [ 'C4_CMDLINE', 'C4_WRAPPER' ]
 
   # C4_CMDLINE
   if evaluatorType == evaluators[0] :
-    return c4_evaluator.runC4_directly( datalogProgPath, tableListPath, savepath )
+    return c4_evaluator.runC4_directly( datalog_prog_path, table_list_path, savepath )
 
   # C4_WRAPPER
   elif evaluatorType == evaluators[1] :
-    return c4_evaluator.runC4_wrapper( datalogProgPath, tableListPath )
+    return c4_evaluator.runC4_wrapper( datalog_prog_path, table_list_path )
 
   # WHAAAAA????
   else :
@@ -107,27 +107,16 @@ def evaluate( evaluatorType, datalogProgPath, tableListPath, savepath ) :
 ####################
 #  CHECK FOR BUGS  #
 ####################
+# check for bugs in the results of evaluating a datalog program
 def checkForBugs( parsedResults, eot ) :
 
-  bugEval     = evalTools.bugConditions( parsedResults, eot )
-  isBugFree   = bugEval[0]
+  bugEval = evalTools.bugConditions( parsedResults, eot )
+  isBugFree = bugEval[0]
   explanation = bugEval[1]
 
-  # case this particular iteration is bug-free
-  if isBugFree :
-    pass
+  execStatus = evalTools.statusConditions( parsedResults, eot )
 
-  # case BUG EXISTS!!! *dalek accent* EXTERMINATE! EXTERMINATE!
-  else :
-    # place magic post processing and visualization code here. =]
-
-    terminateBool = True # True => stop the LDFI Core loop
-
-    # -------------------------------------------- #
-    # generate prov graphs of buggy executions.
-    #vizTools.generateBuggyProvGraphs( parsedResults, argDict[ "EOT" ], cursor, ITER_COUNT )
-
-  return [ terminateBool, isBugFree, explanation ]
+  return [ isBugFree, explanation, execStatus ]
 
 
 #####################
@@ -287,10 +276,7 @@ def solveCNF( provTree_fmla ) :
 def getNewDatalogProg( faultHypoList, irCursor, iter_count ) :
 
   if len( faultHypoList ) > 0 :
-    executionInfo   = newProgGenerationTools.buildNewProg( faultHypoList, irCursor, iter_count )
-    newProgSavePath = executionInfo[0]
-
-    return newProgSavePath
+    return newProgGenerationTools.buildNewProg( faultHypoList, irCursor, iter_count )
 
   else :
     tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : attempted to build a new datalog program, but no fault hypotheses exist." )

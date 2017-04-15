@@ -108,6 +108,8 @@ def main() :
   os.system( "cp ./src/templateFiles/c4i_template.c ./lib/c4/src/c4i/c4i.c" )
   print "...done copying template c4 main."
 
+  #os.system( "make c4" )
+
   # ---------------------------------------------- #
   # run make for c4
   # find candidate apr locations

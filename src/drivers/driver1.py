@@ -41,6 +41,9 @@ ONE_CORE_ITERATION_ONLY = False
 CMDLINE_RESULTS_OUTPUT  = True
 
 C4_DUMP_SAVEPATH        = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
+TABLE_LIST_PATH         = os.path.abspath( __file__ + "/../.." ) + "/evaluators/programFiles/" + "tableListStr.data"
+DATALOG_PROG_PATH       = os.path.abspath( __file__ + "/../.." ) + "/evaluators/programFiles/" + "c4program.olg"
+
 PROV_TREES_ON           = True  # toggle prov tree generation code
 TREE_CNF_ON             = True  # toggle provTree to CNF conversion
 
@@ -58,18 +61,26 @@ def driver() :
   saveDB = os.getcwd() + "/IR.db"
   IRDB   = sqlite3.connect( saveDB ) # database for storing IR, stored in running script dir
   cursor = IRDB.cursor()
+
+  # paths to datalog files
+  tablePath   = None
  
   # track number of LDFI core executions
   iter_count = 0
 
-  # fault hypothesis data from previous iteration
-  prev_faultHypo   = None
-  prev_explanation = None
+  # fault hypothesis data from previous iterations
+  all_suggested_faultHypos = []
+  curr_suggested_faultHypo = None
+  final_faultHypo          = None
+  final_explanation        = None
 
   # =================================================================== #
   #                        LOOP OVER LDFI CORE                          #
   # =================================================================== #
   while True :
+
+    if DRIVER_DEBUG :
+      print "it# " + str(iter_count) + " : curr_suggested_faultHypo = " + str(curr_suggested_faultHypo) 
 
     executionResults = LDFICore( argDict, iter_count, cursor )
 
@@ -77,15 +88,41 @@ def driver() :
       break
 
     else :
-      terminateBool    = executionResults[0]
-      prev_faultHypo   = executionResults[1]
-      prev_explanation = executionResults[2]
+      isBugFree                = executionResults[0]
+      explanation              = executionResults[1]
+      execStatus               = executionResults[2]
+      curr_suggested_faultHypo = executionResults[3]
 
-      # hit a bug
-      if terminateBool :
-        break
 
-    ITER_COUNT += 1 # directly corresponds with number of LDFI Core iterations
+      # BUG FREE and no new suggested fault hypothesis
+      if isBugFree and (curr_suggested_faultHypo == [] or not curr_suggested_faultHypo) :
+          final_faultHypo   = "n/a"
+          final_explanation = "no counterexamples found."
+          break
+
+      else :
+
+        # hit a bug => break LDFI core and output results
+        if not isBugFree :
+          final_faultHypo   = curr_suggested_faultHypo
+          final_explanation = explanation
+          break
+
+        # bug free but no suggested fault hypothesis
+        else :
+          if DRIVER_DEBUG :
+            print "isBugFree                = " + str(isBugFree)
+            print "explanation              = " + str(explanation)
+            print "execStatus               = " + str(execStatus)
+            print "curr_suggested_faultHypo = " + str(curr_suggested_faultHypo)
+
+          #tools.bp( __name__, inspect.stack()[0][3], "wot??? >.>" )
+          continue
+
+    if iter_count > 10  :
+      tools.bp( __name__, inspect.stack()[0][3], "saving your ass from an infinite loop" )
+
+    iter_count += 1 # directly corresponds with number of LDFI Core iterations
 
   # =================================================================== #
   #                     END OF INFINTE WHILE LOOP                       #
@@ -107,10 +144,10 @@ def driver() :
   if CMDLINE_RESULTS_OUTPUT :
     print "/////////////////////////"
     print "~~~ Fault Hypothesis ~~~"
-    print str(prev_faultHypo)
+    print str(final_faultHypo)
     print "/////////////////////////"
     print "~~~~~ Explanation ~~~~~"
-    print prev_explanation
+    print final_explanation
     print "/////////////////////////"
 
   # -------------------------------------------- #
@@ -156,31 +193,46 @@ def LDFICore( argDict, iter_count, cursor ) :
   # translate all input dedalus files into a single datalog program
   outputs = None
   if iter_count == 0 :
-    outputs         = driverTools.dedalus_to_datalog( argDict, cursor )
-    tableListPath   = outputs[0] # string of table names
-    datalogProgPath = outputs[1] # path to datalog program
+    driverTools.dedalus_to_datalog( argDict, TABLE_LIST_PATH, DATALOG_PROG_PATH, cursor )
 
   if DRIVER_DEBUG :
     if outputs :
-      print "outputs              = " + str( outputs )
-      print "table list path      = " + tableListPath
-      print "datalog program path = " + datalogProgPath
+      print "outputs           = " + str( outputs )
+      print "TABLE_LIST_PATH   = " + TABLE_LIST_PATH
+      print "DATALOG_PROG_PATH = " + DATALOG_PROG_PATH
 
   # ----------------------------------------------- #
   # evaluate
 
   # assuming using C4 at commandline
-  resultsPath   = driverTools.evaluate( "C4_CMDLINE", datalogProgPath, tableListPath, C4_DUMP_SAVEPATH )
+  resultsPath   = driverTools.evaluate( "C4_CMDLINE", TABLE_LIST_PATH, DATALOG_PROG_PATH, C4_DUMP_SAVEPATH )
   parsedResults = tools.getEvalResults_file_c4( resultsPath ) # assumes C4 results stored in dump
 
   # ----------------------------------------------- #
-  # check for bug
+  # check for bugs
 
-  executionResults = driverTools.checkForBugs( parsedResults, argDict[ "EOT" ] )
+  bugData             = driverTools.checkForBugs( parsedResults, argDict[ "EOT" ] )
+  isBugFree           = bugData[0]
+  explanation         = bugData[1]
+  execStatus          = bugData[2]
+  suggested_faultHypo = None
 
+  # ---------------------------------------------- #
+  # check execution status
+  check0 = execStatus[0]
+
+  # hit a passing condition
+  # e.g. no eot data in pre and no eot data in post.
+  # a vacuously good execution.
+  if check0 :
+    return [ isBugFree, explanation, execStatus, suggested_faultHypo ]
+
+  # ---------------------------------------------- #
   # return early if bug exists
-  if executionResults[0] :
-    return executionResults
+  if not isBugFree :
+    return [ isBugFree, explanation, execStatus, suggested_faultHypo ]
+
+  tools.bp( __name__, inspect.stack()[0][3], "parsedResults = \n" + str(parsedResults) )
 
   # ----------------------------------------------- #
   # get provenance trees
@@ -201,12 +253,12 @@ def LDFICore( argDict, iter_count, cursor ) :
   # -------------------------------------------- #
   # generate new datalog prog
 
-  newProgSavePath = driverTools.getNewDatalogProg( finalSolnList, cursor, iter_count )
+  suggested_faultHypo = driverTools.getNewDatalogProg( finalSolnList, cursor, iter_count )
 
   # -------------------------------------------- #
+  # no bug discovered in this execution
 
-  return executionResults
-
+  return [ isBugFree, explanation, execStatus, suggested_faultHypo ]
 
 
 #########################

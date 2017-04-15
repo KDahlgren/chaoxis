@@ -22,7 +22,7 @@ DEBUG = True
 
 
 ####################
-#  CHECK FOR BUGS  #
+#  BUG CONDITIONS  #
 ####################
 # check if the pre -> post
 # specifically, the condition is true if the 
@@ -61,25 +61,39 @@ def bugConditions( results, eot ) :
     print "post = " + str( post ) 
 
   # ------------------------------------------------------- #
-  # CHECK #0 : if pre == post == empty, then program is bug free.
-  if pre == [] and post == [] :
-    isBugFree   = True
-    explanation = "No tuples in pre and no tuples in post."
-
-  # ------------------------------------------------------- #
-  # CHECK #1 : all eot tups in pre must exist in post
+  # CHECK #0 : all eot tups in pre must exist in post
   for pretup in pre :
     if ( int( pretup[-1] ) == eot ) and not pretup in post :
       isBugFree   = False
       explanation = "eot tuples exist in pre, but not in post"
 
-  # ------------------------------------------------------- #
-  # CHECK #2 : pre and post must have eot tuples
-  if noEOT( pre, eot ) and noEOT( post, eot ) :
-    isBugFree = False
-    explanation = "no eot tuples in pre and no eot tuples in post."
-
   return [ isBugFree, explanation ]
+
+
+#######################
+#  STATUS CONDITIONS  #
+#######################
+# check if results indicate trivially good execution
+def statusConditions( results, eot ) :
+
+  # grab relevant tuple lists
+  pre  = results[ "pre" ]
+  post = results[ "post" ]
+
+
+  # ------------------------------------------------------- #
+  # check list
+  check0 = False
+  # check1 = False
+  # ...
+
+  # ------------------------------------------------------- #
+  # CHECK #0 : pass if no eot in pre and no eot in post
+  if noEOT( pre, eot ) and noEOT( post, eot ) :
+    check0 = True
+
+  return [ check0 ]
+  #return [ check0, check1 ]
 
 
 ############
@@ -96,7 +110,6 @@ def noEOT( tableResults, eot ) :
       noEOTTuple = True
 
   return noEOTTuple
-
 
 
 #########

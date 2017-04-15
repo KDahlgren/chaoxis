@@ -24,22 +24,19 @@ from utils import dumpers, tools
 
 # **************************************** #
 
-ITER_COUNT = None
 DEBUG      = True
 
 
 ####################
 #  BUILD NEW PROG  #
 ####################
+# input a set of solutions to the cnf formula in the form of sets of legible facts.
+#   each set of legible facts represents one fault hypothesis.
+# output chosen fault hypothesis (list of facts deleted from Clock)
 def buildNewProg( solnSet, irCursor, iter_count ) :
 
   if DEBUG :
     print "...running buildNewProg..."
-
-  ITER_COUNT = iter_count
-
-  if iter_count == 1 :
-    print "ITER_COUNT = " + str( ITER_COUNT )
 
   newProgSavePath = None  # initialize as None to trigger later sanity check in the event of failure
 
@@ -67,7 +64,7 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
 
   # case no preferred soln exists
   if not preferredSoln :
-    return ( newProgSavePath, None )
+    return None
 
   # ----------------------------------------- #
   # parse clock soln records
@@ -103,8 +100,7 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
 
   # sanity checks are good for the soul  ~(^.^)~
   if newProgSavePath :
-    #print "preferredSoln = " + str( preferredSoln )
-    return ( newProgSavePath, preferredSoln )
+    return preferredSoln
   else :
     tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: failed to write new program to " + newProgSavePath )
 
@@ -220,6 +216,9 @@ def getPreferredSoln( solnSet, irCursor ) :
         soln = [ str(i) for i in soln ] # convert all data to strings
         atts = ",".join(soln)
         solnChoice.append( "clock([" + atts + "])" )
+
+  else :
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no solution chosen." )
 
   return solnChoice
 
@@ -405,9 +404,6 @@ def finalizeNewProg( testpath, newProgSavePath, irCursor ) :
     sys.exit( "FATAL ERROR2: directory for saving C4 Overlog program does not exist: " + testpath )
   ##############################################
 
-  if ITER_COUNT == 1 :
-    os.system( "cat " + newProgSavePath )
-    sys.exit()
 
 #########
 #  EOF  #

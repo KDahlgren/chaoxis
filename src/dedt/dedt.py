@@ -243,7 +243,7 @@ def rewrite( ruleMeta, cursor ) :
 # output nothing
 
 # WARNING: CANNOT write rules or facts on multiple lines.
-def runTranslator( cursor, dedFile, argDict, datalogProgPath, evaluator ) :
+def runTranslator( cursor, dedFile, argDict, table_list_path, datalog_prog_path, evaluator ) :
 
   # ded to IR
   meta     = dedToIR( dedFile, cursor )
@@ -263,7 +263,7 @@ def runTranslator( cursor, dedFile, argDict, datalogProgPath, evaluator ) :
 
   # translate IR into datalog
   if evaluator == "c4" :
-    outpaths = c4_translator.c4datalog( cursor )
+    outpaths = c4_translator.c4datalog( table_list_path, datalog_prog_path, cursor )
   elif evaluator == "pyDatalog" :
     outpaths = pydatalog_translator.getPyDatalogProg( cursor )
 
@@ -301,8 +301,7 @@ def cleanUp( IRDB, saveDB ) :
 #######################
 # input command line arguments
 # output abs path to datalog program
-def translateDedalus( argDict, cursor ) :
-  datalogProgPath = os.getcwd() + "/run.datalog"
+def translateDedalus( argDict, table_list_path, datalog_prog_path, cursor ) :
 
   # create tables
   createDedalusIRTables( cursor )
@@ -322,7 +321,7 @@ def translateDedalus( argDict, cursor ) :
   # translate all input dedalus files into a single datalog program
   evaluator = argDict[ 'evaluator' ]
   for dedfilename, status in fileDict.items() :
-    outpaths = runTranslator( cursor, dedfilename, argDict, datalogProgPath, evaluator )
+    outpaths = runTranslator( cursor, dedfilename, argDict, table_list_path, datalog_prog_path, evaluator )
 
   if DEDT_DEBUG1 :
     dumpers.factDump(  cursor )
@@ -330,14 +329,6 @@ def translateDedalus( argDict, cursor ) :
     dumpers.clockDump( cursor )
 
   # ----------------------------------------------------------------- #
-
-  if DEDT_DEBUG :
-    print "DEDT_DEBUG > outpaths = " + str( outpaths )
-
-  if len( outpaths ) > 1 :
-    return outpaths
-  else :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : outpaths empty. failure in runTranslator." )
 
 
 #########
