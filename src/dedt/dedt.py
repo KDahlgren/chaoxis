@@ -301,13 +301,8 @@ def cleanUp( IRDB, saveDB ) :
 #######################
 # input command line arguments
 # output abs path to datalog program
-def translateDedalus( argDict ) :
+def translateDedalus( argDict, cursor ) :
   datalogProgPath = os.getcwd() + "/run.datalog"
-
-  # instantiate IR database
-  saveDB = os.getcwd() + "/IR.db"
-  IRDB    = sqlite3.connect( saveDB ) # database for storing IR, stored in running script dir
-  cursor  = IRDB.cursor()
 
   # create tables
   createDedalusIRTables( cursor )
@@ -325,14 +320,9 @@ def translateDedalus( argDict ) :
   fileDict = tools.getAllIncludedFiles( fileDict )
 
   # translate all input dedalus files into a single datalog program
-  outpaths = []
   evaluator = argDict[ 'evaluator' ]
   for dedfilename, status in fileDict.items() :
     outpaths = runTranslator( cursor, dedfilename, argDict, datalogProgPath, evaluator )
-
-  # expose IRDB cursor, need to call cleanUp at caller of translateDedalus
-  outpaths.append( cursor )
-  outpaths.append( saveDB )
 
   if DEDT_DEBUG1 :
     dumpers.factDump(  cursor )
@@ -341,14 +331,13 @@ def translateDedalus( argDict ) :
 
   # ----------------------------------------------------------------- #
 
-  #cleanUp( IRDB )
-  #IRDB.close()        # close db
-  #os.remove( saveDB ) # delete the IR file to clean up
-
   if DEDT_DEBUG :
     print "DEDT_DEBUG > outpaths = " + str( outpaths )
 
-  return outpaths
+  if len( outpaths ) > 1 :
+    return outpaths
+  else :
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : outpaths empty. failure in runTranslator." )
 
 
 #########

@@ -20,6 +20,7 @@ from utils import tools
 
 DEBUG = True
 
+
 ####################
 #  CHECK FOR BUGS  #
 ####################
@@ -35,7 +36,17 @@ DEBUG = True
 #
 # assume right-most attribute/variable/field value 
 # in both pre and post represents delivery time.
-def checkForBugs( results, eot, executionStatus ) :
+def bugConditions( results, eot ) :
+
+  # ------------------------------------------------------------------------------ #
+  # sanity check pre and post must appear in the evaluation results.
+  if not "pre" in results :
+    dedt.cleanUp( irCursor, saveDB )
+    tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining pre" )
+  elif not "post" in results :
+    dedt.cleanUp( irCursor, saveDB )
+    tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining post" )
+  # ------------------------------------------------------------------------------ #
 
   isBugFree   = True   # be optimistic ~(^.^)~
   explanation = None

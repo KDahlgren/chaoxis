@@ -37,16 +37,17 @@ DEBUG = False
 ###############
 #  SOLVE CNF  #
 ###############
-def solveCNF( cnfFormula_str ) :
+def solveCNF( solverType, cnfFormula_str ) :
 
-  #print
-  #print "getConjuncts( cnfFormula_str ) = " + str( getConjuncts( cnfFormula_str ) )
-  #print
-
-  #tools.bp( __name__, inspect.stack()[0][3], "getConjuncts = " + str(getConjuncts( cnfFormula_str )) )
+  solvers = [ "PYCOSAT" ]
 
   # create a solver instance
-  return Solver_PYCOSAT.Solver_PYCOSAT( cnfFormula_str )
+  if solverType == solvers[0] :
+    return Solver_PYCOSAT.Solver_PYCOSAT( cnfFormula_str )
+
+  # WHAAAAA???
+  else :
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unrecognized solver type '" + solverType + "', currently recognized solvers are : " + str(solvers) )
 
 
 ###################

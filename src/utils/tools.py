@@ -57,6 +57,9 @@ def getRandomAttName() :
 #     { 'tableName' : [ ['a1', ..., 'aN'], ..., ['b1', ..., 'bN'] ] }
 def getEvalResults_file_c4( path ) :
 
+  # mandatory info communication
+  print "Using c4 results from : " + path
+
   if os.path.exists( path ) :
     fo = open( path )
 
