@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+
+'''
+Evaluators_Tests.py
+  Defines unit tests for evaluators.
+'''
+
+#############
+#  IMPORTS  #
+#############
+# standard python packages
+import os, sys, unittest
+
+# ------------------------------------------------------ #
+# import sibling packages HERE!!!
+packagePath  = os.path.abspath( __file__ + "/../../../src" )
+sys.path.append( packagePath )
+
+from evaluators import c4_evaluator, evalTools
+# ------------------------------------------------------ #
+
+
+######################
+#  EVALUATORS TESTS  #
+######################
+class Evaluators_Tests( unittest.TestCase ) :
+
+
+##############
+# Eval Tools #
+##############
+  def test__evalTools__bugFreeExecution( self ) :
+    results = {"pre":[1,2,"3"],"post":[4,"5","6"]}
+    
+    executionStatus = "exhaustedClockOnlySolns"
+    #test first check:
+    
+    
+
+ 
+#########################
+#  THREAD OF EXECUTION  #
+#########################
+# use this main if running this script exclusively.
+if __name__ == "__main__" :
+  unittest.main( verbosity=2 )
+
+
+#########
+#  EOF  #
+#########

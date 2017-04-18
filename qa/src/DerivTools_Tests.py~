@@ -19,9 +19,15 @@ sys.path.append( packagePath )
 from derivation import Node, FactNode
 # ------------------------------------------------------ #
 
-###############################
-# Temp Classes for unitTests  #
-###############################
+
+######################
+#  DERIVTOOLS TESTS  #
+######################
+
+
+#################
+# Test classes  #
+#################
 class FactNodeTestFuncObj(FactNode.FactNode) :
   def __init__(self):
     self.isNeg = None
@@ -29,20 +35,12 @@ class FactNodeTestFuncObj(FactNode.FactNode) :
     self.triggerRecord = []
     self.name = None
     self.record = []
-    
-
-
-######################
-#  DERIVTOOLS TESTS  #
-######################
-
-
 class DerivTools_Tests( unittest.TestCase ) :
 	
 ##########
 # NODE   # 
 ##########
-  def test__Class_Node( self ) :
+  def test__Node__Obj( self ) :
     with self.assertRaises(TypeError) as cm:
       testNodeFail = Node.Node("Test","Test")
     self.assertFalse(cm.exception==None)
@@ -59,7 +57,8 @@ class DerivTools_Tests( unittest.TestCase ) :
 # FactNode  #
 #############
 #depends on Node obj and tools
-  def test_____str__FactNode(self):
+  
+  def test__FactNode___str__(self):
     testFactNode = FactNodeTestFuncObj()
     testFactNode.isNeg = True
     testFactNode.name = "Test"
@@ -68,7 +67,7 @@ class DerivTools_Tests( unittest.TestCase ) :
     self.assertTrue(testFactNode.__str__()=="fact-> Test([])")
     
     
-  def test__extractTrigger__FactNode(self):
+  def test__FactNode__extractTrigger(self):
     testFactNode = FactNodeTestFuncObj()
     testFactNode.results = [[["1","2"],"2","3"],["1","2"]]
     testFactNode.name = 0
@@ -77,7 +76,7 @@ class DerivTools_Tests( unittest.TestCase ) :
     testFactNode.name = 1
     self.assertTrue(testFactNode.extractTrigger()==["1"])
     
-  def test__verifyTriggerRecord__FactNode(self):
+  def test__FactNode__verifyTriggerRecord(self):
     testFactNode = FactNodeTestFuncObj()
     testFactNode.results = [[["5","4"],"3","2"],["1","0"]]
     testFactNode.name = 1
@@ -86,121 +85,19 @@ class DerivTools_Tests( unittest.TestCase ) :
     testFactNode.triggerRecord='2'
     self.assertFalse(testFactNode.verifyTriggerRecord())
   	  
-  def test__Class__FactNode(self):
+  def test__FactNode__Obj(self):
     with self.assertRaises(SystemExit) as cm:
        testFactNode = FactNode.FactNode(1,True,[ "1","2","3","4"], [[["1","2"],"2","3"],["1","2"]], "Test")
     self.assertFalse(cm.exception==None)      
 
-##############
-#  Goal Node #
-##############
-  def test____str____GoalNode(self):
-    return None
-  
-  def test__display__GoalNode(self):
-    return None
-    
-  def test__getClockTriggerRecordList__GoalNode(self):
-    return None
-    
-  def test__getAllIDPairs__GoalNode(self):
-    return None
-    
-  def test__checkListEquality__GoalNode(self):
-    return None
-    
-  def test__getGoalAttMaps__GoalNode(self):
-    return None
-    
-  def test__mergeMaps__GoalNode(self):
-    return None
-  
-  def test__getORID__GaolNode(self):
-    return None
-  
-  def test__getAllTriggerRecords__GoalNode(self):
-    return None
-  
-  def test__checkAgreement__GoalNode(self):
-    return None
-  
-  def test__setDescendants__GoalNode(self):
-    return None
-    
-  def test__spawnFact__GoalNode(self):
-    return None
-  
-  def test__spawnRule__GoalNode(self):
-    return None
-  
-  def test__Class__GoalNode(self):
-    return None
-
 ###############
 #  Rule Node  #
 ###############
-  def test__Class__RuleNode(self):
-    return None
-  def test____str____RuleNode(self):
-    return None
-  def test__getFullMap__RuleNode(self):
-    return None
-  def test__getSubgoalInfo__RuleNode(self):
-    return None
-  def test__getSubgaolSeedRecords__RuleNode(self):
-    return None
-  def test__setDescendants__RuleNode(self):
-    return None
-  def test__spawnNode__RuleNode(self):
-    return None
-###############
-#  ProvTools  #
-###############
-  def test__getOrigRID__ProvTools(self):
-    return None
-  def test__getPartialMatches__ProvTools(self):
-    return None
-  def test__createNode__ProvTools(self):
-    return None
-  def test__subAttMapping__ProvTools(self):
-    return None
-  def test__getSubAttMap__ProvTools(self):
-    return None
-  def test__getAttVal__ProvTools(self):
-    return None
-  def test__getGoalAttMap__ProvTools(self):
-    return None
-  def test__getFullCandidateProvRecords__ProvTools(self):
-    return None
-  def test__getSubgoals__ProvTools(self):
-    return None
-  def test__get_prov_rid_info__ProvTools(self):
-    return None
-  def test__checkEqaulity__ProvTools(self):
-    return None
+
 
 ###############
 #  Deriv Tree #
 ###############
-
-def test__isFinalState__DerivTree(self):
-  return None
-  
-def test__isLeaf__DerivTree(self):
-  return None
-
-def test__generateDerivTree__DerivTree(self):
-  return None
-
-def test__getTopology__DerivTree(self):
-  return None
-  
-def test__errorMsg1__DerivTree(self):
-  return None
-
-def test__Class__DerivTree(self):
-  return None
-
 
 ###############
 #  Prov Tree  #
