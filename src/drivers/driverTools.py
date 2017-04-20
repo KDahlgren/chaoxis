@@ -223,7 +223,7 @@ def tree_to_CNF( provTreeComplete ) :
 ###############
 # input a cnf formula instance
 # output a list of fault hypotheses to try during the next LDFI iteration
-def solveCNF( provTree_fmla ) :
+def solveCNF( provTree_fmla, oldSolns ) :
 
   finalSolnList = []
 
@@ -239,33 +239,99 @@ def solveCNF( provTree_fmla ) :
     if DEBUG :
       numid    = 1   # for tracking the current soln number
 
-    # iterate over all solns
-    for aSoln in solns.solutions() :
+    ## --------------------------------------------------- #
+    ## grab the complete list of solutions
 
-      finalStr = []  # stores the legible version of the soln.
-      # make pretty
-      for var in aSoln :
-        finalStr.append( solverTools.toggle_format_str( var, "legible" ) )
+    ## iterate over all solns
+    #for aSoln in solns.allSolutions() :
+
+    #  finalStr = getLegibleFmla( aSoln )
+
+    #  if DEBUG :
+    #    print "SOLN : " + str(numid) + "\n" + str( finalStr )
+    #    numid += 1
+
+    #  # add soln to soln list and clear temporary save list for the next iteration
+    #  finalSolnList.append( finalStr )
+
+    ## remove duplicates
+    #finalSolnList = removeDuplicates( finalSolnList )
+    ## --------------------------------------------------- #
+
+    # --------------------------------------------------- #
+    # grab one list of solutions not previously considered
+
+    prev_newSoln = None
+    newSoln      = solns.oneNewSolution( oldSolns )
+    newSoln      = getLegibleFmla( newSoln )
+
+    print "oldSolns     = " + str( oldSolns )
+    print "newSoln      = " + str( newSoln )
+    #tools.bp( __name__, inspect.stack()[0][3], "solns.currSolnAttempt = " + str(solns.currSolnAttempt) ) 
+
+    # get a new solution not previously tested
+    while True :
+
+      # save previous newSoln
+      prev_newSoln = newSoln
 
       if DEBUG :
-        print "SOLN : " + str(numid) + "\n" + str( finalStr )
-        numid += 1
+        print "oldSolns            : " + str(oldSolns)
+        print "already encountered : " + str(newSoln)
+        print "getting new soln..."
 
-      # add soln to soln list and clear temporary save list for the next iteration
-      finalSolnList.append( finalStr )
+      # get one new newSoln
+      newSoln = solns.oneNewSolution( oldSolns )
+      solns.currSolnAttempt += 1 # increment id of solution attempt
+      newSoln = getLegibleFmla( newSoln )
 
-    # remove duplicates
-    tmp = []
-    for s in finalSolnList :
-      if s : # skip empties
-        if not s in tmp :
-          tmp.append( s )
-    finalSolnList = tmp
+      # check for equality. Equality means the solver output the same solution twice, 
+      # which likely means there's onlt one soln to the formula.
+      if not newSoln in oldSolns :
+        break
+      elif newSoln == prev_newSoln :
+        break
 
-  else :
-    tools.bp( __name__, inspect.stack()[0][3], "Congratulations! No solutions exist, meaning the solver could not find a counterexample, which means your program is pyLDFI certified. =D\nAborting..." )
+      if DEBUG :
+        print "solns.currSolnAttempt = " + str(solns.currSolnAttempt)
+        print "...next newSoln : " + str(newSoln)
+
+    finalSolnList.append(newSoln)
+
+    # --------------------------------------------------- #
 
   return finalSolnList
+
+
+#######################
+#  REMOVE DUPLICATES  #
+#######################
+# given a list of strings
+# output list of unique strings
+def removeDuplicates( solnList ) :
+ 
+  uniqueList = []
+  for s in solnList :
+    if s : # skip empties
+      if not s in uniqueList :
+        uniqueList.append( s )
+
+  return uniqueList
+
+######################
+#  GET LEGIBLE FMLA  #
+######################
+# given messy raw solution
+# output legible version
+def getLegibleFmla( aSoln ) :
+
+  fmlaStr = []  # stores the legible version of the soln.
+
+  # make legible
+  for var in aSoln :
+    fmlaStr.append( solverTools.toggle_format_str( var, "legible" ) )
+
+  return fmlaStr
 
 
 ##########################

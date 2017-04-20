@@ -103,13 +103,13 @@ def statusConditions( results, eot ) :
 # assumes send time placed in the rightmost field.
 def noEOT( tableResults, eot ) :
 
-  noEOTTuple = False
+  yesEOTTuple = False
 
   for row in tableResults :
     if int(row[-1]) == int(eot) : # gawd! sometimes weak typing sucks....
-      noEOTTuple = True
+      yesEOTTuple = True
 
-  return noEOTTuple
+  return not yesEOTTuple
 
 
 #########

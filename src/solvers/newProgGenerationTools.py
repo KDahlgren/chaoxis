@@ -35,10 +35,13 @@ DEBUG      = True
 # output chosen fault hypothesis (list of facts deleted from Clock)
 def buildNewProg( solnSet, irCursor, iter_count ) :
 
+  print "buildNewProg : iter_count  = " + str( iter_count )
+  print "solnSet :"
+  for s in solnSet :
+    print s
+
   if DEBUG :
     print "...running buildNewProg..."
-
-  newProgSavePath = None  # initialize as None to trigger later sanity check in the event of failure
 
   ##############################################
   # check if program save directory exists
@@ -53,27 +56,39 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
   # save the old program
   oldprogpath = None
   if os.path.isfile( newProgSavePath ) :
-    oldprogpath = newProgSavePath + "_saved_" + str(time.strftime("%d-%m-%Y")) + "_" + str(time.strftime("%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs" ) ) + "_" + str( iter_count )
+    oldprogpath = testpath + "c4program_" + str(time.strftime("%d%b%Y")) + "_" + str(time.strftime("%Hh%Mm%Ss" ) ) + "_" + str( iter_count ) + "_saved_olg.txt"
     os.system( "mv " + newProgSavePath + " " + oldprogpath )
 
   ##############################################
 
   # need to pick one of the solutions
-  #print "solnSet = " + str( solnSet )
-  preferredSoln = getPreferredSoln( solnSet, irCursor )
-
-  # case no preferred soln exists
-  if not preferredSoln :
-    return None
+  if len( solnSet ) < 2 :
+    preferredSoln = solnSet[0]
+  else :
+    preferredSoln = getPreferredSoln( solnSet, irCursor )
+    # case no preferred soln exists
+    if not preferredSoln :
+      return None
 
   # ----------------------------------------- #
   # parse clock soln records
   parsedClockRecords = parseClock( preferredSoln )
 
+  if DEBUG :
+    print "parsedClockRecords = "
+    for p in parsedClockRecords :
+      print p
+
   # reset clock.
-  # flip the inclusion of clock records (simInclude) in the solution from 'True' to 'False' 
-  # and ensure all other clock records are 'True' wrt the inclusion attribute (simInclude).
-  setNewClock( parsedClockRecords, irCursor )
+  if DEBUG :
+    print ">> CLOCK DUMP before RESET <<"
+    dumpers.clockDump( irCursor )
+
+  resetClock( parsedClockRecords, irCursor )
+
+  if DEBUG :
+    print ">> CLOCK DUMP after RESET <<"
+    dumpers.clockDump( irCursor )
 
   # ----------------------------------------- #
   # build new clock configuration
@@ -84,6 +99,9 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
 
   # falsify the appropriate record(s)
   shootClockRecs( parsedClockRecords, irCursor )
+
+  if DEBUG :
+    print "CHECK CLOCK TABLE HERE"
 
   if DEBUG :
     print ">> CLOCK DUMP after <<"
@@ -108,11 +126,17 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
 ######################
 #  SHOOT CLOCK RECS  #
 ######################
+# flip the simInclude boolean in the clock relation from True to False for the fault hypothesis clock records.
 def shootClockRecs( parsedClockRecords, irCursor ) :
 
+  if DEBUG :
+    print "parsedClockRecords :"
+    for p in parsedClockRecords :
+      print p
+
   # flip all the simIncludes to True to reset to newest clock soln configuration
-  simInclude = "True"
-  irCursor.execute( "UPDATE Clock SET simInclude='" + simInclude + "'" )
+  #simInclude = "True"
+  #irCursor.execute( "UPDATE Clock SET simInclude='" + simInclude + "'" )
 
   # flip the simIncludes for the target clock records
   simInclude = "False"
@@ -130,6 +154,7 @@ def shootClockRecs( parsedClockRecords, irCursor ) :
 
     # erase query components as necessary
     # EXISTING BUG TODO : does not work if _ in src --> need to handle ANDs more intelligently
+    #  if _ in src, then query = ... WHERE AND dest==...
     if "_" in src :
       qSRC = ""
     if "_" in dest :
@@ -252,72 +277,17 @@ def getContents( clockFact ) :
     elif clockFact[i] == ")" :
       closedParen = i
 
-  return clockFact[ openParen+2:closedParen-1 ]
+  return clockFact[ openParen+2 : closedParen-1 ]
 
 
-###################
-#  SET NEW CLOCK  #
-###################
-def setNewClock( parsedClockRecords, irCursor ) :
+#################
+#  RESET CLOCK  #
+#################
+def resetClock( parsedClockRecords, irCursor ) :
 
   # flip all the simIncludes to True
   simInclude = "True"
   irCursor.execute( "UPDATE Clock SET simInclude='" + simInclude + "'" )
-
-  # flip the simIncludes for the target clock records
-  simInclude = "False"
-  for rec in parsedClockRecords :
-    src       = rec[0]
-    dest      = rec[1]
-    sndTime   = rec[2]
-    delivTime = rec[3]
-
-    # optimistic by default
-    qSRC       = "src='" + src + "'"
-    qDEST      = " AND dest='" + dest + "'"
-    qSNDTIME   = " AND sndTime='" + sndTime + "'"
-    qDELIVTIME = " AND delivTime='" + delivTime + "'"
-
-    # erase query components as necessary
-    if "__WILDCARD__" in src :
-      qSRC = ""
-    if "__WILDCARD__" in dest :
-      qDEST = ""
-    if "__WILDCARD__" in sndTime :
-      qSNDTIME = ""
-    if "__WILDCARD__" in delivTime :
-      qDELIVTIME = ""
-
-    # set query
-    query = "UPDATE Clock SET simInclude='" + simInclude + "' WHERE " + qSRC + qDEST + qSNDTIME + qDELIVTIME 
-
-    # execute query
-    irCursor.execute( query )
-
-    # update crash table
-    # (using the long way because the sql statements were tempermental)
-    # (easy future update: make this less clunky)
-
-    # grab all the dropped clock facts
-    irCursor.execute( "SELECT src,dest,sndTime,delivTime,simInclude FROM Clock WHERE simInclude=='False'" )
-    clockTable = irCursor.fetchall()
-    clockTable = tools.toAscii_multiList( clockTable )
-
-    # grab the entire contents of crash
-    irCursor.execute( "SELECT src,dest,sndTime,delivTime,simInclude FROM Crash" )
-    crashTable = irCursor.fetchall()
-    crashTable = tools.toAscii_multiList( crashTable )
-
-    # if the dropped clock fact does not already exist in crash table,
-    # then add the fact to crash table.
-    for row in clockTable :
-      if not row in crashTable :
-        src        = row[0]
-        dest       = row[1]
-        sndTime    = row[2]
-        delivTime  = row[3]
-        simInclude = row[4]
-        irCursor.execute( "INSERT INTO Crash (src,dest,sndTime) VALUES ('" + src + "','" + dest + "','" + str(sndTime) + "')" )
 
 
 ###############
@@ -348,7 +318,7 @@ def copyProg( oldProgPath, testpath, newProgPath ) :
 
   ##############################################
   # save the new c4 program
-  # repetition is redundant, but very reassuring.
+  # existance check repetition is redundant, but very reassuring.
   if programLines :
     if os.path.isdir( testpath ) :
       outfile = open( newProgPath, "w" )

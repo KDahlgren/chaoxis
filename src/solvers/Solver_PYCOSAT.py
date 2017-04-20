@@ -8,7 +8,7 @@
 # standard python packages
 import pycosat
 from types import *
-import inspect, os, sys, time
+import inspect, itertools, os, sys, time
 
 import SATVars_PYCOSAT
 
@@ -34,14 +34,17 @@ class Solver_PYCOSAT :
   ################
   #  ATTRIBUTES  #
   ################
-  fmlaVars   = None
-  satformula = None
-  numsolns   = None
+  fmlaVars        = None
+  satformula      = None
+  numsolns        = None
+  currSolnAttempt = 1
 
   #################
   #  CONSTRUCTOR  #
   #################
   def __init__(self, cnf_str):
+
+    #tools.bp( __name__, inspect.stack()[0][3], "cnf_str = " + cnf_str )
 
     self.fmlaVars   = SATVars_PYCOSAT.SATVars_PYCOSAT()
     self.satformula = []
@@ -57,27 +60,34 @@ class Solver_PYCOSAT :
 
       satclause = map( self.fmlaVars.lookupVar, clause )
       satclause = [ var for var in satclause if var ] # remove 'None' variables from satclause
-
-      # justification:
+      #
+      # ^justification:
       # Only combinations of clock deletions are interesting.
       # Removing non-clock facts from CNF clause is equivalent to relegating the value to False.
       # By defn, False OR p == p.
       # Therefore, removing the non-clock facts does not affect the outcome, if we're only
       # interested in the impact of T/F assignments to clock fact variables.
 
-      self.satformula.append( list(satclause ) )
+      if not satclause == [] :
+        self.satformula.append( list(satclause) )
 
       if DEBUG :
         print "clause     = " + str(clause)
         print "satclause  = " + str(satclause)
         print "satformula = " + str(self.satformula)
+        print "map( self.fmlaVars.lookupVar, clause ) = " + str(map( self.fmlaVars.lookupVar, clause ))
+
+    #tools.bp( __name__, inspect.stack()[0][3], "self.satformula = " + str(self.satformula) )
 
 
-  ###############
-  #  SOLUTIONS  #
-  ###############
-  def solutions( self ) :
-    print "solutions: self.satformula = " + str( self.satformula )
+  ###################
+  #  ALL SOLUTIONS  #
+  ###################
+  # calculate and return all solutions to the cnf formula associated with this instance.
+  def allSolutions( self ) :
+
+    if DEBUG :
+      print "solutions: self.satformula = " + str( self.satformula )
 
     # DEVELOPER's NOTE: calculating numsolns is _VERY_ SLOW. only run on small examples. 
     # self.numsolns = len( list( pycosat.itersolve( self.satformula ) ) )
@@ -88,11 +98,35 @@ class Solver_PYCOSAT :
 
     for soln in pycosat.itersolve( self.satformula ) :
 
-        if DEBUG :
-          print "saving soln = " + str(soln)
+      if DEBUG :
+        print "saving soln = " + str(soln)
 
-        yield frozenset( map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) ) # using yield because soln set could be huge
-        #return map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) # not using yield because generators are a headache and a half.
+      yield frozenset( map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) ) # using yield because soln set could be huge
+      #return map(self.fmlaVars.lookupNum, filter(lambda x: x > 0, soln)) # not using yield because generators are a headache and a half.
+
+
+  ######################
+  #  ONE NEW SOLUTION  #
+  ######################
+  # input list of previously tried solutions.
+  # calculate and return a solution to the cnf formula associated with this instance
+  # such that the solution is not among the list of previously tried solutions.
+  def oneNewSolution( self, oldSolutions ) :
+
+    if DEBUG :
+      print "solutions: self.satformula = " + str( self.satformula )
+
+    solnList = list( itertools.islice( pycosat.itersolve( self.satformula), self.currSolnAttempt ) )
+
+    if DEBUG :
+      print "solnList  = " + str(solnList)
+      #print "map( self.fmlaVars.lookupNum, solnList[0]) = " + str(map( self.fmlaVars.lookupNum, solnList[0]))
+
+    #print "solnList[-1]                                  = " + str( solnList[-1] )
+    #print "map(self.fmlaVars.lookupNum, solnList[:-1]) ) = " + str( map(self.fmlaVars.lookupNum, solnList[-1]) )
+    #print "frozenset                                     = "  + str( frozenset( map( self.fmlaVars.lookupNum, solnList[-1]) ) ) # new solns are added to the end.
+
+    return frozenset( map( self.fmlaVars.lookupNum, solnList[-1]) ) # new solns are added to the end.
 
 
   ##############

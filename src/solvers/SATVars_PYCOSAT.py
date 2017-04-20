@@ -20,6 +20,8 @@ from utils import tools
 # **************************************** #
 
 
+DEBUG = True
+
 ######################
 #  SAT VARS PYCOSAT  #
 ######################
@@ -47,8 +49,9 @@ class SATVars_PYCOSAT :
   #  LOOKUP VAR  #
   ################
   # given variable, return the integer id
-  def lookupVar(self, var):
-    print "var = " + str( var )
+  def lookupVar(self, var) :
+    if DEBUG :
+      print "var = " + str( var )
 
     # check if variable already mapped in var2num
     if not self.var2num.has_key( var ) :

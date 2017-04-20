@@ -278,7 +278,8 @@ def toCNF_sympy( sympy_info ) :
   # NOT the formula because LDFI is interested in the set of variable 
   #   assignments which render the original formula false.
   #   Therefore, need solutions for making !origfmla _true_.
-  sympy_fmla = "~(" + sympy_fmla + ")"
+  #sympy_fmla = "~(" + sympy_fmla + ")"
+  sympy_fmla = sympy_fmla # not doing the last NOT
 
   result = sympy.to_cnf( sympy_fmla, simplify=False )
   #result = sympy.to_cnf( sympy_fmla, simplify=True  ) # SLOW! even on simplelog (>.<)'

@@ -206,12 +206,12 @@ def factDump( cursor ) :
 # output nothing, print all clock entries to stdout
 def clockDump( cursor ) :
 
-  if DUMPERS_DEBUG :
-    print "********************\nProgram Clock :"
-    clock = cursor.execute('''SELECT * FROM Clock''')
+  print "********************\nProgram Clock :"
+  clock = cursor.execute('''SELECT * FROM Clock''')
 
-    for c in clock :
-      print c
+  for c in clock :
+    print c
+
 
 ######################
 #  RECONSTRUCT RULE  #
