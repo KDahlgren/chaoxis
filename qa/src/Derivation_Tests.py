@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 '''
-Derivation_Tests.py
-  Defines unit tests for derivation.
+DerivTools_Tests.py
+  Defines unit tests for derivTools.
 '''
 
 #############
