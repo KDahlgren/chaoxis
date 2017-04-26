@@ -36,7 +36,9 @@ def initClockRelation( cursor, argDict ) :
   # --------------------------------------------------------------------- #
   # prefer cmdline topology
   if argDict[ "nodes" ] :
-    print "Using node topology from command line: " + str(argDict[ "nodes" ]) 
+
+    if CLOCKRELATION_DEBUG :
+      print "Using node topology from command line: " + str(argDict[ "nodes" ]) 
 
     nodeSet = argDict[ "nodes" ]
 
@@ -59,7 +61,8 @@ def initClockRelation( cursor, argDict ) :
   # --------------------------------------------------------------------- #
   # otherwise use topology from input files
   elif nodeFacts :
-    print "Using node topology from input file(s)."
+    if CLOCKRELATION_DEBUG :
+      print "Using node topology from input file(s)."
 
     # collect all connection info
     # assumes topology facts characterized by name == "node"

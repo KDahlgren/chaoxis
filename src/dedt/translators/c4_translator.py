@@ -21,8 +21,8 @@ from dedt  import Rule
 #############
 #  GLOBALS  #
 #############
-C4_TRANSLATOR_DEBUG   = True
-C4_TRANSLATOR_DEBUG_1 = True
+C4_TRANSLATOR_DEBUG   = False
+C4_TRANSLATOR_DEBUG_1 = False
 
 
 #####################
@@ -84,7 +84,9 @@ def c4datalog( cursor ) :
 
     # ////////////////////////////////////////////////////////// #
     # populate defines list for rule goals
-    print "In c4datalog: definesList = " + str(definesList)
+    if C4_TRANSLATOR_DEBUG :
+      print "In c4datalog: definesList = " + str(definesList)
+
     if not existingDefine( goalName, definesNames ) : # prevent duplicates
 
       # get goal attribute list
@@ -138,9 +140,11 @@ def c4datalog( cursor ) :
     factName = cursor.fetchone()
     factName = tools.toAscii_str( factName )
 
-    print "**> factName = " + factName
+    if C4_TRANSLATOR_DEBUG :
+      print "**> factName = " + factName
 
-    print "In c4datalog: definesList = " + str(definesList)
+    if C4_TRANSLATOR_DEBUG :
+      print "In c4datalog: definesList = " + str(definesList)
     if not existingDefine( factName, definesNames ) : # prevent duplicates
 
       # populate table string
@@ -194,7 +198,13 @@ def c4datalog( cursor ) :
   # add clock define
 
   definesList.append( "define(clock,{string,string,int,int});\n" )
-  tableListStr += "clock"
+  tableListStr += "clock,"
+
+  # ----------------------------------------------------------- #
+  # add crash define
+
+  definesList.append( "define(crash,{string,string,int});\n" )
+  tableListStr += "crash"
 
   # ----------------------------------------------------------- #
   # add facts
@@ -216,6 +226,12 @@ def c4datalog( cursor ) :
   if C4_TRANSLATOR_DEBUG :
     print "c4_translator: clockFactList = " + str( clockFactList )
 
+  # ----------------------------------------------------------- #
+  # add crash facts
+
+  crashFactList = dumpers_c4.dump_crash( cursor )
+  if C4_TRANSLATOR_DEBUG :
+    print "c4_translator: crashFactList = " + str( crashFactList )
 
   # ----------------------------------------------------------- #
   # add rules
@@ -276,7 +292,7 @@ def c4datalog( cursor ) :
     print "ruleList :"
     print ruleList
 
-  listOfStatementLists = [ definesList, factList, clockFactList, ruleList ]
+  listOfStatementLists = [ definesList, factList, clockFactList, crashFactList, ruleList ]
   program              = tools.combineLines( listOfStatementLists )
 
   testpath        = os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/"

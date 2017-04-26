@@ -18,6 +18,7 @@ SubgoalAtt     (rid text, sid text, attID int, attName text, attType text)
 SubgoalAddArgs (rid text, sid text, argName text)
 Equation       (rid text, eid text, eqn text)
 Clock          (src text, dest text, sndTime int, delivTime int, simInclude text)
+Crash          (src text, dest text, sndTime int, delivTime int, simInclude text)
 
 '''
 
@@ -79,7 +80,7 @@ def dedToIR( filename, cursor ) :
       attList = attList[0].split( "," )
       timeArg = extractors.extractTimeArg( line[1] )
 
-      if True :
+      if DEDT_DEBUG :
         print "dedt sanity check:"
         print "fact name    = " + name
         print "fact attList = " + str(attList)
@@ -208,9 +209,9 @@ def dedToIR( filename, cursor ) :
   return ( factMeta, ruleMeta )
 
 
-#################
-#  IR TO CLOCK  #
-#################
+###################
+#  STARTER CLOCK  #
+###################
 # input cursor and cmdline args, assume IR successful
 # create the initial clock relation in SQL database
 # output nothing
@@ -282,7 +283,9 @@ def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Equation  (rid text, eid text, eqn text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime int, delivTime int, simInclude text)''')
-  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime, simInclude)''') # make all clock rows unique
+  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime, simInclude)''') # make all rows unique
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Crash (src text, dest text, sndTime int, delivTime int, simInclude text)''')
+  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Crash ON Crash(src, dest, sndTime, delivTime, simInclude)''') # make all rows unique
 
 
 ##############

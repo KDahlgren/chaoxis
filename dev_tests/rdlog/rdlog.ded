@@ -1,7 +1,14 @@
+// reliable delivery-backed broadcast.  send messages at all neighbors
+// a (theoretically) infinite number of times
+
+
+/////////////////////////////////////////////////////////////////////////////
+//include "./simplog.ded";
 // broadcast a message to all neighbors. neighbors save message content in log.
 // based on simplog.ded
 
 // initial connections between nodes
+// from "./bcast_edb.ded"
 node("a", "b")@1 ;
 node("a", "c")@1 ;
 node("b", "a")@1 ;
@@ -25,8 +32,20 @@ log(Node2, Pload)@async :- bcast(Node1, Pload), node(Node1, Node2) ;
 log(Node, Pload) :- bcast(Node, Pload); //asdkjahsdf lkj
 
 // someone has a log, but not me.
-missing_log(A, Pl) :- log(X, Pl), node(X, A), notin crash(_, A, _), notin log(A, Pl) ;
+missing_log(A, Pl) :- log(X, Pl), node(X, A), notin log(A, Pl);//, notin crash(_, A, _);
+//missing_log(A, Pl) :- notin log(A, Pl), log(X, Pl), node(X, A) ;
 
 // invariants
-pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1, notin crash(X, X, _);
+pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1 ;//, notin crash(X, X, _);
 post(X, Pl) :- log(X, Pl), notin missing_log(_, Pl);
+/////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+// rdlog.ded
+// persist bcast; sender retries.  should accomodate all failures
+bcast(N, P)@next :- bcast(N, P);
+/////////////////////////////////////////////////////////////////////////////
+
+//////////////////
+//     EOF      //
+//////////////////

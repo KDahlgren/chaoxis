@@ -149,7 +149,6 @@ def parse( dedLine ) :
       try :
         if DEDALUSPARSER_DEBUG :
           print "dedLine = " + dedLine
-        print "dedLine = " + dedLine
 
         result = rule.parseString( dedLine )
         ret    = cleanResult( result )
