@@ -30,7 +30,4 @@ missing_log(A, Pl) :- log(X, Pl), node(X, A), notin crash(_, A, _), notin log(A,
 // invariants
 pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1, notin crash(X, X, _);
 post(X, Pl) :- log(X, Pl), notin missing_log(_, Pl);
-<<<<<<< HEAD
-=======
 
->>>>>>> 3b3ed9c9753af8db30991d651d290841ab2d7780

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 '''
-Derivation_Tests.py
-  Defines unit tests for derivation.
+DerivTools_Tests.py
+  Defines unit tests for derivTools.
 '''
 
 #############
@@ -37,7 +37,7 @@ class FactNodeTestFuncObj(FactNode.FactNode) :
 ######################
 
 
-class Derivation_Tests( unittest.TestCase ) :
+class DerivTools_Tests( unittest.TestCase ) :
 	
 ##########
 # NODE   # 

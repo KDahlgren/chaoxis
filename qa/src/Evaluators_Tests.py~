@@ -16,7 +16,7 @@ import os, sys, unittest
 packagePath  = os.path.abspath( __file__ + "/../../../src" )
 sys.path.append( packagePath )
 
-from evaluators import c4_evaluator, evalTools
+#from evaluators import *
 # ------------------------------------------------------ #
 
 
@@ -25,17 +25,8 @@ from evaluators import c4_evaluator, evalTools
 ######################
 class Evaluators_Tests( unittest.TestCase ) :
 
-
-##############
-# Eval Tools #
-##############
-  def test__evalTools__bugFreeExecution( self ) :
-    results = {"pre":[1,2,"3"],"post":[4,"5","6"]}
-    
-    executionStatus = "exhaustedClockOnlySolns"
-    #test first check:
-    
-    
+  def test__evaluators( self ) :
+    return None
 
  
 #########################
