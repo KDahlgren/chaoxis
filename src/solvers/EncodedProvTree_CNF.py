@@ -47,6 +47,12 @@ class EncodedProvTree_CNF :
     self.rawBooleanFmla_str = self.rawformula.display()
     self.cnfformula         = solverTools.convertToCNF( self.rawBooleanFmla_str )
 
+  #############
+  #  DISPLAY  #
+  #############
+  def display( self ) :
+    return self.cnfformula
+
 
 #########
 #  EOF  #

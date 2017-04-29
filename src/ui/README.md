@@ -1,3 +1,3 @@
-# ui
+# visualizations
 
-Tools supporting the interactive UI for pyLDFI.
+Tools for supporting the many varieties visualizations for communicating results.

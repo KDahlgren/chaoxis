@@ -285,7 +285,7 @@ def toCNF_sympy( sympy_info ) :
   #result = sympy.to_cnf( sympy_fmla, simplify=True  ) # SLOW! even on simplelog (>.<)'
 
   # WARNING: sympy (rather sillily imo) overrides "replace" for Basic types.
-  # bypassng with a format toggling function...
+  # bypassing with a format toggling function...
   result_str = toggle_format_str( str( result ), "legible" )
 
   #tools.bp( __name__, inspect.stack()[0][3], " result_str = "  + str(result_str) )

@@ -48,12 +48,18 @@ def bugConditions( results, eot ) :
     tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining post" )
   # ------------------------------------------------------------------------------ #
 
-  isBugFree   = True   # be optimistic ~(^.^)~
+  conclusion  = None  # conclusion is not None iff it hit a bug.
   explanation = None
 
   # grab relevant tuple lists
   pre  = results[ "pre" ]
   post = results[ "post" ]
+
+  # ------------------------------------------------------------------------------ #
+  # sanity check clock data must be integers
+  checkInts( pre )
+  checkInts( post )
+  # ------------------------------------------------------------------------------ #
 
   if DEBUG :
     print " eot = " + str( eot )
@@ -65,35 +71,31 @@ def bugConditions( results, eot ) :
   for pretup in pre :
     if ( int( pretup[-1] ) == eot ) and not pretup in post :
       isBugFree   = False
-      explanation = "eot tuples exist in pre, but not in post"
-
-  return [ isBugFree, explanation ]
-
-
-#######################
-#  STATUS CONDITIONS  #
-#######################
-# check if results indicate trivially good execution
-def statusConditions( results, eot ) :
-
-  # grab relevant tuple lists
-  pre  = results[ "pre" ]
-  post = results[ "post" ]
-
+      #explanation = "eot tuples exist in pre, but not in post"
+      conclusion  = "FoundCounterexample"
 
   # ------------------------------------------------------- #
-  # check list
-  check0 = False
-  # check1 = False
-  # ...
-
-  # ------------------------------------------------------- #
-  # CHECK #0 : pass if no eot in pre and no eot in post
+  # CHECK #1 : no counterexample if no eot in pre and no eot in post
   if noEOT( pre, eot ) and noEOT( post, eot ) :
-    check0 = True
+    #explanation = "no eot facts in pre and no eot facts in post"
+    conclusion  = "NoCounterexampleFound"
 
-  return [ check0 ]
-  #return [ check0, check1 ]
+  return conclusion
+
+
+################
+#  CHECK INTS  #
+################
+# Assume tables are pre or post, then leftmost column consists of clock data.
+# Clock data must be integers.
+# Abort with fatal error otherwise.
+def checkInts( table ) :
+
+  for row in table :
+    try :
+      x = int( row[-1] )
+    except :
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : clock data is not an integer : " + str( row ) )
 
 
 ############

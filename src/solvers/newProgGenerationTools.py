@@ -36,9 +36,10 @@ DEBUG      = True
 def buildNewProg( solnSet, irCursor, iter_count ) :
 
   print "buildNewProg : iter_count  = " + str( iter_count )
-  print "solnSet :"
+  print "solnSet : ["
   for s in solnSet :
     print s
+  print "]"
 
   if DEBUG :
     print "...running buildNewProg..."
@@ -79,16 +80,7 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
     for p in parsedClockRecords :
       print p
 
-  # reset clock.
-  if DEBUG :
-    print ">> CLOCK DUMP before RESET <<"
-    dumpers.clockDump( irCursor )
-
   resetClock( parsedClockRecords, irCursor )
-
-  if DEBUG :
-    print ">> CLOCK DUMP after RESET <<"
-    dumpers.clockDump( irCursor )
 
   # ----------------------------------------- #
   # build new clock configuration

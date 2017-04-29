@@ -245,6 +245,12 @@ def rewrite( ruleMeta, cursor ) :
 # WARNING: CANNOT write rules or facts on multiple lines.
 def runTranslator( cursor, dedFile, argDict, table_list_path, datalog_prog_path, evaluator ) :
 
+  if not table_list_path :
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no path to file listing c4 paths specified." )
+
+  if not datalog_prog_path :
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no path to c4 program specified." )
+
   # ded to IR
   meta     = dedToIR( dedFile, cursor )
   ruleMeta = meta[1]

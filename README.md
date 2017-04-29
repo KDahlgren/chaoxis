@@ -77,10 +77,11 @@ Python Packages (not automatically installed with pyLDFI) :
   * [pyDatalog](https://sites.google.com/site/pydatalog/installation)
   * [pyDot](https://pypi.python.org/pypi/pydot)
   * [mpmath](https://github.com/fredrik-johansson/mpmath#1-download--installation)
-  * [SymPy](http://docs.sympy.org/latest/install.html)
+  * [SymPy (v1.0.1.dev)](http://docs.sympy.org/latest/install.html)
   * [pycosat](https://pythonhosted.org/PuLP/://pypi.python.org/pypi/pycosat)
 
 Other Tools :
+  * [p5.js](https://github.com/processing/p5.js/wiki/Development#setup)
   * [cmake](http://brewformulas.org/Cmake)
   * [C4 Overlog Runtime](https://github.com/bloom-lang/c4) (installed locally automatically)
   * [Z3 Theorem Prover](https://github.com/Z3Prover/z3) (installed locally automatically)

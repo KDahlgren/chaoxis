@@ -98,10 +98,13 @@ class Dedt_Tests( unittest.TestCase ) :
     #testing set up. runTranslator has dependency
     #on createDedalusIRTables so that's
     #tested first above.
-    testDB = testPath + "/IR.db"
-    IRDB    = sqlite3.connect( testDB ) 
-    cursor  = IRDB.cursor()
-    
+    testDB      = testPath + "/IR.db"
+    IRDB        = sqlite3.connect( testDB ) 
+    cursor      = IRDB.cursor()
+
+    tableList   = testPath  + "/testfiles/tableListStr.data"
+    datalogProg = testPath  + "/testfiles/c4program.olg"
+
     #dependency
     dedt.createDedalusIRTables(cursor)
     
@@ -114,21 +117,31 @@ class Dedt_Tests( unittest.TestCase ) :
     #runs through function to make sure it finishes without error
     outputResult = None
     evaluator    = "c4"
-    self.assertFalse(dedt.runTranslator(cursor,inputfile,inputArg,None,evaluator)==outputResult)
-    outpaths = dedt.runTranslator(cursor,inputfile,inputArg,None,evaluator)
-    tables   = outpaths[0]
-    c4file   = outpaths[1]
 
-    #clean up testing
-    IRDB.close()
-    os.remove( testDB )
-    if tables is not None:
-      os.remove(tables)
-    if c4file is not None:
-      os.remove(c4file)
+
+    with self.assertRaises( SystemExit ) :
+      dedt.runTranslator(cursor,inputfile,inputArg,tableList,None,evaluator)
+
+    outpaths     = dedt.runTranslator(cursor,inputfile,inputArg,tableList,datalogProg,evaluator)
+
+    if not outpaths is None :
+      tables       = outpaths[0]
+      c4file       = outpaths[1]
+
+      #clean up testing
+      IRDB.close()
+      os.remove( testDB )
+      if tables is not None:
+        os.remove(tables)
+      if c4file is not None:
+        os.remove(c4file)
     
   def test_translateDedalus_dedt( self ) :
-  
+ 
+    testDB = testPath + "/IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+ 
     #throw error when file not found (currently leaves behind the DB file)
     '''inputArg = {'prov_diagrams': False, 'use_symmetry': False, 'crashes': 0, 'solver': None, 
     'disable_dot_rendering': False, 'negative_support': False, 'strategy': None,
@@ -143,8 +156,10 @@ class Dedt_Tests( unittest.TestCase ) :
     'disable_dot_rendering': False, 'negative_support': False, 'strategy': None,
     'file': testPath+"/testfiles/testFullProgram.ded", 'EOT': 3, 'find_all_counterexamples': False,
     'nodes': ['a', 'b', 'c', 'd'], 'EFF': 2, 'evaluator': 'c4'}
+    tableList   = testPath  + "/testfiles/tableListStr.data"
+    datalogProg = testPath  + "/testfiles/c4program.olg"
     outputResult = None
-    self.assertFalse(dedt.translateDedalus(inputArg)==outputResult)
+    self.assertTrue(dedt.translateDedalus(inputArg, tableList, datalogProg, cursor)==outputResult)
 
 
   # ///////////////////////////////////////////////// #

@@ -5,6 +5,7 @@ deps: get-submodules c4 z3
 clean:
 	rm -r lib/c4/build
 	rm -r lib/z3/build
+	rm -r lib/p5/build
 
 cleanc4:
 	rm -r lib/c4/build
