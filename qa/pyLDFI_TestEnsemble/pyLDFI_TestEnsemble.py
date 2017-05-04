@@ -45,6 +45,11 @@ from derivation_tests import Test_DerivTree, \
                              Test_provTools
 
 # ------------------------------------ #
+#         E2E (End-to-End) TESTS       #
+# ------------------------------------ #
+#from e2e_tests import Test_
+
+# ------------------------------------ #
 #            EVALUATORS TESTS          #
 # ------------------------------------ #
 from evaluators_tests import Evaluators_Tests
@@ -169,7 +174,6 @@ if __name__ == "__main__" :
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_provTools.Test_provTools )
   unittest.TextTestRunner( verbosity=2 ).run( suite )
 
-
   #################
   #  EVALUATORS/  #
   #################
@@ -234,6 +238,22 @@ if __name__ == "__main__" :
   print "<><><><><><><><><><><><><><><><><><>"
   suite = unittest.TestLoader().loadTestsFromTestCase( Visualizations_Tests.Visualizations_Tests )
   unittest.TextTestRunner( verbosity=2 ).run( suite )
+
+
+  ############################
+  #  E2E (End-to-End) Tests  #
+  ############################
+  print "\n"
+  print "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"
+  print "<><><><><><><><><><><><><><><><><><>"
+  print "<>            E2E TESTS           <>"
+  print "<><><><><><><><><><><><><><><><><><>"
+  print
+  print "        O>O  derp...."
+  print
+  #suite = unittest.TestLoader().loadTestsFromTestCase( E2E_Tests.E2E_Tests )
+  #unittest.TextTestRunner( verbosity=2 ).run( suite )
+
 
   print "*****************************************************"
 
