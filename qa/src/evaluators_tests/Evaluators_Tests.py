@@ -13,13 +13,12 @@ import os, sys, unittest
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/../../../src" )
-sys.path.append( packagePath )
+sys.path.append( os.path.abspath( __file__ + "/../../../../src" ) )
 
-testPath = os.path.abspath(__file__+"/../../../qa")
 from evaluators import c4_evaluator, evalTools
 # ------------------------------------------------------ #
 
+testPath = os.path.abspath(__file__+"/../../../../qa")
 
 ######################
 #  EVALUATORS TESTS  #
