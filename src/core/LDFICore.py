@@ -119,7 +119,8 @@ class LDFICore :
     # 2. evaluate
   
     # assuming using C4 at commandline
-    resultsPath   = self.evaluate( "C4_CMDLINE", self.table_list_path, self.datalog_prog_path, self.c4_dump_savepath )
+    resultsPath   = self.evaluate( "C4_WRAPPER", self.table_list_path, self.datalog_prog_path, self.c4_dump_savepath )
+    #resultsPath   = self.evaluate( "C4_CMDLINE", self.table_list_path, self.datalog_prog_path, self.c4_dump_savepath )
     parsedResults = tools.getEvalResults_file_c4( resultsPath ) # assumes C4 results stored in dump
   
     # ----------------------------------------------- #
@@ -179,7 +180,7 @@ class LDFICore :
   
     # C4_WRAPPER
     elif evaluatorType == evaluators[1] :
-      return c4_evaluator.runC4_wrapper( datalog_prog_path, table_list_path )
+      return c4_evaluator.runC4_wrapper( datalog_prog_path, table_list_path, savepath )
   
     # WHAAAAA????
     else :
