@@ -69,7 +69,8 @@ class Test_e2e( unittest.TestCase ) :
     output_olg = os.path.abspath( __file__ + "/../../../testfiles/e2e_test.olg" )
 
     # file storing the expected c4 datalog
-    expected_olg = os.path.abspath( __file__ + "/../../../testfiles/simpleLog_v0_to_c4_expected.olg" )
+    expected_olg       = os.path.abspath( __file__ + "/../../../testfiles/simpleLog_v0_to_c4_expected.olg" )
+    expected_olg_molly = os.path.abspath( __file__ + "/../../../testfiles/expected_c4_prog_molly.olg" )
 
     # dictionary of commandline args for executing the run
     argDict = { 'prov_diagrams'            : False,           \
@@ -90,7 +91,8 @@ class Test_e2e( unittest.TestCase ) :
     dedt.runTranslator( cursor, input_ded, argDict, table_save, output_olg, "c4" )
 
     # compare test file translation with expected file translation
-    self.assertTrue( e2e_tools.cmpDatalogFiles_c4( output_olg, expected_olg ) )
+    self.assertTrue( e2e_tools.cmpDatalogFiles_c4( output_olg, expected_olg       ) )
+    #self.assertTrue( e2e_tools.cmpDatalogFiles_c4( output_olg, expected_olg_molly ) )
 
     # close database instance
     dedt.cleanUp( IRDB, saveDB )

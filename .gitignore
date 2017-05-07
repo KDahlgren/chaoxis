@@ -16,6 +16,10 @@ dev_tests/**/*.db
 qa/**/*.txt
 qa/**/*.db
 !qa/**/expected_IR.db
+qa/testfiles/c4program.olg
+qa/testfiles/e2e_test.olg
+qa/testfiles/simplelog_v0_tables.data
+qa/testfiles/tableListStr.data
 
 !save_data/c4Output/README.md
 !save_data/graphOutput/README.md
