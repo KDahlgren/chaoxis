@@ -142,7 +142,7 @@ class FaultManager :
             concl = desc.run()
 
             if concl :
-              print "<><>triggerFault = " + str(triggerFault) + " : concl = " + concl
+              print "<><>triggerFault = " + str(desc.triggerFault) + " : concl = " + concl
 
               # CASE : 'NoCounterexampleFound'
               if conclTypes.categories[0] in concl :

@@ -45,11 +45,6 @@ from derivation_tests import Test_DerivTree, \
                              Test_provTools
 
 # ------------------------------------ #
-#         E2E (End-to-End) TESTS       #
-# ------------------------------------ #
-#from e2e_tests import Test_
-
-# ------------------------------------ #
 #            EVALUATORS TESTS          #
 # ------------------------------------ #
 from evaluators_tests import Evaluators_Tests
@@ -74,6 +69,10 @@ from utils_tests import Test_clockTools,            \
 from visualizations_tests import Visualizations_Tests
 
 # ------------------------------------ #
+#         E2E (End-to-End) TESTS       #
+# ------------------------------------ #
+from e2e_tests import Test_e2e
+
 
 # ------------------------------------------------------ #
 
@@ -251,8 +250,8 @@ if __name__ == "__main__" :
   print
   print "        O>O  derp...."
   print
-  #suite = unittest.TestLoader().loadTestsFromTestCase( E2E_Tests.E2E_Tests )
-  #unittest.TextTestRunner( verbosity=2 ).run( suite )
+  suite = unittest.TestLoader().loadTestsFromTestCase( Test_e2e.Test_e2e )
+  unittest.TextTestRunner( verbosity=2 ).run( suite )
 
 
   print "*****************************************************"

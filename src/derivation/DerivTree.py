@@ -22,7 +22,7 @@ from utils import tools
 # **************************************** #
 
 
-DEBUG = True
+DEBUG = False
 
 # --------------------------------------------------- #
 #                   DERIV TREE CLASS                  #
@@ -162,6 +162,44 @@ class DerivTree( ) :
         edges.extend( topo[1] )
 
     return ( nodes, edges )
+
+
+  # ------------------------------------------ #
+  ############################
+  #  GET TOPOLOGY EDGE SET   #
+  ############################
+  def getTopology_edgeSet( self ) :
+    edges = []
+
+    # recursively ask for all descendant nodes.
+    if not self.root.treeType == "fact" : # facts have no descendants
+
+      # ----------------------------------- #
+      # case goal
+      if self.root.treeType == "goal" :
+
+        if not self.root.descendants == [] :
+          desc = self.root.descendants
+
+        else :
+          return edges
+
+      # ----------------------------------- #
+      # case rule
+      elif self.root.treeType == "rule" :
+        desc = self.root.descendants    # rules have one or many descendants
+
+      # ----------------------------------- #
+      # iterate over descendants
+      for d in desc :
+
+        # create an edge
+        edges.append( ( str( self.root ), str( d.root ) ) )
+
+        # update topology with recursive results
+        edges.extend( d.getTopology_edgeSet() )
+
+    return edges
 
 
   # ------------------------------------------ #

@@ -30,7 +30,7 @@ from visualizations import vizTools
 # **************************************** #
 
 
-DEBUG                = True
+DEBUG                = False
 
 PROV_TREES_ON        = True
 OUTPUT_PROV_TREES_ON = True
@@ -247,7 +247,7 @@ class LDFICore :
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
     # initialize provenance tree structure
     provTreeComplete = ProvTree.ProvTree( "FinalState", parsedResults, irCursor )
-  
+
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
     # populate prov tree
     for seedRecord in postrecords_eot :
@@ -262,6 +262,15 @@ class LDFICore :
     if OUTPUT_PROV_TREES_ON :
       provTreeComplete.createGraph( None, iter_count )
     # ------------------------------------------------------------- #
+
+    #print "PRINTING EDGE SET"
+    #print provTreeComplete.getEdgeSet()
+
+    #os.system( "rm /Users/KsComp/projects/pyldfi/qa/testfiles/expected_provTreeComplete.txt" ) 
+    #fo = open( "/Users/KsComp/projects/pyldfi/qa/testfiles/expected_provTreeComplete.txt", "w" )
+    #fo.write( str( provTreeComplete.getEdgeSet() ) )
+    #fo.close()
+    #sys.exit( "ermergerd! saved provTreeComplete for first good execution!" ) 
   
     return provTreeComplete
   
@@ -285,7 +294,13 @@ class LDFICore :
       print
       print ">>> provTree_fmla.cnfformula = " + str( provTree_fmla.cnfformula )
       print
-  
+ 
+      #os.system( "rm /Users/KsComp/projects/pyldfi/qa/testfiles/expected_cnf_fmla_save.txt" )
+      #fo = open( "/Users/KsComp/projects/pyldfi/qa/testfiles/expected_cnf_fmla_save.txt", "w" )
+      #fo.write( str( provTree_fmla.cnfformula ) )
+      #fo.close()
+      #sys.exit( "ermergerd! just saved the cnf fmla for the initial good execution to a file!" )
+ 
       if OUTPUT_TREE_CNF_ON :
         provTree_fmla.rawformula.graph()
   

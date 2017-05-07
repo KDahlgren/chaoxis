@@ -4,7 +4,7 @@ import os, sys
 
 from ctypes import *
 
-C4_WRAPPER_DEBUG = True
+C4_WRAPPER_DEBUG = False
 
 class C4Wrapper( object ) :
 
@@ -35,7 +35,6 @@ class C4Wrapper( object ) :
       program = []
       fo = open( filename, "r" )
       for line in fo :
-        print line
         line = line.rstrip()
         program.append( line )
       fo.close()

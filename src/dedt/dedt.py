@@ -39,7 +39,7 @@ import Fact, Rule
 packagePath2  = os.path.abspath( __file__ + "/translators" )
 sys.path.append( packagePath2 )
 
-from translators import c4_translator, pydatalog_translator
+from translators import c4_translator, dumpers_c4, pydatalog_translator
 # ------------------------------------------------------ #
 
 #############

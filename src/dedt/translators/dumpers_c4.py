@@ -20,6 +20,67 @@ from utils import tools
 #############
 DUMPERS_C4_DEBUG = False
 
+
+#############
+#  DUMP IR  #
+#############
+# dump the contents of an entire IR database
+def dumpIR( cursor, db_dump_save_path ) :
+
+  # get facts
+  cursor.execute( "SELECT fid FROM Fact" )
+  fid_all = cursor.fetchall()
+  fid_all = tools.toAscii_list( fid_all )
+
+  full_facts = []
+  for fid in fid_all :
+    full_facts.append( dumpSingleFact_c4( fid, cursor ) )
+
+  # get rules
+  cursor.execute( "SELECT rid FROM Rule" )
+  rid_all = cursor.fetchall()
+  rid_all = tools.toAscii_list( rid_all )
+
+  full_rules = []
+  for rid in rid_all :
+    full_rules.append( dumpSingleRule_c4( rid, cursor ) )
+
+  # get clock
+  full_clock = dump_clock( cursor )
+
+  # get crash table
+  full_crash = dump_crash( cursor )
+
+  if db_dump_save_path :
+    if DUMPERS_C4_DEBUG :
+      print "...DUMPING IR..."
+      print full_facts
+      print full_rules
+      print full_clock
+      print full_crash
+
+    # save to file
+    fo = open( db_dump_save_path, "w" )
+    for fact in full_facts : # write facts
+      fo.write( fact )
+    for rule in full_rules : # write rules
+      fo.write( rule )
+    for clock in full_clock : # write clock facts
+      fo.write( clock )
+    for crash in full_crash : # write crash facts
+      fo.write( crash )
+    fo.close()
+
+    print "IR DUMP SAVED TO : " + db_dump_save_path
+
+  else :
+    print "...DUMPING IR..."
+    print full_facts
+    print full_rules
+    print full_clock
+    print full_crash
+
+
 #########################
 #  DUMP SINGLE FACT C4  #
 #########################

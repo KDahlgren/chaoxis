@@ -17,7 +17,7 @@ import DerivTree, GoalNode, RuleNode, FactNode, provTools
 
 # **************************************** #
 
-DEBUG       = True
+DEBUG       = False
 IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data/graphOutput" )
 
 # --------------------------------------------------- #
@@ -99,7 +99,7 @@ class ProvTree( ) :
 
     for tree in self.subtrees :
       edges.append( pydot.Edge( provRootNode, provTools.createNode( tree.root ) ) )
-      topology   = tree.getTopology( )
+      topology = tree.getTopology( )
       nodes.extend( topology[0] )
       edges.extend( topology[1] )
 
@@ -124,6 +124,24 @@ class ProvTree( ) :
     print "Saving prov tree render to " + str(path)
     graph.write_png( path + ".png" )
 
+
+  ##################
+  #  GET EDGE SET  #
+  ##################
+  # grab the complete list of edges for a prov tree
+  # use for equality comparisons
+  def getEdgeSet( self ) :
+    if DEBUG :
+      print "... running getEdgeSet ..."
+      print "subtrees = " + str( self.subtrees )
+
+    edgeSet = []
+
+    for tree in self.subtrees :
+      edgeSet.append( ( self.rootname, str( tree.root ) ) )
+      edgeSet.extend( tree.getTopology_edgeSet() )
+
+    return edgeSet
 
 #########
 #  EOF  #
