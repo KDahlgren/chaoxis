@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-cmd="python ../../src/drivers/driver1.py -n a,b,c -f ./rdLog.ded --evaluator c4"
+cmd="python ../../src/drivers/driver1.py -n a,b,c --EOT 4 -f ./rdLog.ded --evaluator c4"
 opt_cmd="cmd"
 
 rm ./IR.db

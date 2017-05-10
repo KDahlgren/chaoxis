@@ -125,7 +125,10 @@ class LDFICore :
   
     # ----------------------------------------------- #
     # 3. check for bugs
-  
+
+    if DEBUG :
+      print "CHECKING FOR BUGS on results from triggerFault = " + str(triggerFault)
+
     conclusion = self.checkForBugs( parsedResults, self.argDict[ "EOT" ] )
 
     # conclusion is not None iff it hit a bug.

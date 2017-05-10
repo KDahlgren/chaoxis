@@ -136,6 +136,7 @@ class FaultManager :
 
           desc = self.descendants[i]
 
+          # ignore previously explored scenarios.
           if desc.triggerFault in self.old_faults :
             pass
           else :

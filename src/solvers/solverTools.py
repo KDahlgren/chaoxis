@@ -281,8 +281,10 @@ def toCNF_sympy( sympy_info ) :
   #sympy_fmla = "~(" + sympy_fmla + ")"
   sympy_fmla = sympy_fmla # not doing the last NOT
 
+  print "Generating cnf formula..."
   result = sympy.to_cnf( sympy_fmla, simplify=False )
   #result = sympy.to_cnf( sympy_fmla, simplify=True  ) # SLOW! even on simplelog (>.<)'
+  print "...done generating cnf formula."
 
   # WARNING: sympy (rather sillily imo) overrides "replace" for Basic types.
   # bypassing with a format toggling function...

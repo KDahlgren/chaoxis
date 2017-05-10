@@ -94,8 +94,9 @@ if __name__ == "__main__" :
   print "<><><><><><><><><><><><><><><><><><>"
   print "<>           CORE TESTS           <>"
   print "<><><><><><><><><><><><><><><><><><>"
+
   suite = unittest.TestLoader().loadTestsFromTestCase( Core_Tests.Core_Tests )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
 
   ###########
@@ -109,31 +110,31 @@ if __name__ == "__main__" :
 
   # dedt.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_dedt.Test_dedt )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # clockRelation.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_clockRelation.Test_clockRelation )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # dedalusParser.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_dedalusParser.Test_dedalusParser )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # dedalusRewriter.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_dedalusRewriter.Test_dedalusRewriter )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # provenanceRewriter.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_provenanceRewriter.Test_provenanceRewriter )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # Fact.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_Fact.Test_Fact )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # Rule.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_Rule.Test_Rule )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
 
   #################
@@ -147,31 +148,31 @@ if __name__ == "__main__" :
 
   # DerivTree.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_DerivTree.Test_DerivTree )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # FactNode.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_FactNode.Test_FactNode )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # GoalNode.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_GoalNode.Test_GoalNode )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # Node.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_Node.Test_Node )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # ProvTree.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_ProvTree.Test_ProvTree )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # RuleNode.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_RuleNode.Test_RuleNode )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # provTools.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_provTools.Test_provTools )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   #################
   #  EVALUATORS/  #
@@ -181,8 +182,9 @@ if __name__ == "__main__" :
   print "<><><><><><><><><><><><><><><><><><>"
   print "<>         EVALUATORS TESTS       <>"
   print "<><><><><><><><><><><><><><><><><><>"
+
   suite = unittest.TestLoader().loadTestsFromTestCase( Evaluators_Tests.Evaluators_Tests )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
 
   ##############
@@ -193,8 +195,9 @@ if __name__ == "__main__" :
   print "<><><><><><><><><><><><><><><><><><>"
   print "<>          SOLVERS TESTS         <>"
   print "<><><><><><><><><><><><><><><><><><>"
+
   suite = unittest.TestLoader().loadTestsFromTestCase( Solvers_Tests.Solvers_Tests )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
 
   ############
@@ -208,23 +211,23 @@ if __name__ == "__main__" :
 
   # clockTools.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_clockTools.Test_clockTools )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # dumpers.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_dumpers.Test_dumpers )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # extractors.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_extractors.Test_extractors )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # parseCommandLineInput.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_parseCommandLineInput.Test_parseCommandLineInput )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # tools.py
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_tools.Test_tools )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
 
   ####################
@@ -235,8 +238,9 @@ if __name__ == "__main__" :
   print "<><><><><><><><><><><><><><><><><><>"
   print "<>       VISUALIZATION TESTS      <>"
   print "<><><><><><><><><><><><><><><><><><>"
+
   suite = unittest.TestLoader().loadTestsFromTestCase( Visualizations_Tests.Visualizations_Tests )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
 
   ############################
@@ -247,11 +251,9 @@ if __name__ == "__main__" :
   print "<><><><><><><><><><><><><><><><><><>"
   print "<>            E2E TESTS           <>"
   print "<><><><><><><><><><><><><><><><><><>"
-  print
-  print "        O>O  derp...."
-  print
+
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_e2e.Test_e2e )
-  unittest.TextTestRunner( verbosity=2 ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
 
   print "*****************************************************"

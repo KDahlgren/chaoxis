@@ -53,7 +53,7 @@ class Test_e2e( unittest.TestCase ) :
     # ------------------------------------------------------------------ #
     # create IR instance
     saveDB = os.getcwd() + "/IR_test_dedalus_to_c4_datalog_e2e.db"
-    os.system( saveDB ) # delete db if it already exists.
+    os.system( "rm saveDB" ) # delete db if it already exists.
 
     IRDB   = sqlite3.connect( saveDB ) # database for storing IR, stored in running script dir
     cursor = IRDB.cursor()
@@ -106,7 +106,7 @@ class Test_e2e( unittest.TestCase ) :
     # ------------------------------------------------------------------ #
     # create IR instance
     saveDB = os.getcwd() + "/IR_test_dedalus_to_dedalus_ir_rewrite_e2e.db"
-    os.system( saveDB ) # delete db if it already exists.
+    os.system( "rm saveDB" ) # delete db if it already exists.
 
     IRDB   = sqlite3.connect( saveDB ) # database for storing IR, stored in running script dir
     cursor = IRDB.cursor()
@@ -117,7 +117,7 @@ class Test_e2e( unittest.TestCase ) :
 
     # path to test IR dump
     test_dump_save = os.getcwd() + "/test_dump.txt"
-    os.system( test_dump_save ) # remove if file already exists
+    os.system( "rm test_dump_save" ) # remove if file already exists
 
     # path to expected IR dump
     expected_dump_save = os.path.abspath( __file__ + "/../../../testfiles/expected_IR_dump_test_dedalus_to_dedalus_ir_rewrite_e2e.txt" )
@@ -164,7 +164,7 @@ class Test_e2e( unittest.TestCase ) :
     # ------------------------------------------------------------------ #
     # create IR instance
     saveDB = os.getcwd() + "/IR_test_dedalus_to_provenance_ir_rewrite_e2e.db"
-    os.system( saveDB ) # delete db if it already exists.
+    os.system( "rm saveDB" ) # delete db if it already exists.
 
     IRDB   = sqlite3.connect( saveDB ) # database for storing IR, stored in running script dir
     cursor = IRDB.cursor()
@@ -175,7 +175,7 @@ class Test_e2e( unittest.TestCase ) :
 
     # path to test IR dump
     test_dump_save = os.getcwd() + "/test_dump.txt"
-    os.system( test_dump_save ) # remove if file already exists
+    os.system( "rm test_dump_save" ) # remove if file already exists
     
     # path to expected IR dump
     expected_dump_save = os.path.abspath( __file__ + "/../../../testfiles/expected_IR_dump_test_dedalus_to_provenance_ir_rewrite_e2e.txt" )
@@ -226,7 +226,7 @@ class Test_e2e( unittest.TestCase ) :
     # ------------------------------------------------------------------ #
     # create IR instance
     saveDB = os.getcwd() + "/IR_test_dedalus_to_c4_datalog_e2e.db"
-    os.system( saveDB ) # delete db if it already exists.
+    os.system( "rm saveDB" ) # delete db if it already exists.
 
     IRDB   = sqlite3.connect( saveDB ) # database for storing IR, stored in running script dir
     cursor = IRDB.cursor()
@@ -294,7 +294,7 @@ class Test_e2e( unittest.TestCase ) :
     # ------------------------------------------------------------------ #
     # create IR instance
     saveDB = os.getcwd() + "/IR_test_dedalus_to_c4_datalog_e2e.db"
-    os.system( saveDB ) # delete db if it already exists.
+    os.system( "rm saveDB" ) # delete db if it already exists.
 
     IRDB   = sqlite3.connect( saveDB ) # database for storing IR, stored in running script dir
     cursor = IRDB.cursor()
