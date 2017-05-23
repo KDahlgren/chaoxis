@@ -3,10 +3,6 @@
 
 
 /////////////////////////////////////////////////////////////////////////////
-//include "./simplog.ded";
-// broadcast a message to all neighbors. neighbors save message content in log.
-// based on simplog.ded
-
 // initial connections between nodes
 // from "./bcast_edb.ded"
 node("a", "b")@1 ;
@@ -17,8 +13,13 @@ node("c", "a")@1 ;
 node("c", "b")@1 ;
 
 // initial stimulus
+// from "./bcast_edb.ded"
 bcast("a", "hello")@1 ;
 
+/////////////////////////////////////////////////////////////////////////////
+//include "./simplog.ded";
+// broadcast a message to all neighbors. neighbors save message content in log.
+// based on simplog.ded
 // each node's vision of the topology does not change over time.
 node(Node, Neighbor)@next :- node(Node, Neighbor) ;
 

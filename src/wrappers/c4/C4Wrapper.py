@@ -45,13 +45,88 @@ class C4Wrapper( object ) :
       print "Could not open file " + filename
       return None
 
+
+  #########################################
+  #  GET INPUT PROG FILE STRATIFY CLOCKS  #
+  #########################################
+  def getInputProg_file_stratify_clocks( self, filename ) :
+    if C4_WRAPPER_DEBUG :
+      print "Importing program from " + filename
+
+    try :
+      program = []
+      fo = open( filename, "r" )
+      for line in fo :
+        line = line.rstrip()
+        program.append( line )
+      fo.close()
+
+      codeStatementsOnly   = "" # string of code statements only. no clock statements.
+      clockStatementGroups = [] # list of strings grouping clock statements by SndTime
+      currClockList        = ""
+      currTime             = 1
+
+      # only works if clock facts are sorted by increasing SndTime when 
+      # appearing in the input c4 file.
+      # also only works if simulations start at time 1.
+      for i in range(0 ,len(program)) :
+
+        statement = program[i]
+        nextStatement = None
+        lastClock     = False
+
+        parsedStatement = statement.split( "(" )
+
+        # CASE : hit a clock fact
+        if parsedStatement[0] == "clock" :
+
+          # check if the next statement in the program also declares a clock fact
+          try :
+            nextStatement    = program[ i+1 ]
+            parsedStatement1 = nextStatement.split( "(" )
+            parsedClockArgs1 = parsedStatement1[1].split( "," ) # split clock fact arguments into a list
+            assert( parsedStatement1[0] == "clock" )
+          except :
+            lastClock = True
+
+          parsedClockArgs = parsedStatement[1].split( "," ) # split clock fact arguments into a list
+
+          # check if SndTime is in the current group
+          if not lastClock and int( parsedClockArgs[2] ) == currTime :
+            currClockList += statement
+
+          # hit a clock fact in the next time group
+          elif not lastClock and int( parsedClockArgs[2] ) > currTime :
+            clockStatementGroups.append( currClockList ) # save the old clock group
+            currClockList  = ""                          # reset the clock group
+            currClockList += statement                   # reset the clock group
+            currTime       = int( parsedClockArgs[2] )   # reset the curr time
+
+          # hit a clock fact in the last time group
+          elif lastClock :
+            clockStatementGroups.append( currClockList ) # save the old clock group
+
+        # CASE : hit a non clock fact
+        else :
+          codeStatementsOnly += statement
+
+      finalProg = [ codeStatementsOnly ]
+      finalProg.extend( clockStatementGroups )
+      return finalProg
+
+    except IOError :
+      print "Could not open file " + filename
+      return None
+
+
   #########
   #  RUN  #
   #########
   # fullprog is a string of concatenated overlog commands.
   def run( self, fullprog_path, table_path, savepath ) :
 
-    fullprog  = self.getInputProg_file( fullprog_path )
+    #fullprog  = self.getInputProg_file( fullprog_path )
+    fullprog  = self.getInputProg_file_stratify_clocks( fullprog_path )
     tableList = self.getTableList( table_path )
 
     self.lib.c4_initialize()
@@ -62,8 +137,12 @@ class C4Wrapper( object ) :
     if C4_WRAPPER_DEBUG :
       print "... loading prog ..."
 
-    c_prog = bytes( fullprog )
-    self.lib.c4_install_str( self.c4_obj, c_prog )
+    #c_prog = bytes( fullprog )
+    #self.lib.c4_install_str( self.c4_obj, c_prog )
+
+    for subprog in fullprog :
+      c_prog = bytes( subprog )
+      self.lib.c4_install_str( self.c4_obj, c_prog )
 
     # ---------------------------------------- #
     # dump program results to file

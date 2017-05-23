@@ -193,6 +193,10 @@ def dumpSingleRule_c4( rid, cursor ) :
       subTimeArg = cursor.fetchone() # assume only one time arg
       subTimeArg = tools.toAscii_str( subTimeArg )
 
+      # replace SndTime in subgoal with subTimeArg, if applicable
+      if not subTimeArg == "" :
+        sys.exit( "subTimeArg = " + str(subTimeArg) )
+
       # get subgoal additional args
       cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + rid + "' AND sid == '" + s + "'" )
       subAddArg = cursor.fetchone() # assume only one additional arg

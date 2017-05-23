@@ -58,9 +58,11 @@ seq("b", 1)@1;
 seq("c", 1)@1;
 seq(Node, Seq)@next :- member(Node, Node), notin primary(Node, Node), seq(Node, Seq), notin history(Node, _, _, _);
 
-seq(Node, Seq+1)@next :- member(Node, Node), notin primary(Node, Node), history(Node, _, _, _), max_history(Node, Seq);
+//KDseq(Node, Seq+1)@next :- member(Node, Node), notin primary(Node, Node), history(Node, _, _, _), max_history(Node, Seq);
+seq(Node, Seq)@next :- member(Node, Node), notin primary(Node, Node), history(Node, _, _, _), max_history(Node, Seq);
 
-max_history(Node, max<Seq>) :- member(Node, Node), history(Node, _, _, Seq);
+//KDmax_history(Node, max<Seq>) :- member(Node, Node), history(Node, _, _, Seq);
+max_history(Node, Seq) :- member(Node, Node), history(Node, _, _, Seq);
 
 term("G", 1)@1;
 term("a", 1)@1;

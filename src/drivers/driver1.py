@@ -41,6 +41,8 @@ DATALOG_PROG_PATH = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/pro
 ############
 def driver() :
 
+  os.system( "rm IR.db" )
+
   # get dictionary of commandline arguments.
   # exits here if user provides invalid inputs.
   argDict = driverTools.parseArgs( )
