@@ -95,7 +95,7 @@ class FaultManager :
 
     # run LDFI workflow and gather results
     # results := [ conclusion/None, provTree_merged/None, solution/None ]
-    results = self.core.run_workflow( self.triggerFault, self.provTree_merged, self.old_faults )
+    results = self.core.run_workflow( self.triggerFault, self.provTree_merged )
 
     # grab data from run
     # provTree_merged     is not None iff no conclusion exists.
@@ -124,8 +124,12 @@ class FaultManager :
       return self.conclusion
 
     # CASE 2 : if conclusion is NoCounterexampleFound, then return conclusion immediately. ( TEMPORARY )
-    elif self.conclusion == "NoCounterexampleFound" and self.getTrigger( self.solution ) in self.old_faults :
-      print "BREAK CONDITION --> self.getTrigger( self.solution ) in self.old_faults"
+    elif self.conclusion == "NoCounterexampleFound" and self.solution in self.old_solutions :
+      print "BREAK CONDITION --> self.solution in self.old_solutions"
+      print
+      print "self.solution      = " + str( self.solution )
+      print "self.old_solutions = " + str( self.old_solutions )
+      print
       print "returning result info..."
       return self.conclusion
 
@@ -136,19 +140,27 @@ class FaultManager :
     # otherwise, have not hit a conclusion yet
     # RECURSIVE CASE : if NoCounterexampleFound and new solutions exist, then find a new soln and try again.
     else :
+
       if DEBUG :
         print str( self.triggerFault ) + " : self.conclusion  = " + str( self.conclusion )
-        print str( self.triggerFault ) + " : self.solution   = " + str( self.solution )
+        print str( self.triggerFault ) + " : self.solution    = " + str( self.solution )
 
       # add evaluated triggerFault to old_faults
       self.old_faults.append( self.triggerFault )
 
-      # recurse until counterexample found or run out of new solutions
-      self.triggerFault = self.getTrigger( self.solution ) # clean solution into a trigger fault
+      # add evaluated solution to old_solutions
+      self.old_solutions.append( self.solution )
+
+      # self comms are pointless
+      self.solution = self.core.removeSelfComms( self.solution )
+
+      # clean solution into a trigger fault
+      self.triggerFault = self.getTrigger( self.solution )
 
       # increment the fault id
       self.core.fault_id += 1
 
+      # recurse until counterexample found or run out of new solutions
       self.run()
 
 

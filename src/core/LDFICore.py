@@ -49,7 +49,6 @@ class LDFICore :
   argDict           = None  # dictionary of commaned line args
   cursor            = None  # a reference to the IR database
   fault_id          = 1     # id of the current fault to inject. start at 1 for pycosat.
-  old_faults        = None  # list of previously tried faults. reassigned with every invocation of run_workflow.
 
   # --------------------------------- #
 
@@ -78,10 +77,7 @@ class LDFICore :
   #  6. solve the CNF formula using some solver
   #  7. generate the new datalog program for the next iteration
   #
-  def run_workflow( self, triggerFault, old_provTree, old_faults ) :
-
-    # reassign old_faults
-    self.old_faults = old_faults
+  def run_workflow( self, triggerFault, old_provTree ) :
 
     # initialize return array
     return_array = []
@@ -181,7 +177,7 @@ class LDFICore :
         # -------------------------------------------- #
 
         finalSolnList   = self.solveCNF( provTree_fmla )         # grab a soln to the prov tree
-        finalSolnList   = self.removeSelfComms( finalSolnList )  # self comms are pointless
+        #finalSolnList   = self.removeSelfComms( finalSolnList )  # self comms are pointless
         return_array[2] = finalSolnList                          # update solutions part of returns
 
         return return_array # of the form [ conclusion/None, provTree_merged/None, solutions/None ]
