@@ -23,7 +23,7 @@ sys.path.append( packagePath )
 from utils import tools
 # **************************************** #
 
-DEBUG = True
+DEBUG = False
 
 ##########################
 #  CLASS SOLVER PYCOSAT  #
@@ -37,12 +37,14 @@ class Solver_PYCOSAT :
   fmlaVars        = None
   satformula      = None
   numsolns        = None
-  currSolnAttempt = 1
+  currSolnAttempt = None
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__(self, cnf_str):
+  def __init__( self, cnf_str, fault_id ):
+
+    self.currSolnAttempt = fault_id
 
     #tools.bp( __name__, inspect.stack()[0][3], "cnf_str = " + cnf_str )
 
@@ -111,14 +113,20 @@ class Solver_PYCOSAT :
   # input list of previously tried solutions.
   # calculate and return a solution to the cnf formula associated with this instance
   # such that the solution is not among the list of previously tried solutions.
-  def oneNewSolution( self, oldSolutions ) :
+  #def oneNewSolution( self, oldSolutions ) :
+  def oneNewSolution( self ) :
 
     if DEBUG :
       print "solutions: self.satformula = " + str( self.satformula )
 
-    solnList = list( itertools.islice( pycosat.itersolve( self.satformula), self.currSolnAttempt ) )
+    # grab all solns up to currSolnAttempt. returns a list. the largest element will be new.
+    solnList = list( itertools.islice( pycosat.itersolve( self.satformula ), self.currSolnAttempt ) )
+
+    print "self.currSolnAttempt = " + str( self.currSolnAttempt )
+    print "solnList  = " + str(solnList)
 
     if DEBUG :
+      print "self.currSolnAttempt = " + str( self.currSolnAttempt )
       print "solnList  = " + str(solnList)
       #print "map( self.fmlaVars.lookupNum, solnList[0]) = " + str(map( self.fmlaVars.lookupNum, solnList[0]))
 

@@ -281,9 +281,9 @@ def checkPyDeps() :
     print "sqlite3...verified"
   
   # pydatalog
-  import pyDatalog
-  if pyDatalog.__name__ :
-    print "pyDatalog...verified"
+  #import pyDatalog
+  #if pyDatalog.__name__ :
+  #  print "pyDatalog...verified"
   
   # pydot
   import pydot

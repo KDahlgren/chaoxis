@@ -30,7 +30,7 @@ from visualizations import vizTools
 # **************************************** #
 
 
-DEBUG                = False
+DEBUG                = True
 
 PROV_TREES_ON        = True
 OUTPUT_PROV_TREES_ON = True
@@ -46,9 +46,10 @@ class LDFICore :
   c4_dump_savepath  = None
   table_list_path   = None
   datalog_prog_path = None
-
   argDict           = None  # dictionary of commaned line args
   cursor            = None  # a reference to the IR database
+  fault_id          = 1     # id of the current fault to inject. start at 1 for pycosat.
+  old_faults        = None  # list of previously tried faults. reassigned with every invocation of run_workflow.
 
   # --------------------------------- #
 
@@ -77,20 +78,16 @@ class LDFICore :
   #  6. solve the CNF formula using some solver
   #  7. generate the new datalog program for the next iteration
   #
-  def run_workflow( self, triggerFault, fault_id ) :
+  def run_workflow( self, triggerFault, old_provTree, old_faults ) :
 
-    #if str(triggerFault) == "['clock([a,c,1,2])']" :
-    #  tools.bp( __name__, inspect.stack()[0][3], "asdkljfh" )
-
-    print "*****fault_id = " + fault_id
-    if fault_id == "0000" :
-      tools.bp( __name__, inspect.stack()[0][3], "fault_id = " + str(fault_id) + "; triggerFault = " + str(triggerFault)  )
+    # reassign old_faults
+    self.old_faults = old_faults
 
     # initialize return array
     return_array = []
-    return_array.append( None )
-    return_array.append( None )
-    return_array.append( None )
+    return_array.append( None )  # := conclusion
+    return_array.append( None )  # := provTree_merged
+    return_array.append( None )  # := solutions
 
     if DEBUG :
      print "*******************************************************"
@@ -98,66 +95,145 @@ class LDFICore :
      print "*******************************************************"
      print
  
+    # save the previous c4 program for records (not used in future iterations).
     if os.path.isfile( self.c4_dump_savepath ) :
-      os.system( "mv " + self.c4_dump_savepath + " " + self.c4_dump_savepath + "_" + time.strftime("%d%b%Y-%Hh%Mm%Ss") + "_iter" + str( fault_id ) + ".txt" )
+      os.system( "mv " + self.c4_dump_savepath + " " + self.c4_dump_savepath + "_" + time.strftime("%d%b%Y-%Hh%Mm%Ss") + "_iter" + str( self.fault_id ) + ".txt" )
   
     # ----------------------------------------------- #
-    # 1. get datalog
-    if fault_id == "0" :
-      # ----------------------------------------------- #
-      # first LDFI cor run
-      # translate all input dedalus files into a single datalog program
+    # 1. get datalog                                  #
+    # ----------------------------------------------- #
+    if self.fault_id == 1 :
+
+      # ---------------------------------------------------------------- #
+      # first LDFI core run                                              #
+      # translate all input dedalus files into a single datalog program  #
+      # ---------------------------------------------------------------- #
+
       self.dedalus_to_datalog( self.argDict, self.table_list_path, self.datalog_prog_path, self.cursor )
+
     else :
+
       # -------------------------------------------- #
-      # 7. generate new datalog prog
-      #if fault_id == "000" :
-      #  tools.bp( __name__, inspect.stack()[0][3], "triggerFault = " + str(triggerFault) )
-      self.getNewDatalogProg( [ triggerFault ], self.cursor, fault_id )
-  
+      # 7. generate new datalog prog                 #
+      # -------------------------------------------- #
+
+      self.getNewDatalogProg( [ triggerFault ], self.cursor, self.fault_id )
+
     # ----------------------------------------------- #
-    # 2. evaluate
-  
-    # assuming using C4 at commandline
+    # 2. evaluate                                     #
+    # ----------------------------------------------- #
+ 
+    # use c4 wrapper 
     resultsPath   = self.evaluate( "C4_WRAPPER", self.table_list_path, self.datalog_prog_path, self.c4_dump_savepath )
+    # use c4 from command line (deprecated)
     #resultsPath   = self.evaluate( "C4_CMDLINE", self.table_list_path, self.datalog_prog_path, self.c4_dump_savepath )
     parsedResults = tools.getEvalResults_file_c4( resultsPath ) # assumes C4 results stored in dump
   
     # ----------------------------------------------- #
-    # 3. check for bugs
+    # 3. check for bugs                               #
+    # ----------------------------------------------- #
 
     if DEBUG :
       print "CHECKING FOR BUGS on results from triggerFault = " + str(triggerFault)
 
-    conclusion = self.checkForBugs( parsedResults, self.argDict[ "EOT" ] )
+    # check for bugs
+    bugInfo         = self.checkForBugs( parsedResults, self.argDict[ "EOT" ] )
+    conclusion      = bugInfo[0]
+    explanation     = bugInfo[1]
 
-    # conclusion is not None iff it hit a bug.
-    if conclusion :
-      return_array[0] = conclusion  # update conclusion part of returns
+    # update conclusion part of returns
+    return_array[0] = conclusion
 
+
+    ##############################################
+    # CASE 1 :                                   # 
+    #   Found a counterexample!                  #
+    #   Return immediately.
+    ##############################################
+    if conclusion == "FoundCounterexample" :
+      return return_array
+
+    ##############################################
+    # CASE 2 :                                   # 
+    #   Found a vacuously correct execution.     #
+    #   No new prov tree.                        #
+    #   Find a new soln over previous tree.      #
+    ##############################################
+    elif conclusion == "NoCounterexampleFound" and explanation == "VACUOUS" :
+
+      if old_provTree :
+
+        # -------------------------------------------- #
+        # 4. get provenance trees                      #
+        #     no change in provTree by definition      #
+        # -------------------------------------------- #
+
+        return_array[1] = old_provTree
+
+        # -------------------------------------------- #
+        # 5. generate CNF formula                      #
+        # -------------------------------------------- #
+
+        provTree_fmla = self.tree_to_CNF( old_provTree )
+
+        # -------------------------------------------- #
+        # 6. solve CNF formula                         #
+        # -------------------------------------------- #
+
+        finalSolnList   = self.solveCNF( provTree_fmla )         # grab a soln to the prov tree
+        finalSolnList   = self.removeSelfComms( finalSolnList )  # self comms are pointless
+        return_array[2] = finalSolnList                          # update solutions part of returns
+
+        return return_array # of the form [ conclusion/None, provTree_merged/None, solutions/None ]
+
+      elif not old_provTree and not self.fault_id == 1 :
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no previous prov tree and not initial run. Aborting..." )
+
+      else :
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : illogical. hit a vacuous result without injecting faults. Aborting..." )
+
+
+    ##############################################
+    # CASE 3 :                                   # 
+    #   Found a correct execution, not vacuous.  #
+    #   Can build new prov tree.                 #
+    #   Find a new soln over the new tree.       #
+    ##############################################
     else :
-      # ----------------------------------------------- #
-      # 4. get provenance trees
 
-      if PROV_TREES_ON :
-        provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], fault_id, self.cursor )
+      # ----------------------------------------------- #
+      # 4. get provenance trees                         #
+      # ----------------------------------------------- #
+
+      provTreeComplete = self.buildProvTree( old_provTree, parsedResults, self.argDict[ "EOT" ], self.fault_id, self.cursor )
+      # merge new prov tree with prov tree from previous iteration
+      provTree_merged = None
+      if old_provTree :
+        provTree_merged  = provTreeComplete.mergeTrees( old_provTree ) 
+
+      # update provTree_merged part of returns 
+      if provTree_merged :
+        return_array[1] = provTree_merged
+      else :
+        return_array[1] = provTreeComplete
+
+      # -------------------------------------------- #
+      # 5. generate CNF formula                      #
+      # -------------------------------------------- #
   
-        # -------------------------------------------- #
-        # 5. generate CNF formula
+      provTree_fmla   = self.tree_to_CNF( provTreeComplete )
+
+      # -------------------------------------------- #
+      # 6. solve CNF formula                         #
+      # -------------------------------------------- #
   
-        provTree_fmla   = self.tree_to_CNF( provTreeComplete )
-        return_array[1] = provTree_fmla  # update cnf_formula part of returns
+      finalSolnList = self.solveCNF( provTree_fmla )         # grab a soln to the prov tree
+      finalSolnList = self.removeSelfComms( finalSolnList )  # self comms are pointless
+      #if DEBUG :
+      #  finalSolnList = self.removeCrashes( finalSolnList ) # debugging only
+      return_array[2] = finalSolnList  # update solutions part of returns
   
-        # -------------------------------------------- #
-        # 6. solve CNF formula
-  
-        finalSolnList = self.solveCNF( provTree_fmla )
-        finalSolnList = self.removeSelfComms( finalSolnList )
-        if DEBUG :
-          finalSolnList = self.removeCrashes( finalSolnList ) # debugging only
-        return_array[2] = finalSolnList  # update solutions part of returns
-  
-    return return_array # of the form [ conclusion/None, cnf_formula/None, solutions/None ]
+      return return_array # of the form [ conclusion/None, provTree_merged/None, solutions/None ]
 
 
   ########################
@@ -204,7 +280,7 @@ class LDFICore :
   #####################
   # use the evaluation execution results to build a provenance tree of the evaluation execution.
   # return a provenance tree instance
-  def buildProvTree( self, parsedResults, eot, iter_count, irCursor ) :
+  def buildProvTree( self, old_provTree, parsedResults, eot, iter_count, irCursor ) :
   
     if parsedResults :
       # 000000000000000000000000000000000000000000000000000000000000000000 #
@@ -274,7 +350,7 @@ class LDFICore :
     #fo.write( str( provTreeComplete.getEdgeSet() ) )
     #fo.close()
     #sys.exit( "ermergerd! saved provTreeComplete for first good execution!" ) 
-  
+
     return provTreeComplete
   
   
@@ -297,7 +373,7 @@ class LDFICore :
       print
       print ">>> provTree_fmla.cnfformula = " + str( provTree_fmla.cnfformula )
       print
- 
+
       #os.system( "rm /Users/KsComp/projects/pyldfi/qa/testfiles/expected_cnf_fmla_save.txt" )
       #fo = open( "/Users/KsComp/projects/pyldfi/qa/testfiles/expected_cnf_fmla_save.txt", "w" )
       #fo.write( str( provTree_fmla.cnfformula ) )
@@ -321,31 +397,34 @@ class LDFICore :
   def solveCNF( self, provTree_fmla ) :
   
     finalSolnList = []
-  
+
+    # remove self comms
+    cleanCNFFmla = self.removeSelfComms( provTree_fmla.cnfformula )
+
     # create a Solver_PYCOSAT insance
-    solns = solverTools.solveCNF( "PYCOSAT", provTree_fmla.cnfformula )
+    solns = solverTools.solveCNF( "PYCOSAT", cleanCNFFmla, self.fault_id )
   
     if solns :
       if DEBUG :
         numid = 1   # for tracking the current soln number
   
       # --------------------------------------------------- #
-      # grab the complete list of solutions
-  
-      # iterate over all solns
-      for aSoln in solns.allSolutions() :
+      # pick one new solution
 
-        finalStr = self.getLegibleFmla( aSoln )
+      aSoln = solns.oneNewSolution( )
+
+      finalStr = self.getLegibleFmla( aSoln )
+
+      if DEBUG :
+        print "SOLN : " + str(numid) + "\n" + str( finalStr )
+        numid += 1
   
-        if DEBUG :
-          print "SOLN : " + str(numid) + "\n" + str( finalStr )
-          numid += 1
-  
-        # add soln to soln list and clear temporary save list for the next iteration
-        finalSolnList.append( finalStr )
+      # add soln to soln list and clear temporary save list for the next iteration
+      finalSolnList.append( finalStr )
   
       # remove duplicates
       finalSolnList = self.removeDuplicates( finalSolnList )
+
       # --------------------------------------------------- #
   
     return finalSolnList
@@ -399,46 +478,57 @@ class LDFICore :
   #######################
   #  REMOVE SELF COMMS  #
   #######################
-  # input a list of solutions consisting only of clock facts.
+  # input a solution consisting only of clock facts.
   # outputs a list of containing solutions such that each solution contains 
   # the original set of clock facts, minus the self-comm clock facts ( e.g. clock('a','a',1,2) )
-  def removeSelfComms( self, solnList ) :
+  def removeSelfComms( self, soln ) :
 
-    cleanList = []
-    for soln in solnList :
-      cleanSoln = []
-      for clockFact in soln :
-        content = newProgGenerationTools.getContents( clockFact )
-        content = content.split( "," )
-        if content[0] == content[1] : # sender is the same as the receiver
-          pass
-        else :
-          cleanSoln.append( clockFact )
-      cleanList.append( cleanSoln )
+    print "soln    = " + str( soln )
+    print "soln[0] = " + str( soln[0] )
 
-    return cleanList
+    strInput = False
+    if type( soln[0] ) == list :
+      soln = soln[0]
+    elif type( soln ) is str :
+      strInput = True
+      soln     = soln.split( " OR " )
+
+    if DEBUG :
+      print ">soln = " + str( soln )
+
+    cleanSoln = []
+    for clockFact in soln :
+      print "clockFact = " + str(clockFact)
+      content = newProgGenerationTools.getContents( clockFact )
+      content = content.split( "," )
+      if content[0] == content[1] : # sender is the same as the receiver
+        pass
+      else :
+        cleanSoln.append( clockFact )
+
+    if strInput :
+      return " OR ".join( cleanSoln )
+    else :
+      return cleanSoln
 
   ####################
   #  REMOVE CRASHES  #
   ####################
-  # input a list of solutions consisting only of clock facts.
+  # input a soln consisting only of clock facts.
   # outputs a list of containing solutions such that each solution contains 
   # the original set of clock facts, minus the clock facts indicating crash failures( e.g. clock('a','_',1,_) )
-  def removeCrashes( self, solnList ) :
+  def removeCrashes( self, soln ) :
     
-    cleanList = []
-    for soln in solnList :
-      cleanSoln = []
-      for clockFact in soln :
-        content = newProgGenerationTools.getContents( clockFact )
-        content = content.split( "," )
-        if content[1] == "_" : # sender is the same as the receiver
-          pass
-        else :
-          cleanSoln.append( clockFact )
-      cleanList.append( cleanSoln )
+    cleanSoln = []
+    for clockFact in soln :
+      content = newProgGenerationTools.getContents( clockFact )
+      content = content.split( "," )
+      if content[1] == "_" : # sender is the same as the receiver
+        pass
+      else :
+        cleanSoln.append( clockFact )
 
-    return cleanList
+    return cleanSoln
 
 #########
 #  EOF  #

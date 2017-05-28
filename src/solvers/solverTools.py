@@ -37,13 +37,13 @@ DEBUG = False
 ###############
 #  SOLVE CNF  #
 ###############
-def solveCNF( solverType, cnfFormula_str ) :
+def solveCNF( solverType, cnfFormula_str, fault_id ) :
 
   solvers = [ "PYCOSAT" ]
 
-  # create a solver instance
+  # create a PYCOSAT solver instance
   if solverType == solvers[0] :
-    return Solver_PYCOSAT.Solver_PYCOSAT( cnfFormula_str )
+    return Solver_PYCOSAT.Solver_PYCOSAT( cnfFormula_str, fault_id )
 
   # WHAAAAA???
   else :
@@ -70,7 +70,8 @@ def getConjuncts( cnfFormula_str ) :
   # clean strs
   cleanClauses = []
   for c in clauses :
-    print "c = " + str( c )
+    if DEBUG :
+      print "c = " + str( c )
     c = c.replace( "([", "__OPENPAR__" + "__OPENBRA__" )
     c = c.replace( "])", "__CLOSBRA__" + "__CLOSPAR__" )
     c = c.replace( ",", "__COMMA__" )
@@ -78,7 +79,8 @@ def getConjuncts( cnfFormula_str ) :
     c = c.replace( ")", "" )
     cleanClauses.append( c )
 
-  print "cleanClauses = " + str( cleanClauses )
+  if DEBUG :
+    print "cleanClauses = " + str( cleanClauses )
 
   masterList = []
   # for clause in resulting list, collect a list of constituent vars
@@ -87,7 +89,8 @@ def getConjuncts( cnfFormula_str ) :
     c = c.split( " OR " )
     masterList.append( c )
 
-  print "masterList = " + str( masterList )
+  if DEBUG :
+    print "masterList = " + str( masterList )
 
   return masterList
 
@@ -278,8 +281,8 @@ def toCNF_sympy( sympy_info ) :
   # NOT the formula because LDFI is interested in the set of variable 
   #   assignments which render the original formula false.
   #   Therefore, need solutions for making !origfmla _true_.
-  #sympy_fmla = "~(" + sympy_fmla + ")"
-  sympy_fmla = sympy_fmla # not doing the last NOT
+  sympy_fmla = "~(" + sympy_fmla + ")"
+  #sympy_fmla = sympy_fmla # not doing the last NOT
 
   print "Generating cnf formula..."
   result = sympy.to_cnf( sympy_fmla, simplify=False )

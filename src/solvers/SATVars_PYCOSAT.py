@@ -20,7 +20,7 @@ from utils import tools
 # **************************************** #
 
 
-DEBUG = True
+DEBUG = False
 
 ######################
 #  SAT VARS PYCOSAT  #

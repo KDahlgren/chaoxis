@@ -17,7 +17,7 @@ import DerivTree, GoalNode, RuleNode, FactNode, provTools
 
 # **************************************** #
 
-DEBUG       = False
+DEBUG       = True
 IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data/graphOutput" )
 
 # --------------------------------------------------- #
@@ -37,10 +37,10 @@ class ProvTree( ) :
   #  CONSTRUCTOR  #
   #################
   def __init__( self, name, parsedResults, cursor ) :
-    self.rootname    = name
-    self.subtrees    = []
-    self.fullResults = parsedResults
-    self.cursor      = cursor
+    self.rootname      = name
+    self.subtrees      = []
+    self.parsedResults = parsedResults
+    self.cursor        = cursor
 
 
   ######################
@@ -68,9 +68,33 @@ class ProvTree( ) :
   ########################
   #  GENERATE PROV TREE  #
   ########################
+  # populates self.subtrees
   def generateProvTree( self, name, seedRecord ) :
-    return DerivTree.DerivTree( name, None, "goal", False, None, seedRecord, self.fullResults, self.cursor )
+    return DerivTree.DerivTree( name, None, "goal", False, None, seedRecord, self.parsedResults, self.cursor )
  
+
+  #################
+  #  MERGE TREES  #
+  #################
+  # old_provTree := a ProvTree instance
+  def mergeTrees( self, old_provTree ) :
+
+    # define structure of the new merged tree
+    merged_name          = self.rootname
+    merged_subtrees      = self.subtrees.extend( old_provTree.subtrees )
+    merged_parsedResults = self.parsedResults.extend( old_provTree.parsedResults )
+    merged_cursor        = self.cursor
+
+    # instantiate new ProvTree
+    provTree_merged = ProvTree( self.rootname, merged_name, merged_parsedResults, merged_cursor )
+
+    # manually construct subtrees for new merged instance
+    provTree_merged.subtrees = merged_subtrees
+
+    sys.exit( "provTree_merged.subtrees = " + str(provTree_merged.subtrees) )
+
+    return provTree_merged
+
  
   ##################
   #  CREATE GRAPH  #
@@ -80,7 +104,8 @@ class ProvTree( ) :
   def createGraph( self, addNameInfo, iter_count ) :
     if DEBUG :
       print "... running createGraph ..."
-      print "subtrees = " + str( self.subtrees )
+      print "subtrees   = " + str( self.subtrees )
+      print "iter_count = " + str( iter_count )
   
     graph = pydot.Dot( graph_type = 'digraph', strict=True ) # strict => ignore duplicate edges
 

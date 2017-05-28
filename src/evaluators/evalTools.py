@@ -79,8 +79,9 @@ def bugConditions( results, eot ) :
   if noEOT( pre, eot ) and noEOT( post, eot ) :
     #explanation = "no eot facts in pre and no eot facts in post"
     conclusion  = "NoCounterexampleFound"
+    explanation = "VACUOUS"
 
-  return conclusion
+  return [ conclusion, explanation ]
 
 
 ################

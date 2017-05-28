@@ -41,7 +41,7 @@ DATALOG_PROG_PATH = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/pro
 ############
 def driver() :
 
-  os.system( "rm IR.db" )
+  os.system( "rm IR.db" ) # delete db from previous run, if appicable
 
   # get dictionary of commandline arguments.
   # exits here if user provides invalid inputs.
@@ -52,26 +52,11 @@ def driver() :
   IRDB   = sqlite3.connect( saveDB ) # database for storing IR, stored in running script dir
   cursor = IRDB.cursor()
 
-  # paths to datalog files
-  tablePath   = None
- 
-  # track number of LDFI core executions
-  iter_count = 0
-
-  # fault hypothesis data from previous iterations
-  prev_cnf_fmla            = None
-
-  # important collection vars
-  all_suggested_faultHypos = []
-  final_faultHypo          = None
-  final_explanation        = None
-
-
   # initialize fault manager
-  initial_trigger_fault = []
-  initial_fault_id      = "0"
-  fm = FaultManager.FaultManager( initial_trigger_fault, initial_fault_id, [], C4_DUMP_SAVEPATH, TABLE_LIST_PATH, DATALOG_PROG_PATH, argDict, cursor )
+  fm = FaultManager.FaultManager( C4_DUMP_SAVEPATH, TABLE_LIST_PATH, DATALOG_PROG_PATH, argDict, cursor )
   fm.run()
+
+  os.system( "rm IR.db" ) # delete db from previous run, if appicable
 
   if DEBUG :
     "PROGRAM ENDED SUCESSFULLY."

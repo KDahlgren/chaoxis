@@ -24,7 +24,7 @@ from utils import dumpers, tools
 
 # **************************************** #
 
-DEBUG      = True
+DEBUG = False
 
 
 ####################
@@ -258,8 +258,12 @@ def parseClock( preferredSoln ) :
 ##################
 #  GET CONTENTS  #
 ##################
+# input clock fact string
 # extract the data from the clock fact
 def getContents( clockFact ) :
+
+  if DEBUG :
+    print ">clockFact = " + str( clockFact )
 
   openParen   = None
   closedParen = None
@@ -268,6 +272,9 @@ def getContents( clockFact ) :
       openParen = i
     elif clockFact[i] == ")" :
       closedParen = i
+
+  if DEBUG :
+    print "done with " + str( clockFact )
 
   return clockFact[ openParen+2 : closedParen-1 ]
 
