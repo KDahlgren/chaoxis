@@ -13,8 +13,10 @@ save_data/fault_injection_solns/*
 
 dev_tests/**/*.txt
 dev_tests/**/*.db
+dev_tests/**/*.db-*
 qa/**/*.txt
 qa/**/*.db
+qa/**/*.db-*
 !qa/**/expected_IR.db
 qa/testfiles/c4program.olg
 qa/testfiles/e2e_test.olg
