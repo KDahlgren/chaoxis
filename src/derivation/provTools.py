@@ -14,10 +14,8 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = True
+DEBUG = False
 C4_RESULTS_PATH = os.path.abspath( __file__ + "/../../../save_data/c4Output/c4dump.txt" )
-
-
 
 #################
 #  CREATE NODE  #

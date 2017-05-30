@@ -17,7 +17,7 @@ import DerivTree, GoalNode, RuleNode, FactNode, provTools
 
 # **************************************** #
 
-DEBUG       = True
+DEBUG       = False
 IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data/graphOutput" )
 
 # --------------------------------------------------- #

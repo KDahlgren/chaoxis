@@ -49,6 +49,7 @@ class LDFICore :
   argDict           = None  # dictionary of commaned line args
   cursor            = None  # a reference to the IR database
   fault_id          = 1     # id of the current fault to inject. start at 1 for pycosat.
+  currSolnAttempt   = 1     # controls depth of soln search in pycosat. must start at 1.
 
   # --------------------------------- #
 
@@ -77,12 +78,12 @@ class LDFICore :
   #  6. solve the CNF formula using some solver
   #  7. generate the new datalog program for the next iteration
   #
-  def run_workflow( self, triggerFault, old_provTree ) :
+  def run_workflow( self, triggerFault, old_provTree_fmla ) :
 
     # initialize return array
     return_array = []
     return_array.append( None )  # := conclusion
-    return_array.append( None )  # := provTree_merged
+    return_array.append( None )  # := provTree_fmla
     return_array.append( None )  # := solutions
 
     if DEBUG :
@@ -144,49 +145,41 @@ class LDFICore :
     ##############################################
     # CASE 1 :                                   # 
     #   Found a counterexample!                  #
-    #   Return immediately.
+    #   Return immediately.                      #
     ##############################################
     if conclusion == "FoundCounterexample" :
       return return_array
+
 
     ##############################################
     # CASE 2 :                                   # 
     #   Found a vacuously correct execution.     #
     #   No new prov tree.                        #
-    #   Find a new soln over previous tree.      #
+    #   Find another new soln over the previous  #
+    #   CNF fmla.                                #
+    #   fault_id already updated in              #
+    #   FaultManager.                            #
     ##############################################
     elif conclusion == "NoCounterexampleFound" and explanation == "VACUOUS" :
 
-      if old_provTree :
-
-        # -------------------------------------------- #
-        # 4. get provenance trees                      #
-        #     no change in provTree by definition      #
-        # -------------------------------------------- #
-
-        return_array[1] = old_provTree
-
-        # -------------------------------------------- #
-        # 5. generate CNF formula                      #
-        # -------------------------------------------- #
-
-        provTree_fmla = self.tree_to_CNF( old_provTree )
+      if old_provTree_fmla :
 
         # -------------------------------------------- #
         # 6. solve CNF formula                         #
         # -------------------------------------------- #
 
-        finalSolnList   = self.solveCNF( provTree_fmla )         # grab a soln to the prov tree
-        #finalSolnList   = self.removeSelfComms( finalSolnList )  # self comms are pointless
-        return_array[2] = finalSolnList                          # update solutions part of returns
+        return_array[1]       = old_provTree_fmla                   # no change in fmla
+        self.currSolnAttempt += 1                                   # increment soln bound b/c still using same fmla
+        finalSoln             = self.solveCNF( old_provTree_fmla )  # grab another soln to the old fmla
+        return_array[2]       = finalSoln                           # update solutions part of returns
 
-        return return_array # of the form [ conclusion/None, provTree_merged/None, solutions/None ]
+        return return_array # of the form [ conclusion/None, provTree_fmla/None, solutions/None ]
 
-      elif not old_provTree and not self.fault_id == 1 :
-        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no previous prov tree and not initial run. Aborting..." )
+      elif not old_provTree_fmla and not self.fault_id > 1 :
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no previous prov fmla and not initial run. Aborting..." )
 
       else :
-        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : illogical. hit a vacuous result without injecting faults. Aborting..." )
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : illogical, captain. hit a vacuous result without injecting faults. Aborting..." )
 
 
     ##############################################
@@ -201,35 +194,72 @@ class LDFICore :
       # 4. get provenance trees                         #
       # ----------------------------------------------- #
 
-      provTreeComplete = self.buildProvTree( old_provTree, parsedResults, self.argDict[ "EOT" ], self.fault_id, self.cursor )
-      # merge new prov tree with prov tree from previous iteration
-      provTree_merged = None
-      if old_provTree :
-        provTree_merged  = provTreeComplete.mergeTrees( old_provTree ) 
-
-      # update provTree_merged part of returns 
-      if provTree_merged :
-        return_array[1] = provTree_merged
-      else :
-        return_array[1] = provTreeComplete
+      provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], self.fault_id, self.cursor )
 
       # -------------------------------------------- #
       # 5. generate CNF formula                      #
       # -------------------------------------------- #
-  
-      provTree_fmla   = self.tree_to_CNF( provTreeComplete )
+ 
+      # fmla is of the form ~( CNF ) because we're 
+      # equating solns with fault scenarios. 
+      provTree_fmla = self.tree_to_CNF( provTreeComplete )
+
+      # grab the textual version of the fmla and merge with old fmla, if applicable
+      finalFmla = self.getFinalFmla( provTree_fmla, old_provTree_fmla )
+
+      if self.fault_id == 2 :
+        tools.bp( __name__, inspect.stack()[0][3], "finalFmla = " + str(finalFmla) )
+
+      # update CNF component of returns
+      return_array[1] = finalFmla
 
       # -------------------------------------------- #
       # 6. solve CNF formula                         #
       # -------------------------------------------- #
-  
-      finalSolnList = self.solveCNF( provTree_fmla )         # grab a soln to the prov tree
-      finalSolnList = self.removeSelfComms( finalSolnList )  # self comms are pointless
+
+      #if old_provTree_fmla :
+      #  print old_provTree_fmla
+      #  print finalFmla
+      #  tools.bp( __name__, inspect.stack()[0][3], "asdlfkjh" )
+
+      self.currSolnAttempt = 1                                   # reset soln bound b/c using new fmla
+      finalSoln            = self.solveCNF( finalFmla )          # grab a soln to the prov tree
+      #finalSoln            = self.removeSelfComms( finalSoln )  # self comms are pointless
       #if DEBUG :
-      #  finalSolnList = self.removeCrashes( finalSolnList ) # debugging only
-      return_array[2] = finalSolnList  # update solutions part of returns
+      #  finalSoln    = self.removeCrashes( finalSoln ) # debugging only
+      return_array[2] = finalSoln                       # update solutions part of returns
   
-      return return_array # of the form [ conclusion/None, provTree_merged/None, solutions/None ]
+      return return_array # of the form [ conclusion/None, provTree_fmla/None, solutions/None ]
+
+
+  ####################
+  #  GET FINAL FMLA  #
+  ####################
+  # assume provTree_fmla.cnfformula is of the form ~( CNF )
+  # and old_provTree_fmla is DNF
+  def getFinalFmla( self, provTree_fmla, old_provTree_fmla ) :
+
+    cleanCNFFmla = provTree_fmla.cnfformula
+
+    # merge old and new fmlas, if applicable.
+    # merging fmlas is less expensive than merging trees at the moment.
+    # TODO : this is PYCOSAT specific. generalize.
+    #if old_provTree_fmla :
+    #  finalFmla =  cleanCNFFmla + " OR (" + old_provTree_fmla + ")" 
+
+    #elif not old_provTree_fmla and self.fault_id == 1 :
+    #  finalFmla = cleanCNFFmla
+
+    #else :
+    #  tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : old_provTree_fmla is None" )
+
+    #if old_provTree_fmla :
+    #  print cleanCNFFmla
+    #  print old_provTree_fmla
+    #  tools.bp( __name__, inspect.stack()[0][3], "finalFmla = " + str(finalFmla) )
+
+    #return finalFmla
+    return cleanCNFFmla
 
 
   ########################
@@ -276,7 +306,7 @@ class LDFICore :
   #####################
   # use the evaluation execution results to build a provenance tree of the evaluation execution.
   # return a provenance tree instance
-  def buildProvTree( self, old_provTree, parsedResults, eot, iter_count, irCursor ) :
+  def buildProvTree( self, parsedResults, eot, iter_count, irCursor ) :
   
     if parsedResults :
       # 000000000000000000000000000000000000000000000000000000000000000000 #
@@ -390,15 +420,12 @@ class LDFICore :
   ###############
   # input a cnf formula instance
   # output a list of fault hypotheses to try during the next LDFI iteration
-  def solveCNF( self, provTree_fmla ) :
+  def solveCNF( self, finalFmla ) :
   
-    finalSolnList = []
-
-    # remove self comms
-    cleanCNFFmla = self.removeSelfComms( provTree_fmla.cnfformula )
+    finalSoln = None
 
     # create a Solver_PYCOSAT insance
-    solns = solverTools.solveCNF( "PYCOSAT", cleanCNFFmla, self.fault_id )
+    solns = solverTools.solveCNF( "PYCOSAT", finalFmla, self.currSolnAttempt )
   
     if solns :
       if DEBUG :
@@ -407,23 +434,12 @@ class LDFICore :
       # --------------------------------------------------- #
       # pick one new solution
 
-      aSoln = solns.oneNewSolution( )
-
-      finalStr = self.getLegibleFmla( aSoln )
-
-      if DEBUG :
-        print "SOLN : " + str(numid) + "\n" + str( finalStr )
-        numid += 1
-  
-      # add soln to soln list and clear temporary save list for the next iteration
-      finalSolnList.append( finalStr )
-  
-      # remove duplicates
-      finalSolnList = self.removeDuplicates( finalSolnList )
+      aSoln     = solns.oneNewSolution( )
+      finalSoln = self.getLegibleFmla( aSoln )
 
       # --------------------------------------------------- #
   
-    return finalSolnList
+    return finalSoln
   
   
   #######################
@@ -479,17 +495,8 @@ class LDFICore :
   # the original set of clock facts, minus the self-comm clock facts ( e.g. clock('a','a',1,2) )
   def removeSelfComms( self, soln ) :
 
-    print "soln    = " + str( soln )
-    print "soln[0] = " + str( soln[0] )
-
-    strInput = False
-    if type( soln[0] ) == list :
-      soln = soln[0]
-    elif type( soln ) is str :
-      strInput = True
-      soln     = soln.split( " OR " )
-
     if DEBUG :
+      print "IN REMOVESELFCOMMS"
       print ">soln = " + str( soln )
 
     cleanSoln = []
@@ -502,10 +509,9 @@ class LDFICore :
       else :
         cleanSoln.append( clockFact )
 
-    if strInput :
-      return " OR ".join( cleanSoln )
-    else :
-      return cleanSoln
+    print "cleanSoln = " + str( cleanSoln )
+    return cleanSoln
+
 
   ####################
   #  REMOVE CRASHES  #

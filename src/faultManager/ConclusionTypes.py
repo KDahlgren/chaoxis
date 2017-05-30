@@ -24,7 +24,7 @@ sys.path.append( packagePath )
 # **************************************** #
 
 
-DEBUG = True
+DEBUG = False
 
 
 class ConclusionTypes :

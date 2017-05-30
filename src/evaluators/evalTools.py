@@ -71,13 +71,11 @@ def bugConditions( results, eot ) :
   for pretup in pre :
     if ( int( pretup[-1] ) == eot ) and not pretup in post :
       isBugFree   = False
-      #explanation = "eot tuples exist in pre, but not in post"
       conclusion  = "FoundCounterexample"
 
   # ------------------------------------------------------- #
   # CHECK #1 : no counterexample if no eot in pre and no eot in post
   if noEOT( pre, eot ) and noEOT( post, eot ) :
-    #explanation = "no eot facts in pre and no eot facts in post"
     conclusion  = "NoCounterexampleFound"
     explanation = "VACUOUS"
 

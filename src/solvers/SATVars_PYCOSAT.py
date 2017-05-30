@@ -56,9 +56,11 @@ class SATVars_PYCOSAT :
     # check if variable already mapped in var2num
     if not self.var2num.has_key( var ) :
 
+      # remove non clock facts from fmla
       if not "clock" in var :
         return None
-
+      if False :
+        sys.exit( "barking shit" )
       else :
         currID = self.counter
 

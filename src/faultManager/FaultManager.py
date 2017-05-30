@@ -49,13 +49,12 @@ class FaultManager :
 
   # runtime data
   # transient data (change per iteration of run())
-  provTree_merged = None  # the current vision of the prov tree monotonically augmented over all runs.
-  old_faults      = []    # the list of previously tried faults
-  old_solutions   = []    # the list of previously tried solutions
-  triggerFault    = None  # the current fault to inject
-  solution        = []    # generated after running LDFI with the chosen trigger fault
-  fault_id        = 1     # integers starting at 1
-  conclusion      = None  # bug conclusion = None / FoundCounterexample / NoCounterexampleFound
+  provTree_fmla = None  # the current vision of the prov tree fmla monotonically augmented over all runs.
+  old_faults    = []    # the list of previously tried faults
+  old_solutions = []    # the list of previously tried solutions
+  triggerFault  = None  # the current fault to inject
+  solution      = []    # generated after running LDFI with the chosen trigger fault
+  conclusion    = None  # bug conclusion = None / FoundCounterexample / NoCounterexampleFound
 
   # --------------------------------- #
 
@@ -84,54 +83,69 @@ class FaultManager :
   # returns a conclusion string
   def run( self ) :
 
+    #if self.core.fault_id == 3 :
+    #  tools.bp( __name__, inspect.stack()[0][3], "fucking shit" )
+
     if DEBUG :
       print "============================================="
       print "            FAULT MANAGER RUN()"
       print "============================================="
-      print "    fault_id      = " + str( self.fault_id )
+      print "    fault_id      = " + str( self.core.fault_id )
       print "    triggerFault  = " + str( self.triggerFault )
       print "    old_faults    = " + str( self.old_faults )
       print "    old_solutions = " + str( self.old_solutions )
+      print "---------------------------------------------"
 
-    # run LDFI workflow and gather results
-    # results := [ conclusion/None, provTree_merged/None, solution/None ]
-    results = self.core.run_workflow( self.triggerFault, self.provTree_merged )
+    while True :
 
-    # grab data from run
-    # provTree_merged     is not None iff no conclusion exists.
-    # likewise, solution  is not None iff no conclusion exists.
-    self.conclusion      = results[0]
-    self.provTree_merged = results[1]
-    self.solution        = results[2]
+      # run LDFI workflow and gather results
+      # results := [ conclusion/None, provTree_fmla/None, solution/None ]
+      results = self.core.run_workflow( self.triggerFault, self.provTree_fmla )
 
-    if DEBUG :
-      print "self.conclusion      = "       + str( self.conclusion      )
-      print "self.provTree_merged = "       + str( self.provTree_merged )
-      print "self.solution        = "       + str( self.solution        )
-      print "COMPLETED run_workflow() for " + str( self.triggerFault    )
+      # grab data from run
+      # provTree_fmla       is not None iff no conclusion exists.
+      # likewise, solution  is not None iff no conclusion exists.
+      self.conclusion    = results[0]
+      self.provTree_fmla = results[1]
+      self.solution      = results[2]
 
+      if DEBUG :
+        print "**************************************************************"
+        print "* FAULT MANAGER RUN() : fault_id = " + str( self.core.fault_id )
+        print "* self.conclusion    = "             + str( self.conclusion      )
+        print "* self.provTree_fmla = "             + str( self.provTree_fmla   )
+        print "* self.solution      = "             + str( self.solution        )
+        print "* COMPLETED run_workflow() for "     + str( self.triggerFault    )
+        print "**************************************************************"
+
+      # check if still bug free
+      if not self.isBugFree() :
+        break
+
+
+  #################
+  #  IS BUG FREE  #
+  #################
+  def isBugFree( self ) :
 
     ###############
     #  BASE CASE  #
     ###############
     # branch on cases
-    # CASE 1 : if FoundCounterExample, then return immediately.
+    # CASE 1 : if FoundCounterexample, then return immediately.
     # CASE 2 : if NoCounterexampleFound and no new solutions, then return conclusion. program is bug free.
 
     # CASE 1 : if conclusion is FoundCounterExample, then return conclusion immediately.
     if self.conclusion == "FoundCounterexample" :
-      print "returning counterexample info..."
-      return self.conclusion
+      print "display counterexample info..."
+      return False
 
-    # CASE 2 : if conclusion is NoCounterexampleFound, then return conclusion immediately. ( TEMPORARY )
-    elif self.conclusion == "NoCounterexampleFound" and self.solution in self.old_solutions :
-      print "BREAK CONDITION --> self.solution in self.old_solutions"
-      print
-      print "self.solution      = " + str( self.solution )
-      print "self.old_solutions = " + str( self.old_solutions )
-      print
-      print "returning result info..."
-      return self.conclusion
+    # CASE 2 : if conclusion is NoCounterexampleFound and new soln identical to previous soln.
+    # TODO : this is PYCOSAT specific. generalize.
+    # assumes pycosat just returns last soln in list even if currSolnAttempt surpasses number of solns in list.
+    elif self.conclusion == "NoCounterexampleFound" and len( self.old_solutions ) > 0 and self.solution == self.old_solutions[-1] :
+      print "display result info..."
+      return False
 
 
     ####################
@@ -142,26 +156,29 @@ class FaultManager :
     else :
 
       if DEBUG :
-        print str( self.triggerFault ) + " : self.conclusion  = " + str( self.conclusion )
-        print str( self.triggerFault ) + " : self.solution    = " + str( self.solution )
+        print str( self.triggerFault ) + " : self.conclusion = " + str( self.conclusion )
+        print str( self.triggerFault ) + " : self.solution   = " + str( self.solution )
 
-      # add evaluated triggerFault to old_faults
-      self.old_faults.append( self.triggerFault )
-
-      # add evaluated solution to old_solutions
+      # add solution to evaluate to old_solutions
       self.old_solutions.append( self.solution )
-
-      # self comms are pointless
-      self.solution = self.core.removeSelfComms( self.solution )
 
       # clean solution into a trigger fault
       self.triggerFault = self.getTrigger( self.solution )
 
+      if DEBUG :
+        print "solution from previous run_workflow = " + str( self.solution )
+        print "triggerFault for next run_workflow  = " + str( self.triggerFault )
+
+      # add new faults to old_faults
+      # if seen triggerFault before, iterate again with previous triggerFault
+      if not self.triggerFault and self.triggerFault in self.old_faults :
+        self.old_faults.append( self.triggerFault )
+
       # increment the fault id
       self.core.fault_id += 1
 
-      # recurse until counterexample found or run out of new solutions
-      self.run()
+      # loop until counterexample found or run out of new solutions
+      return True
 
 
   #################
@@ -171,10 +188,21 @@ class FaultManager :
   # handling these is future work.
   def getTrigger( self, soln ) :
 
+    if DEBUG :
+      print "IN GETTRIGGER()"
+
+    # self comms are (currently) pointless
+    #soln = self.core.removeSelfComms( self.solution )
+
     triggerFault = []
     for literal in soln :
-      if "NOT" in literal :                 # do not include positive clock facts
-        triggerFault.append( literal[4:] )  # strip off the NOT
+
+      if DEBUG :
+        print "* literal = " + str( literal )
+
+      if "clock(" in literal :                # trigger faults contain only clock facts
+        if "NOT" in literal :                 # do not include positive clock facts
+          triggerFault.append( literal[4:] )  # strip off the NOT
 
     return triggerFault
 
@@ -183,7 +211,7 @@ class FaultManager :
   #  DISPLAY  #
   #############
   def display( self ) :
-    return str( self.fault_id ) + " : " + str( self.triggerFault )
+    return str( self.core.fault_id ) + " : " + str( self.triggerFault )
 
 
 

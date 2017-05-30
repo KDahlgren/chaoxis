@@ -274,7 +274,7 @@ def getContents( clockFact ) :
       closedParen = i
 
   if DEBUG :
-    print "done with " + str( clockFact )
+    print "done with " + str( clockFact ) + " : " + str(clockFact[ openParen+2 : closedParen-1 ])
 
   return clockFact[ openParen+2 : closedParen-1 ]
 

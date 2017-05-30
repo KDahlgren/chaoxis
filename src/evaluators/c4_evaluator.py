@@ -22,7 +22,7 @@ C4_DYLIB           = '../../lib/c4/build/src/libc4/libc4.dylib'
 C4_EXEC_PATH       = os.path.dirname(os.path.abspath( __file__ )) + "/../../lib/c4/build/src/c4i/c4i"
 #C4_SAVE_PATH       = os.path.dirname(os.path.abspath( __file__ )) + "/programFiles/c4_run_output.txt"
 
-C4_EVALUATOR_DEBUG = True
+DEBUG = False
 
 
 #####################
@@ -67,7 +67,7 @@ def getTables( table_path ) :
 # posts the results to standard out while capturing in a file for future processing.
 def runC4_directly( c4_file_path, table_path, savepath ) :
 
-  if C4_EVALUATOR_DEBUG :
+  if DEBUG :
     print "USING C4 DIRECTLY..."
     print "c4_file_path = " + c4_file_path
     print "table_path   = " + table_path
@@ -78,7 +78,7 @@ def runC4_directly( c4_file_path, table_path, savepath ) :
     if os.path.exists( c4_file_path ) :
       tableListStr = getTables( table_path )
 
-      if C4_EVALUATOR_DEBUG :
+      if DEBUG :
         print "tableListStr = " + tableListStr
         print "savepath     = " + savepath
 
@@ -109,7 +109,7 @@ def runC4_directly( c4_file_path, table_path, savepath ) :
 # saves the evaluation results to file at save_path.
 def runC4_wrapper( c4_file_path, table_path, savepath ) :
 
-  if C4_EVALUATOR_DEBUG :
+  if DEBUG :
     print "USING C4 WRAPPER..."
     print "c4_file_path = " + c4_file_path
     print "table_path   = " + table_path

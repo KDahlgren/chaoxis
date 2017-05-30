@@ -25,7 +25,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = True
+DEBUG = False
 IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data/graphOutput" )
 
 

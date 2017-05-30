@@ -29,7 +29,7 @@ from faultManager import FaultManager
 #############
 #  GLOBALS  #
 #############
-DEBUG = True
+DEBUG = False
 
 C4_DUMP_SAVEPATH  = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
 TABLE_LIST_PATH   = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/programFiles/" + "tableListStr.data"

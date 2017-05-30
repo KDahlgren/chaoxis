@@ -25,7 +25,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = True
+DEBUG = False
 
 class Literal( BooleanFormula ) :
 
