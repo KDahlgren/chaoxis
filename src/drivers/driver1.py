@@ -35,6 +35,12 @@ C4_DUMP_SAVEPATH  = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Ou
 TABLE_LIST_PATH   = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/programFiles/" + "tableListStr.data"
 DATALOG_PROG_PATH = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/programFiles/" + "c4program.olg"
 
+# remove files from previous runs or else suffer massive file collections.
+os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/*.txt" )
+os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/save_data/graphOutput/*.png" )
+os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/save_data/fault_injection/*.txt" )
+os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/*.data" )
+os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/*.olg" )
 
 ############
 #  DRIVER  #

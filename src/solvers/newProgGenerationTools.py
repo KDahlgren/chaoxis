@@ -150,7 +150,8 @@ def shootClockRecs( parsedClockRecords, irCursor ) :
     if "_" in src :
       qSRC = ""
     if "_" in dest :
-      qDEST = ""
+      qDEST    = ""
+      qSNDTIME = "AND delivTime > " + sndTime # node remains crashed for the remainder of the simulation.
     if "_" in sndTime :
       qSNDTIME = ""
     if "_" in delivTime :

@@ -50,18 +50,21 @@ class LDFICore :
   cursor            = None  # a reference to the IR database
   fault_id          = 1     # id of the current fault to inject. start at 1 for pycosat.
   currSolnAttempt   = 1     # controls depth of soln search in pycosat. must start at 1.
+  solver            = None
 
   # --------------------------------- #
+
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, c4_save, table_save, datalog_save, argDict, cursor ) :
+  def __init__( self, c4_save, table_save, datalog_save, argDict, cursor, solver ) :
     self.c4_dump_savepath  = c4_save
     self.table_list_path   = table_save
     self.datalog_prog_path = datalog_save
     self.argDict           = argDict
     self.cursor            = cursor
+    self.solver            = solver
 
 
   ##################
@@ -84,7 +87,8 @@ class LDFICore :
     return_array = []
     return_array.append( None )  # := conclusion
     return_array.append( None )  # := provTree_fmla
-    return_array.append( None )  # := solutions
+    return_array.append( None )  # := triggerFault
+    return_array.append( None )  # := noNewSolns
 
     if DEBUG :
      print "*******************************************************"
@@ -131,7 +135,7 @@ class LDFICore :
     # ----------------------------------------------- #
 
     if DEBUG :
-      print "CHECKING FOR BUGS on results from triggerFault = " + str(triggerFault)
+      print "CHECKING FOR BUGS on results from triggerFault = " + str( triggerFault )
 
     # check for bugs
     bugInfo         = self.checkForBugs( parsedResults, self.argDict[ "EOT" ] )
@@ -148,6 +152,7 @@ class LDFICore :
     #   Return immediately.                      #
     ##############################################
     if conclusion == "FoundCounterexample" :
+      return_array[2] = triggerFault
       return return_array
 
 
@@ -170,8 +175,9 @@ class LDFICore :
 
         return_array[1]       = old_provTree_fmla                   # no change in fmla
         self.currSolnAttempt += 1                                   # increment soln bound b/c still using same fmla
-        finalSoln             = self.solveCNF( old_provTree_fmla )  # grab another soln to the old fmla
-        return_array[2]       = finalSoln                           # update solutions part of returns
+        triggerFault          = self.solveCNF( old_provTree_fmla )  # grab another soln to the old fmla
+        return_array[2]       = triggerFault                        # update trigger fault part of returns
+        return_array[3]       = self.solver.noNewSolns              # update soln status in returns
 
         return return_array # of the form [ conclusion/None, provTree_fmla/None, solutions/None ]
 
@@ -179,6 +185,7 @@ class LDFICore :
         tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no previous prov fmla and not initial run. Aborting..." )
 
       else :
+        print "self.fault_id = " + str( self.fault_id )
         tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : illogical, captain. hit a vacuous result without injecting faults. Aborting..." )
 
 
@@ -204,11 +211,11 @@ class LDFICore :
       # equating solns with fault scenarios. 
       provTree_fmla = self.tree_to_CNF( provTreeComplete )
 
-      # grab the textual version of the fmla and merge with old fmla, if applicable
-      finalFmla = self.getFinalFmla( provTree_fmla, old_provTree_fmla )
+      # grab the textual version of the fmla
+      finalFmla = provTree_fmla.cnfformula
 
-      if self.fault_id == 2 :
-        tools.bp( __name__, inspect.stack()[0][3], "finalFmla = " + str(finalFmla) )
+      #if self.fault_id == 2 :
+      #  tools.bp( __name__, inspect.stack()[0][3], "finalFmla = " + str(finalFmla) )
 
       # update CNF component of returns
       return_array[1] = finalFmla
@@ -222,44 +229,12 @@ class LDFICore :
       #  print finalFmla
       #  tools.bp( __name__, inspect.stack()[0][3], "asdlfkjh" )
 
-      self.currSolnAttempt = 1                                   # reset soln bound b/c using new fmla
-      finalSoln            = self.solveCNF( finalFmla )          # grab a soln to the prov tree
-      #finalSoln            = self.removeSelfComms( finalSoln )  # self comms are pointless
-      #if DEBUG :
-      #  finalSoln    = self.removeCrashes( finalSoln ) # debugging only
-      return_array[2] = finalSoln                       # update solutions part of returns
-  
+      self.currSolnAttempt = 1                          # reset soln bound b/c using new fmla
+      triggerFault         = self.solveCNF( finalFmla ) # grab a soln to the prov tree
+      return_array[2]      = triggerFault                      # update trigger fault part of returns
+      return_array[3]      = self.solver.noNewSolns            # update soln status in returns
+
       return return_array # of the form [ conclusion/None, provTree_fmla/None, solutions/None ]
-
-
-  ####################
-  #  GET FINAL FMLA  #
-  ####################
-  # assume provTree_fmla.cnfformula is of the form ~( CNF )
-  # and old_provTree_fmla is DNF
-  def getFinalFmla( self, provTree_fmla, old_provTree_fmla ) :
-
-    cleanCNFFmla = provTree_fmla.cnfformula
-
-    # merge old and new fmlas, if applicable.
-    # merging fmlas is less expensive than merging trees at the moment.
-    # TODO : this is PYCOSAT specific. generalize.
-    #if old_provTree_fmla :
-    #  finalFmla =  cleanCNFFmla + " OR (" + old_provTree_fmla + ")" 
-
-    #elif not old_provTree_fmla and self.fault_id == 1 :
-    #  finalFmla = cleanCNFFmla
-
-    #else :
-    #  tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : old_provTree_fmla is None" )
-
-    #if old_provTree_fmla :
-    #  print cleanCNFFmla
-    #  print old_provTree_fmla
-    #  tools.bp( __name__, inspect.stack()[0][3], "finalFmla = " + str(finalFmla) )
-
-    #return finalFmla
-    return cleanCNFFmla
 
 
   ########################
@@ -334,7 +309,7 @@ class LDFICore :
       if DEBUG :
         print "postrecords_eot = " + str(postrecords_eot)
     
-      # !!! RETURN EARLY IF POST CONTAINS NO EOT RECORDS !!!
+      # !!! BREAK EARLY IF POST CONTAINS NO EOT RECORDS !!!
       if len( postrecords_eot ) < 1 :
         tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : attempting to build a provenance tree when no post eot records exist. Aborting..." )
    
@@ -368,15 +343,6 @@ class LDFICore :
       provTreeComplete.createGraph( None, iter_count )
     # ------------------------------------------------------------- #
 
-    #print "PRINTING EDGE SET"
-    #print provTreeComplete.getEdgeSet()
-
-    #os.system( "rm /Users/KsComp/projects/pyldfi/qa/testfiles/expected_provTreeComplete.txt" ) 
-    #fo = open( "/Users/KsComp/projects/pyldfi/qa/testfiles/expected_provTreeComplete.txt", "w" )
-    #fo.write( str( provTreeComplete.getEdgeSet() ) )
-    #fo.close()
-    #sys.exit( "ermergerd! saved provTreeComplete for first good execution!" ) 
-
     return provTreeComplete
   
   
@@ -400,12 +366,6 @@ class LDFICore :
       print ">>> provTree_fmla.cnfformula = " + str( provTree_fmla.cnfformula )
       print
 
-      #os.system( "rm /Users/KsComp/projects/pyldfi/qa/testfiles/expected_cnf_fmla_save.txt" )
-      #fo = open( "/Users/KsComp/projects/pyldfi/qa/testfiles/expected_cnf_fmla_save.txt", "w" )
-      #fo.write( str( provTree_fmla.cnfformula ) )
-      #fo.close()
-      #sys.exit( "ermergerd! just saved the cnf fmla for the initial good execution to a file!" )
- 
       if OUTPUT_TREE_CNF_ON :
         provTree_fmla.rawformula.graph()
   
@@ -421,27 +381,19 @@ class LDFICore :
   # input a cnf formula instance
   # output a list of fault hypotheses to try during the next LDFI iteration
   def solveCNF( self, finalFmla ) :
-  
-    finalSoln = None
+ 
+    self.solver.setFmla( finalFmla ) 
 
-    # create a Solver_PYCOSAT insance
-    solns = solverTools.solveCNF( "PYCOSAT", finalFmla, self.currSolnAttempt )
-  
-    if solns :
-      if DEBUG :
-        numid = 1   # for tracking the current soln number
-  
-      # --------------------------------------------------- #
-      # pick one new solution
+    # --------------------------------------------------- #
+    # pick one new trigger fault
 
-      aSoln     = solns.oneNewSolution( )
-      finalSoln = self.getLegibleFmla( aSoln )
+    triggerFault = self.solver.oneNewTriggerFault( )
 
-      # --------------------------------------------------- #
+    # --------------------------------------------------- #
   
-    return finalSoln
-  
-  
+    return triggerFault
+
+
   #######################
   #  REMOVE DUPLICATES  #
   #######################
@@ -457,21 +409,6 @@ class LDFICore :
   
     return uniqueList
   
-  ######################
-  #  GET LEGIBLE FMLA  #
-  ######################
-  # given messy raw solution
-  # output legible version
-  def getLegibleFmla( self, aSoln ) :
-  
-    fmlaStr = []  # stores the legible version of the soln.
-  
-    # make legible
-    for var in aSoln :
-      fmlaStr.append( solverTools.toggle_format_str( var, "legible" ) )
-  
-    return fmlaStr
-  
   
   ##########################
   #  GET NEW DATALOG PROG  #
@@ -485,32 +422,6 @@ class LDFICore :
   
     else :
       tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : attempted to build a new datalog program, but no fault hypotheses exist." )
-
-
-  #######################
-  #  REMOVE SELF COMMS  #
-  #######################
-  # input a solution consisting only of clock facts.
-  # outputs a list of containing solutions such that each solution contains 
-  # the original set of clock facts, minus the self-comm clock facts ( e.g. clock('a','a',1,2) )
-  def removeSelfComms( self, soln ) :
-
-    if DEBUG :
-      print "IN REMOVESELFCOMMS"
-      print ">soln = " + str( soln )
-
-    cleanSoln = []
-    for clockFact in soln :
-      print "clockFact = " + str(clockFact)
-      content = newProgGenerationTools.getContents( clockFact )
-      content = content.split( "," )
-      if content[0] == content[1] : # sender is the same as the receiver
-        pass
-      else :
-        cleanSoln.append( clockFact )
-
-    print "cleanSoln = " + str( cleanSoln )
-    return cleanSoln
 
 
   ####################

@@ -1,10 +1,24 @@
 #/usr/bin/env python
 
-import os, sys
-
+#############
+#  IMPORTS  #
+#############
+# standard python packages
+import pycosat
+from types import *
 from ctypes import *
+import inspect, itertools, os, sys, time
 
-C4_WRAPPER_DEBUG = False
+# ------------------------------------------------------ #
+# import sibling packages HERE!!!
+
+packagePath  = os.path.abspath( __file__ + "/../.." )
+sys.path.append( packagePath )
+
+from utils   import tools
+# **************************************** #
+
+DEBUG = False
 
 class C4Wrapper( object ) :
 
@@ -28,7 +42,7 @@ class C4Wrapper( object ) :
   #  GET INPUT PROG FILE  #
   #########################
   def getInputProg_file( self, filename ) :
-    if C4_WRAPPER_DEBUG :
+    if DEBUG :
       print "Importing program from " + filename
 
     try :
@@ -46,11 +60,56 @@ class C4Wrapper( object ) :
       return None
 
 
-  #########################################
-  #  GET INPUT PROG FILE STRATIFY CLOCKS  #
-  #########################################
-  def getInputProg_file_stratify_clocks( self, filename ) :
-    if C4_WRAPPER_DEBUG :
+  #############################
+  #  GET INPUT PROG LIST ALL  #
+  #############################
+  def getInputProg_list_all_clocks( self, filename ) :
+    if DEBUG :
+      print "Importing program from " + filename
+
+    try :
+      program = []
+      fo = open( filename, "r" )
+      for line in fo :
+        line = line.rstrip()
+        program.append( line )
+      fo.close()
+
+      codeStatementsOnly = "" # string of code statements only. no clock statements.
+      clockStatements    = [] # list of strings grouping clock statements by SndTime
+      currClockList      = ""
+      currTime           = 1
+
+      # only works if clock facts are sorted by increasing SndTime when 
+      # appearing in the input c4 file.
+      # also only works if simulations start at time 1.
+      for i in range(0 ,len(program)) :
+
+        statement       = program[i]
+        parsedStatement = statement.split( "(" )
+
+        # CASE : hit a clock fact
+        if parsedStatement[0] == "clock" :
+          clockStatements.append( statement ) # save the old clock group
+
+        # CASE : hit a non clock fact
+        else :
+          codeStatementsOnly += statement
+
+      finalProg = [ codeStatementsOnly ]
+      finalProg.extend( clockStatements )
+      return finalProg
+
+    except IOError :
+      print "Could not open file " + filename
+      return None
+
+
+  ######################################
+  #  GET INPUT PROG FILE GROUP CLOCKS  #
+  ######################################
+  def getInputProg_group_clocks( self, filename ) :
+    if DEBUG :
       print "Importing program from " + filename
 
     try :
@@ -126,7 +185,8 @@ class C4Wrapper( object ) :
   def run( self, fullprog_path, table_path, savepath ) :
 
     #fullprog  = self.getInputProg_file( fullprog_path )
-    fullprog  = self.getInputProg_file_stratify_clocks( fullprog_path )
+    #fullprog  = self.getInputProg_group_clocks( fullprog_path )
+    fullprog  = self.getInputProg_list_all_clocks( fullprog_path )
     tableList = self.getTableList( table_path )
 
     self.lib.c4_initialize()
@@ -134,7 +194,7 @@ class C4Wrapper( object ) :
 
     # ---------------------------------------- #
     # loading program
-    if C4_WRAPPER_DEBUG :
+    if DEBUG :
       print "... loading prog ..."
 
     #c_prog = bytes( fullprog )
@@ -146,14 +206,14 @@ class C4Wrapper( object ) :
 
     # ---------------------------------------- #
     # dump program results to file
-    if C4_WRAPPER_DEBUG :
+    if DEBUG :
       print "... dumping program ..."
 
     self.saveC4Results( tableList, savepath )
 
     # ---------------------------------------- #
     # close c4 program
-    if C4_WRAPPER_DEBUG :
+    if DEBUG :
       print "... closing C4 ..."
 
     self.lib.c4_destroy( self.c4_obj )
@@ -187,7 +247,7 @@ class C4Wrapper( object ) :
     for table in tableList :
       
       # output to stdout
-      if C4_WRAPPER_DEBUG :
+      if DEBUG :
         print "---------------------------"
         print table
         print self.lib.c4_dump_table( self.c4_obj, table )

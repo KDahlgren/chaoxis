@@ -140,13 +140,17 @@ class BooleanFormula( object ) :
     # prep edge set
     pyEdges = []
     for edge in edges :
-      print "edge[0] = " + str( edge[0] )
-      print "edge[1] = " + str( edge[1] )
+
+      if DEBUG :
+        print "edge[0] = " + str( edge[0] )
+        print "edge[1] = " + str( edge[1] )
+
       pyEdges.append( pydot.Edge( edge[0], edge[1] ) )
 
     # add nodes to graph
     for e in pyEdges :
-      print "e = " + str( e )
+      if DEBUG :
+        print "e = " + str( e )
       #graph.add_edge( n )
 
     # ------------------------------------------- #
@@ -229,8 +233,9 @@ class BooleanFormula( object ) :
       existingEdges_right = self.right.edgeset()
       newEdge_right       = ( self.display(), existingEdges_right )
 
-      print "newEdge_left  = " + str( newEdge_left )
-      print "newEdge_right = " + str( newEdge_right )
+      if DEBUG :
+        print "newEdge_left  = " + str( newEdge_left )
+        print "newEdge_right = " + str( newEdge_right )
 
       completeEdgeSet = [ newEdge_left, newEdge_left ]
       return completeEdgeSet

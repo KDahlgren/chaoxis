@@ -20,7 +20,7 @@ from utils import tools
 # **************************************** #
 
 
-DEBUG = False
+DEBUG = True
 
 ######################
 #  SAT VARS PYCOSAT  #
@@ -59,8 +59,6 @@ class SATVars_PYCOSAT :
       # remove non clock facts from fmla
       if not "clock" in var :
         return None
-      if False :
-        sys.exit( "barking shit" )
       else :
         currID = self.counter
 

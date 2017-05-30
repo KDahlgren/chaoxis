@@ -24,8 +24,9 @@ import ConclusionTypes
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from core           import LDFICore
-from utils          import tools
+from core    import LDFICore
+from utils   import tools
+from solvers import solverTools
 
 # **************************************** #
 
@@ -49,12 +50,10 @@ class FaultManager :
 
   # runtime data
   # transient data (change per iteration of run())
-  provTree_fmla = None  # the current vision of the prov tree fmla monotonically augmented over all runs.
-  old_faults    = []    # the list of previously tried faults
-  old_solutions = []    # the list of previously tried solutions
-  triggerFault  = None  # the current fault to inject
-  solution      = []    # generated after running LDFI with the chosen trigger fault
   conclusion    = None  # bug conclusion = None / FoundCounterexample / NoCounterexampleFound
+  noNewSolns    = False # bool indicating whether more new solutions exist
+  triggerFault  = None  # the current fault to inject
+  provTree_fmla = None
 
   # --------------------------------- #
 
@@ -70,8 +69,11 @@ class FaultManager :
     self.argDict           = argDict
     self.cursor            = cursor
 
+    # create a Solver_PYCOSAT insance
+    solver = solverTools.solveCNF( "PYCOSAT" )
+
     # instantiate LDFICore
-    self.core = LDFICore.LDFICore( self.c4_dump_savepath, self.table_list_path, self.datalog_prog_path, self.argDict, self.cursor )
+    self.core = LDFICore.LDFICore( self.c4_dump_savepath, self.table_list_path, self.datalog_prog_path, self.argDict, self.cursor, solver )
 
 
   #########
@@ -83,23 +85,14 @@ class FaultManager :
   # returns a conclusion string
   def run( self ) :
 
-    #if self.core.fault_id == 3 :
-    #  tools.bp( __name__, inspect.stack()[0][3], "fucking shit" )
-
-    if DEBUG :
-      print "============================================="
-      print "            FAULT MANAGER RUN()"
-      print "============================================="
-      print "    fault_id      = " + str( self.core.fault_id )
-      print "    triggerFault  = " + str( self.triggerFault )
-      print "    old_faults    = " + str( self.old_faults )
-      print "    old_solutions = " + str( self.old_solutions )
-      print "---------------------------------------------"
-
     while True :
+      if DEBUG :
+        print "============================================="
+        print "            FAULT MANAGER RUN()"
+        print "============================================="
 
       # run LDFI workflow and gather results
-      # results := [ conclusion/None, provTree_fmla/None, solution/None ]
+      # results := [ conclusion/None, noNewSolns/None, triggerFault/None ]
       results = self.core.run_workflow( self.triggerFault, self.provTree_fmla )
 
       # grab data from run
@@ -107,16 +100,21 @@ class FaultManager :
       # likewise, solution  is not None iff no conclusion exists.
       self.conclusion    = results[0]
       self.provTree_fmla = results[1]
-      self.solution      = results[2]
+      self.triggerFault  = results[2]
+      self.noNewSolns    = results[3]
 
       if DEBUG :
+        print "self.provTree_fmla = " + str( self.provTree_fmla )
+        print
         print "**************************************************************"
         print "* FAULT MANAGER RUN() : fault_id = " + str( self.core.fault_id )
-        print "* self.conclusion    = "             + str( self.conclusion      )
-        print "* self.provTree_fmla = "             + str( self.provTree_fmla   )
-        print "* self.solution      = "             + str( self.solution        )
-        print "* COMPLETED run_workflow() for "     + str( self.triggerFault    )
+        print "* self.conclusion   = "              + str( self.conclusion    )
+        print "* self.noNewSolns   = "              + str( self.noNewSolns    )
+        print "* COMPLETED run_workflow() for "     + str( self.triggerFault  )
         print "**************************************************************"
+
+      #if self.core.fault_id == 2 :
+      #  tools.bp( __name__, inspect.stack()[0][3], "self.isBugFree = " + str( self.isBugFree() ) )
 
       # check if still bug free
       if not self.isBugFree() :
@@ -140,10 +138,8 @@ class FaultManager :
       print "display counterexample info..."
       return False
 
-    # CASE 2 : if conclusion is NoCounterexampleFound and new soln identical to previous soln.
-    # TODO : this is PYCOSAT specific. generalize.
-    # assumes pycosat just returns last soln in list even if currSolnAttempt surpasses number of solns in list.
-    elif self.conclusion == "NoCounterexampleFound" and len( self.old_solutions ) > 0 and self.solution == self.old_solutions[-1] :
+    # CASE 2 : if conclusion is NoCounterexampleFound and no new solutions
+    elif self.conclusion == "NoCounterexampleFound" and self.noNewSolns :
       print "display result info..."
       return False
 
@@ -156,55 +152,13 @@ class FaultManager :
     else :
 
       if DEBUG :
-        print str( self.triggerFault ) + " : self.conclusion = " + str( self.conclusion )
-        print str( self.triggerFault ) + " : self.solution   = " + str( self.solution )
-
-      # add solution to evaluate to old_solutions
-      self.old_solutions.append( self.solution )
-
-      # clean solution into a trigger fault
-      self.triggerFault = self.getTrigger( self.solution )
-
-      if DEBUG :
-        print "solution from previous run_workflow = " + str( self.solution )
         print "triggerFault for next run_workflow  = " + str( self.triggerFault )
-
-      # add new faults to old_faults
-      # if seen triggerFault before, iterate again with previous triggerFault
-      if not self.triggerFault and self.triggerFault in self.old_faults :
-        self.old_faults.append( self.triggerFault )
 
       # increment the fault id
       self.core.fault_id += 1
 
       # loop until counterexample found or run out of new solutions
       return True
-
-
-  #################
-  #  GET TRIGGER  #
-  #################
-  # positive clock facts imply the execution was good because the facts DID NOT happen.
-  # handling these is future work.
-  def getTrigger( self, soln ) :
-
-    if DEBUG :
-      print "IN GETTRIGGER()"
-
-    # self comms are (currently) pointless
-    #soln = self.core.removeSelfComms( self.solution )
-
-    triggerFault = []
-    for literal in soln :
-
-      if DEBUG :
-        print "* literal = " + str( literal )
-
-      if "clock(" in literal :                # trigger faults contain only clock facts
-        if "NOT" in literal :                 # do not include positive clock facts
-          triggerFault.append( literal[4:] )  # strip off the NOT
-
-    return triggerFault
 
 
   #############

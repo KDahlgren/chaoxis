@@ -37,13 +37,13 @@ DEBUG = False
 ###############
 #  SOLVE CNF  #
 ###############
-def solveCNF( solverType, cnfFormula_str, fault_id ) :
+def solveCNF( solverType ) :
 
   solvers = [ "PYCOSAT" ]
 
   # create a PYCOSAT solver instance
   if solverType == solvers[0] :
-    return Solver_PYCOSAT.Solver_PYCOSAT( cnfFormula_str, fault_id )
+    return Solver_PYCOSAT.Solver_PYCOSAT( )
 
   # WHAAAAA???
   else :
@@ -63,9 +63,9 @@ def getConjuncts( cnfFormula_str ) :
   # split on ANDs
   cnfFormula_str = cnfFormula_str.replace( "AND", "__AND__" )
   cnfFormula_str = cnfFormula_str.replace( "OR" , "__OR__"  )
-  cnfFormula_str = "".join( cnfFormula_str.split() ) # remove whitespace
-  cnfFormula_str = cnfFormula_str.replace( "__OR__" , " OR "  ) # to align with pycosat formatting
-  clauses = cnfFormula_str.split( "__AND__" ) # divide clauses by the ANDs
+  cnfFormula_str = "".join( cnfFormula_str.split() )             # remove whitespace
+  cnfFormula_str = cnfFormula_str.replace( "__OR__" , " OR "  )  # to align with pycosat formatting
+  clauses = cnfFormula_str.split( "__AND__" )                    # divide clauses by the ANDs
 
   # clean strs
   cleanClauses = []
@@ -321,8 +321,8 @@ def format_std( sympy_fmla_res ) :
 ########################
 def convertToBoolean( provTree ) :
 
-  if not provTree.isFinalState() :
-    displayTree( provTree )
+  #if not provTree.isFinalState() :
+  #  displayTree( provTree )
 
   fmla = None # initialize
 
