@@ -2,7 +2,7 @@
 
 
 #cmd="python ../../src/drivers/driver1.py -n a,b,c -f ./replog.ded -f ./bcast_edb.ded -f ./deliv_assert.ded --evaluator c4"
-cmd="python ../../src/drivers/driver1.py -n a,b,c --EOT 4 -f ./replog_v2.ded --evaluator c4"
+cmd="time python ../../src/drivers/driver1.py -n a,b,c --EOT 4 -f ./replog_v2.ded --evaluator c4"
 opt_cmd="cmd"
 
 if [ "$1" = "$opt_cmd" ]

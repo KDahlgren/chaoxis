@@ -334,20 +334,6 @@ def getLegibleFmla( aSoln ) :
   return fmlaStr
 
 
-##########################
-#  GET NEW DATALOG PROG  #
-##########################
-# input a list of fault hypotheses
-# output the path to the new datalog program
-def getNewDatalogProg( faultHypoList, irCursor, iter_count ) :
-
-  if len( faultHypoList ) > 0 :
-    return newProgGenerationTools.buildNewProg( faultHypoList, irCursor, iter_count )
-
-  else :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : attempted to build a new datalog program, but no fault hypotheses exist." )
-
-
 #########
 #  EOF  #
 #########

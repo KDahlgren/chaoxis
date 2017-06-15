@@ -31,12 +31,14 @@ from visualizations import vizTools
 
 
 DEBUG                = True
-
 PROV_TREES_ON        = True
 OUTPUT_PROV_TREES_ON = True
 OUTPUT_TREE_CNF_ON   = True
 
 
+####################
+#  CLASS LDFICORE  #
+####################
 class LDFICore :
 
   # --------------------------------- #
@@ -118,7 +120,7 @@ class LDFICore :
       # 7. generate new datalog prog                 #
       # -------------------------------------------- #
 
-      self.getNewDatalogProg( [ triggerFault ], self.cursor, self.fault_id )
+      self.getNewDatalogProg( [ triggerFault ], self.argDict[ "EFF" ], self.cursor, self.fault_id )
 
     # ----------------------------------------------- #
     # 2. evaluate                                     #
@@ -415,10 +417,10 @@ class LDFICore :
   ##########################
   # input a list of fault hypotheses
   # output the path to the new datalog program
-  def getNewDatalogProg( self, faultHypoList, irCursor, iter_count ) :
+  def getNewDatalogProg( self, faultHypoList, eff, irCursor, iter_count ) :
 
     if len( faultHypoList ) > 0 :
-      return newProgGenerationTools.buildNewProg( faultHypoList, irCursor, iter_count )
+      return newProgGenerationTools.buildNewProg( faultHypoList, eff, irCursor, iter_count )
   
     else :
       tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : attempted to build a new datalog program, but no fault hypotheses exist." )

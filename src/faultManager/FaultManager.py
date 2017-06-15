@@ -25,7 +25,7 @@ packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
 from core    import LDFICore
-from utils   import tools
+from utils   import tools, settings
 from solvers import solverTools
 
 # **************************************** #
@@ -61,6 +61,9 @@ class FaultManager :
   #  CONSTRUCTOR  #
   #################
   def __init__( self, c4_save, table_save, datalog_save, argDict, cursor ) :
+
+    # set settings
+    settings.settings( argDict[ "settings" ] )
 
     # file paths + execution configs (do not change per execution of PyLDFI)
     self.c4_dump_savepath  = c4_save

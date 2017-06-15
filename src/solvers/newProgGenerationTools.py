@@ -33,7 +33,7 @@ DEBUG = False
 # input a set of solutions to the cnf formula in the form of sets of legible facts.
 #   each set of legible facts represents one fault hypothesis.
 # output chosen fault hypothesis (list of facts deleted from Clock)
-def buildNewProg( solnSet, irCursor, iter_count ) :
+def buildNewProg( solnSet, eff, irCursor, iter_count ) :
 
   print "buildNewProg : iter_count  = " + str( iter_count )
   print "solnSet : ["
@@ -90,7 +90,7 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
     dumpers.clockDump( irCursor )
 
   # falsify the appropriate record(s)
-  shootClockRecs( parsedClockRecords, irCursor )
+  shootClockRecs( parsedClockRecords, eff, irCursor )
 
   if DEBUG :
     print "CHECK CLOCK TABLE HERE"
@@ -119,7 +119,7 @@ def buildNewProg( solnSet, irCursor, iter_count ) :
 #  SHOOT CLOCK RECS  #
 ######################
 # flip the simInclude boolean in the clock relation from True to False for the fault hypothesis clock records.
-def shootClockRecs( parsedClockRecords, irCursor ) :
+def shootClockRecs( parsedClockRecords, eff, irCursor ) :
 
   if DEBUG :
     print "parsedClockRecords :"
@@ -138,34 +138,36 @@ def shootClockRecs( parsedClockRecords, irCursor ) :
     sndTime   = rec[2]
     delivTime = rec[3]
 
-    # optimistic by default
-    qSRC       = "src=='" + src + "'"
-    qDEST      = " AND dest=='" + dest + "'"
-    qSNDTIME   = " AND sndTime==" + sndTime + ""
-    qDELIVTIME = " AND delivTime==" + delivTime + ""
-
-    # erase query components as necessary
-    # EXISTING BUG TODO : does not work if _ in src --> need to handle ANDs more intelligently
-    #  if _ in src, then query = ... WHERE AND dest==...
-    if "_" in src :
-      qSRC = ""
-    if "_" in dest :
-      qDEST    = ""
-      qSNDTIME = "AND delivTime > " + sndTime # node remains crashed for the remainder of the simulation.
-    if "_" in sndTime :
-      qSNDTIME = ""
-    if "_" in delivTime :
-      qDELIVTIME = ""
-
-    # set query
-    query = "UPDATE Clock SET simInclude='" + simInclude + "' WHERE " + qSRC + qDEST + qSNDTIME + qDELIVTIME
-
-    if DEBUG :
-      print "query = " + str(query)
-
-    # execute query
-    irCursor.execute( query )
-
+    # only shoot clock records less than or equal to eff (end of finite failures)
+    if int( sndTime ) <= int( eff ) :
+      # optimistic by default
+      qSRC       = "src=='" + src + "'"
+      qDEST      = " AND dest=='" + dest + "'"
+      qSNDTIME   = " AND sndTime==" + sndTime + ""
+      qDELIVTIME = " AND delivTime==" + delivTime + ""
+  
+      # erase query components as necessary
+      # EXISTING BUG TODO : does not work if _ in src --> need to handle ANDs more intelligently
+      #  if _ in src, then query = ... WHERE AND dest==...
+      if "_" in src :
+        qSRC = ""
+      if "_" in dest :
+        qDEST    = ""
+        qSNDTIME = "AND delivTime > " + sndTime # node remains crashed for the remainder of the simulation.
+      if "_" in sndTime :
+        qSNDTIME = ""
+      if "_" in delivTime :
+        qDELIVTIME = ""
+  
+      # set query
+      query = "UPDATE Clock SET simInclude='" + simInclude + "' WHERE " + qSRC + qDEST + qSNDTIME + qDELIVTIME
+  
+      if DEBUG :
+        print "query = " + str(query)
+  
+      # execute query
+      irCursor.execute( query )
+  
 
 ########################
 #  GET PREFERRED SOLN  #
