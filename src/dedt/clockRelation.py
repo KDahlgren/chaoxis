@@ -18,7 +18,7 @@ from utils import dumpers, parseCommandLineInput, tools
 #############
 #  GLOBALS  #
 #############
-CLOCKRELATION_DEBUG = False
+CLOCKRELATION_DEBUG = tools.getConfig( "DEDT", "CLOCKRELATION_DEBUG", bool )
 
 #########################
 #  INIT CLOCK RELATION  #

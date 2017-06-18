@@ -19,7 +19,7 @@ from utils import tools
 #############
 #  GLOBALS  #
 #############
-DEDALUSPARSER_DEBUG = False
+DEDALUSPARSER_DEBUG = tools.getConfig( "DEDT", "DEDALUSPARSER_DEBUG", bool )
 
 keywords = [ "notin" ] # TODO: make this configurable
 

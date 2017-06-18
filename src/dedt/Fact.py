@@ -16,7 +16,7 @@ sys.path.append( packagePath )
 from utils import tools
 # ------------------------------------------------------ #
 
-DEBUG = False
+DEBUG = tools.getConfig( "DEDT", "FACT_DEBUG", bool )
 
 class Fact :
   # attributes

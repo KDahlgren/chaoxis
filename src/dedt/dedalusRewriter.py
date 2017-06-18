@@ -18,8 +18,8 @@ from utils import clockTools, tools, dumpers
 #############
 #  GLOBALS  #
 #############
-DEDALUSREWRITER_DEBUG       = False
-DEDALUSREWRITER_DUMPS_DEBUG = False
+DEDALUSREWRITER_DEBUG       = tools.getConfig( "DEDT", "DEDALUSREWRITER_DEBUG", bool )
+DEDALUSREWRITER_DUMPS_DEBUG = tools.getConfig( "DEDT", "DEDALUSREWRITER_DUMPS_DEBUG", bool )
 
 timeAtt_snd    = "SndTime"
 timeAtt_deliv  = "DelivTime"

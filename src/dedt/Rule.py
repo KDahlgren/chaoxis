@@ -16,7 +16,7 @@ sys.path.append( packagePath )
 from utils import dumpers, extractors, tools
 # ------------------------------------------------------ #
 
-DEBUG = False
+DEBUG = tools.getConfig( "DEDT", "RULE_DEBUG", bool )
 
 opList = [ "notin" ] # TODO: make this configurable
 arithOps = [ "+", "-", "*", "/" ]

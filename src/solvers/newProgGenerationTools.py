@@ -45,24 +45,6 @@ def buildNewProg( triggerFault, eff, irCursor, iter_count, allProgramData_noCloc
   if DEBUG :
     print "...running buildNewProg..."
 
-  ##############################################
-  # check if program save directory exists
-  testpath        = os.path.abspath( __file__ + "/../.." ) + "/evaluators/programFiles/"
-  newProgSavePath = os.path.abspath( __file__ + "/../.." ) + "/evaluators/programFiles/" + "c4program.olg"
-
-  if os.path.isdir( testpath ) :
-    pass
-  else :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : directory for storing datalog programs does not exist:\n" + testpath + "\nThat's pretty weird. Aborting... " )
-
-  # save the old program
-  oldprogpath = None
-  if os.path.isfile( newProgSavePath ) :
-    oldprogpath = testpath + "c4program_" + str(time.strftime("%d%b%Y")) + "_" + str(time.strftime("%Hh%Mm%Ss" ) ) + "_" + str( iter_count ) + "_saved_olg.txt"
-    os.system( "mv " + newProgSavePath + " " + oldprogpath )
-
-  ##############################################
-
   allFaultFacts = getAllClockFacts( triggerFault, irCursor ) # get all clock fact deletions associated with the trigger fault.
 
   # ----------------------------------------- #
@@ -93,7 +75,7 @@ def buildNewProg( triggerFault, eff, irCursor, iter_count, allProgramData_noCloc
 
   # ----------------------------------------- #
   # get new clock lines
-  newClockSet = finalizeNewProg( testpath, newProgSavePath, irCursor )
+  newClockSet = finalizeNewProg( irCursor )
 
   ##############################################
 
@@ -283,7 +265,7 @@ def resetClock( parsedClockRecords, irCursor ) :
 #  FINALIZE NEW PROG  #
 #######################
 # build the final version of the new program with the new clock fact configuration
-def finalizeNewProg( testpath, newProgSavePath, irCursor ) :
+def finalizeNewProg( irCursor ) :
 
   # get all clock facts where simInclude == True
   irCursor.execute( "SELECT src,dest,sndTime,delivTime FROM Clock WHERE simInclude=='True'" )

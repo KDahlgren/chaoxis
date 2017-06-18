@@ -29,7 +29,7 @@ from solvers import solverTools
 # **************************************** #
 
 
-DEBUG = True
+DEBUG = tools.getConfig( "FaultManager", "DEBUG", bool )
 
 
 class FaultManager :
@@ -103,12 +103,15 @@ class FaultManager :
       if DEBUG :
         print "self.provTree_fmla = " + str( self.provTree_fmla )
         print
-        print "**************************************************************"
-        print "* FAULT MANAGER RUN() : fault_id = " + str( self.core.fault_id )
-        print "* self.conclusion   = "              + str( self.conclusion    )
-        print "* self.noNewSolns   = "              + str( self.noNewSolns    )
-        print "* COMPLETED run_workflow() for "     + str( self.triggerFault  )
-        print "**************************************************************"
+
+      # display results
+      print
+      print "**************************************************************"
+      print "* FAULT MANAGER RUN() : fault_id = " + str( self.core.fault_id )
+      print "* self.conclusion   = "              + str( self.conclusion    )
+      print "* self.noNewSolns   = "              + str( self.noNewSolns    )
+      print "* COMPLETED run_workflow() for "     + str( self.triggerFault  )
+      print "**************************************************************"
 
       # check if still bug free
       if not self.isBugFree() :

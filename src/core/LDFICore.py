@@ -30,10 +30,10 @@ from visualizations import vizTools
 # **************************************** #
 
 
-DEBUG                = True
-PROV_TREES_ON        = True
-OUTPUT_PROV_TREES_ON = True
-OUTPUT_TREE_CNF_ON   = True
+DEBUG                = tools.getConfig( "CORE", "LDFI_DEBUG", bool )
+PROV_TREES_ON        = tools.getConfig( "CORE", "LDFI_PROV_TREES_ON", bool )
+OUTPUT_PROV_TREES_ON = tools.getConfig( "CORE", "LDFI_OUTPUT_PROV_TREES_ON", bool )
+OUTPUT_TREE_CNF_ON   = tools.getConfig( "CORE", "LDFI_OUTPUT_TREE_CNF_ON", bool )
 
 
 ####################
@@ -241,7 +241,7 @@ class LDFICore :
   # evaluate the datalog program using some datalog evaluator
   # return some data structure or storage location encompassing the evaluation results.
   def evaluate( self, evaluatorType, allProgramData ) :
-  
+
     evaluators    = [ 'C4_WRAPPER' ]  # evaluator options
     results_array = []                # evaluation results default is an empty array
 

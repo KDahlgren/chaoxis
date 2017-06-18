@@ -6,7 +6,7 @@ tools.py
    sanity-check particular properties.
 '''
 
-import inspect, os, random, re, string, sys, numbers
+import ConfigParser, inspect, os, random, re, string, sys, numbers
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -29,6 +29,31 @@ TOOLS_DEBUG = False
 #####################
 def bp( filename, funcname, msg ) :
   sys.exit( "BREAKPOINT in file " + filename + " at function " + funcname + " :\n>>> " + msg )
+
+################
+#  GET CONFIG  #
+################
+def getConfig( section, option, dataType ) :
+
+  # create config parser instance
+  configs = ConfigParser.ConfigParser( )
+
+  # read defaults first
+  defaultsPath = os.path.abspath( __file__ + "/.." ) + "/defaults.ini" # assume stored in src/utils/
+  configs.read( defaultsPath )
+
+  # read user-specified settings, if applicable
+  settingsPath = os.path.abspath( os.getcwd() ) + "settings.ini"
+  if os.path.isfile( settingsPath ) : # check if file exists first.
+    configs.read( settingsPath )
+
+  if dataType == bool :
+      if configs.get(section, option) == "True"  :
+        return True
+      else :
+        return False
+  else :
+    return configs.get(section, option)
 
 ############
 #  GET ID  #
@@ -71,8 +96,6 @@ def getEvalResults_dict_c4( results_array ) :
     currRelation = None
 
     for i in range( 0, len( results_array ) ) :
-
-      print " results_array[" + str(i) + "] = " + results_array[i]
 
       # get previous line
       if i > 0 :

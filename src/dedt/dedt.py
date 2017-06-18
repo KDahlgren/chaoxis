@@ -45,8 +45,8 @@ from translators import c4_translator, dumpers_c4, pydatalog_translator
 #############
 #  GLOBALS  #
 #############
-DEDT_DEBUG  = False
-DEDT_DEBUG1 = False
+DEDT_DEBUG  = tools.getConfig( "DEDT", "DEDT_DEBUG", bool )
+DEDT_DEBUG1 = tools.getConfig( "DEDT", "DEDT_DEBUG1", bool )
 
 ###############
 #  DED TO IR  #
