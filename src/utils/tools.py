@@ -46,74 +46,78 @@ def getID() :
 def getRandomAttName() :
   return "".join( random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ') for i in range(16) )
 
-#########################
-#  GET EVAL RESULTS C4  #
-#########################
-# get results from c4 output file
-# input path to c4 results file
-# output clean dictionary of results:
+
+##############################
+#  GET EVAL RESULTS DICT C4  #
+##############################
+# get results from c4 output
+# input results as an array
+# output dictionary of results:
 #     table names are keys, 
 #     values are a list of rows split into lists on commas
 #     { 'tableName' : [ ['a1', ..., 'aN'], ..., ['b1', ..., 'bN'] ] }
-def getEvalResults_file_c4( path ) :
+def getEvalResults_dict_c4( results_array ) :
 
-  # mandatory info communication
-  print "Using c4 results from : " + path
+  resultsDict = {}
 
-  if os.path.exists( path ) :
-    fo = open( path )
+  # ---------------------------------------------------------------------- #
+  # CASE : results_array not empty                                         #
+  # ---------------------------------------------------------------------- #
+  if not results_array == [] :
 
-    prevLine = None
-    currRel  = None
+    prevPrevLine = None
+    prevLine     = None
+    currLine     = None
+    currRelation = None
 
-    resultsDict = {}
-    save        = False
-    tupleList   = []
+    for i in range( 0, len( results_array ) ) :
 
-    for line in fo :
+      print " results_array[" + str(i) + "] = " + results_array[i]
 
-      if line == "\n" :
-        resultsDict[ currRel ] = tupleList
-        currRel = None
-        tupleList = []
-        save = False
+      # get previous line
+      if i > 0 :
+        prevLine = results_array[ i-1 ]
+      else :
+        prevLine = None
 
+      # get previous previous line
+      if i > 1 :
+        prevPrevLine = results_array[ i-2 ]
+      else :
+        prevPrevLine = None
+
+      # get current line
+      currLine     = results_array[ i ]
+
+      # hit an empty relation
+      if prevPrevLine == "---------------------------"  and currLine == "---------------------------"  :
+        resultsDict[ currRelation ] = []
+
+      # hit a delimiter line
+      elif currLine == "---------------------------" :
+        pass
+
+      # hit a relation line
       elif prevLine == "---------------------------" :
-        currRel = line.rstrip()
-        save    = True
+        currRelation = currLine
 
-      elif save == True :
-        tupleList.append( line.rstrip() )
+      # hit a tuple line
+      else :
+        if currRelation in resultsDict :
+          currList = resultsDict[ currRelation ]
+        else :
+          currList = []
 
+        currList.append( currLine.split( ',' ) )
+        resultsDict[ currRelation ] = currList
 
-      prevLine = line.rstrip()
-
-    fo.close()
-
+  # ---------------------------------------------------------------------- #
+  # CASE: empty results array                                              #
+  # ---------------------------------------------------------------------- #
   else :
-    sys.exit( "Cannot open file : " + path )
+    tools.bp( __name__, inspect.stack()[0][3], "No evaluation results." )
 
-  if TOOLS_DEBUG :
-    print "resultsDict : "
-    for key in resultsDict :
-      print "key = " + str(key) + " : "
-      print resultsDict[ key ]
-
-  cleanResultsDict = {}
-  for key in resultsDict :
-    tupList = []
-    for tup in resultsDict[ key ] :
-      tup = tup.split( "," )
-      tupList.append( tup )
-    cleanResultsDict[ key ] = tupList
-
-  if TOOLS_DEBUG :
-    print "cleanResultsDict : "
-    for key in cleanResultsDict :
-      print "key = " + str(key) + " : "
-      print cleanResultsDict[ key ]
-
-  return cleanResultsDict
+  return resultsDict
 
 
 ################################

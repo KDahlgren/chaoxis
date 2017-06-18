@@ -41,11 +41,9 @@ def bugConditions( results, eot ) :
   # ------------------------------------------------------------------------------ #
   # sanity check pre and post must appear in the evaluation results.
   if not "pre" in results :
-    dedt.cleanUp( irCursor, saveDB )
-    tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining pre" )
+    tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining pre\nresults:\n" + str( results ) )
   elif not "post" in results :
-    dedt.cleanUp( irCursor, saveDB )
-    tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining post" )
+    tools.bp( __name__, inspect.stack()[0][3], "ERROR : no rule defining post\nresults:\n" + str( results ) )
   # ------------------------------------------------------------------------------ #
 
   conclusion  = None  # conclusion is not None iff it hit a bug.

@@ -18,9 +18,9 @@ from c4    import C4Wrapper
 
 # **************************************** #
 
-C4_DYLIB           = '../../lib/c4/build/src/libc4/libc4.dylib'
-C4_EXEC_PATH       = os.path.dirname(os.path.abspath( __file__ )) + "/../../lib/c4/build/src/c4i/c4i"
-#C4_SAVE_PATH       = os.path.dirname(os.path.abspath( __file__ )) + "/programFiles/c4_run_output.txt"
+
+C4_DYLIB     = '../../lib/c4/build/src/libc4/libc4.dylib'
+C4_EXEC_PATH = os.path.dirname(os.path.abspath( __file__ )) + "/../../lib/c4/build/src/c4i/c4i"
 
 DEBUG = False
 
@@ -39,6 +39,7 @@ def cleanTableStr( tableStr ) :
 
   return newStr
 
+
 ################
 #  GET TABLES  #
 ################
@@ -53,8 +54,6 @@ def getTables( table_path ) :
     fo.close()
   else :
     sys.exit( "Table list for C4 Overlog input file for pyLDFI program not found at : " + table_path + "\nAborting..." )
-
-  #tableListStr = cleanTableStr( tableListStr )
 
   return tableListStr
 
@@ -106,35 +105,32 @@ def runC4_directly( c4_file_path, table_path, savepath ) :
 ####################
 # runs c4 program on generated overlog program
 # by interacting with a C4 wrapper.
-# saves the evaluation results to file at save_path.
-def runC4_wrapper( c4_file_path, table_path, savepath ) :
+# saves the evaluation results to file at c4_results_dump_path.
+def runC4_wrapper( allProgramData ) :
 
   if DEBUG :
     print "USING C4 WRAPPER..."
-    print "c4_file_path = " + c4_file_path
-    print "table_path   = " + table_path
-    print "savepath     = " + savepath
+    print "allProgramLines = " + str( allProgramData[0] )
+    print "tableListArray  = " + allProgramData[1]
 
-  # check if c4 datalog input file exists
-  if os.path.exists( c4_file_path ) :
+  # branch on empty generated programs
+  if len( allProgramData[0] ) > 1 :
 
-    # run the program using the c4 wrapper
-    w = C4Wrapper.C4Wrapper( C4_DYLIB ) # initializes c4 wrapper instance
-    w.run( c4_file_path, table_path, savepath )
+    # branch on empty generated table list arrays
+    if allProgramData[1] and not allProgramData[1] == "" :
 
-    # check if dump file is empty.
-    if not os.path.exists( savepath ) :
-      tools.bp( __name__, inspect.stack()[0][3], "ERROR: c4 file dump does not exist at " + savepath )
+      # run the program using the c4 wrapper
+      w             = C4Wrapper.C4Wrapper( C4_DYLIB ) # initializes c4 wrapper instance
+      results_array = w.run( allProgramData )
+
+      # return c4 evaluation results as an array of strings
+      return results_array
+
     else :
-      if not os.path.getsize( savepath ) > 0 :
-        tools.bp( __name__, inspect.stack()[0][3], "ERROR: no c4 dump results at " + savepath  )
-
-    return savepath
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : generated empty C4 Overlog table list. Aborting..." )
 
   else :
-    sys.exit( "C4 Overlog input file for pyLDFI program not found at : " + c4_file_path + "\nAborting..." )
-
-  return None
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : generated empty C4 Overlog program. Aborting..." )
 
 
 #########

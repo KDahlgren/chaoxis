@@ -48,16 +48,12 @@ def dumpIR( cursor, db_dump_save_path ) :
   # get clock
   full_clock = dump_clock( cursor )
 
-  # get crash table
-  full_crash = dump_crash( cursor )
-
   if db_dump_save_path :
     if DUMPERS_C4_DEBUG :
       print "...DUMPING IR..."
       print full_facts
       print full_rules
       print full_clock
-      print full_crash
 
     # save to file
     fo = open( db_dump_save_path, "w" )
@@ -67,8 +63,6 @@ def dumpIR( cursor, db_dump_save_path ) :
       fo.write( rule )
     for clock in full_clock : # write clock facts
       fo.write( clock )
-    for crash in full_crash : # write crash facts
-      fo.write( crash )
     fo.close()
 
     print "IR DUMP SAVED TO : " + db_dump_save_path
@@ -78,7 +72,6 @@ def dumpIR( cursor, db_dump_save_path ) :
     print full_facts
     print full_rules
     print full_clock
-    print full_crash
 
 
 #########################

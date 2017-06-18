@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-cmd="python ../../src/drivers/driver1.py -n a,b,c -f ./fun_example_5.ded --evaluator c4"
+cmd="python ../../src/drivers/driver.py -n a,b,c -f ./fun_example_5.ded --evaluator c4"
 opt_cmd="cmd"
 
 rm ./IR.db

@@ -45,14 +45,12 @@ class LDFICore :
   #############
   #  ATTRIBS  #
   #############
-  c4_dump_savepath  = None
-  table_list_path   = None
-  datalog_prog_path = None
-  argDict           = None  # dictionary of commaned line args
-  cursor            = None  # a reference to the IR database
-  fault_id          = 1     # id of the current fault to inject. start at 1 for pycosat.
-  currSolnAttempt   = 1     # controls depth of soln search in pycosat. must start at 1.
-  solver            = None
+  argDict                 = None  # dictionary of commaned line args
+  cursor                  = None  # a reference to the IR database
+  allProgramData_noClocks = []    # [ allProgramLines (minus clocks), tableListArray ]
+  fault_id                = 1     # id of the current fault to inject. start at 1 for pycosat.
+  currSolnAttempt         = 1     # controls depth of soln search in pycosat. must start at 1.
+  solver                  = None
 
   # --------------------------------- #
 
@@ -60,10 +58,7 @@ class LDFICore :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, c4_save, table_save, datalog_save, argDict, cursor, solver ) :
-    self.c4_dump_savepath  = c4_save
-    self.table_list_path   = table_save
-    self.datalog_prog_path = datalog_save
+  def __init__( self, argDict, cursor, solver ) :
     self.argDict           = argDict
     self.cursor            = cursor
     self.solver            = solver
@@ -97,11 +92,7 @@ class LDFICore :
      print "               RUNNING LDFI CORE WORKFLOW"
      print "*******************************************************"
      print
- 
-    # save the previous c4 program for records (not used in future iterations).
-    if os.path.isfile( self.c4_dump_savepath ) :
-      os.system( "mv " + self.c4_dump_savepath + " " + self.c4_dump_savepath + "_" + time.strftime("%d%b%Y-%Hh%Mm%Ss") + "_iter" + str( self.fault_id ) + ".txt" )
-  
+
     # ----------------------------------------------- #
     # 1. get datalog                                  #
     # ----------------------------------------------- #
@@ -112,7 +103,15 @@ class LDFICore :
       # translate all input dedalus files into a single datalog program  #
       # ---------------------------------------------------------------- #
 
-      self.dedalus_to_datalog( self.argDict, self.table_list_path, self.datalog_prog_path, self.cursor )
+      # allProgramData := [ allProgramLines, tableListArray ]
+      allProgramData = self.dedalus_to_datalog( self.argDict, self.cursor )
+
+      # The base datalog program does not change per iteration.
+      # The tables used in the program do not change per iteration.
+      # Only the collection of clock facts included in the program change per iteration.
+      # Save the base program (program minus clock facts) and table list array for future use.
+      self.allProgramData_noClocks.append( [ x for x in allProgramData[0] if not x[:6] == "clock(" ] ) # base program lines.
+      self.allProgramData_noClocks.append( allProgramData[1] )  # table list array
 
     else :
 
@@ -120,18 +119,15 @@ class LDFICore :
       # 7. generate new datalog prog                 #
       # -------------------------------------------- #
 
-      self.getNewDatalogProg( [ triggerFault ], self.argDict[ "EFF" ], self.cursor, self.fault_id )
+      allProgramData = self.getNewDatalogProg( triggerFault, self.argDict[ "EFF" ], self.cursor, self.fault_id )
 
     # ----------------------------------------------- #
     # 2. evaluate                                     #
     # ----------------------------------------------- #
- 
+
     # use c4 wrapper 
-    resultsPath   = self.evaluate( "C4_WRAPPER", self.table_list_path, self.datalog_prog_path, self.c4_dump_savepath )
-    # use c4 from command line (deprecated)
-    #resultsPath   = self.evaluate( "C4_CMDLINE", self.table_list_path, self.datalog_prog_path, self.c4_dump_savepath )
-    parsedResults = tools.getEvalResults_file_c4( resultsPath ) # assumes C4 results stored in dump
-  
+    parsedResults = self.evaluate( "C4_WRAPPER", allProgramData )
+
     # ----------------------------------------------- #
     # 3. check for bugs                               #
     # ----------------------------------------------- #
@@ -216,20 +212,12 @@ class LDFICore :
       # grab the textual version of the fmla
       finalFmla = provTree_fmla.cnfformula
 
-      #if self.fault_id == 2 :
-      #  tools.bp( __name__, inspect.stack()[0][3], "finalFmla = " + str(finalFmla) )
-
       # update CNF component of returns
       return_array[1] = finalFmla
 
       # -------------------------------------------- #
       # 6. solve CNF formula                         #
       # -------------------------------------------- #
-
-      #if old_provTree_fmla :
-      #  print old_provTree_fmla
-      #  print finalFmla
-      #  tools.bp( __name__, inspect.stack()[0][3], "asdlfkjh" )
 
       self.currSolnAttempt = 1                          # reset soln bound b/c using new fmla
       triggerFault         = self.solveCNF( finalFmla ) # grab a soln to the prov tree
@@ -243,8 +231,8 @@ class LDFICore :
   #  DEDALUS TO DATALOG  #
   ########################
   # translate all input dedalus files into a single datalog program
-  def dedalus_to_datalog( self, argDict, table_list_path, datalog_prog_path, cursor ) :
-    return dedt.translateDedalus( argDict, table_list_path, datalog_prog_path, cursor )
+  def dedalus_to_datalog( self, argDict, cursor ) :
+    return dedt.translateDedalus( argDict, cursor )
   
   
   ##############
@@ -252,22 +240,67 @@ class LDFICore :
   ##############
   # evaluate the datalog program using some datalog evaluator
   # return some data structure or storage location encompassing the evaluation results.
-  def evaluate( self, evaluatorType, table_list_path, datalog_prog_path, savepath ) :
+  def evaluate( self, evaluatorType, allProgramData ) :
   
-    evaluators = [ 'C4_CMDLINE', 'C4_WRAPPER' ]
-  
-    # C4_CMDLINE
-    if evaluatorType == evaluators[0] :
-      return c4_evaluator.runC4_directly( datalog_prog_path, table_list_path, savepath )
-  
+    evaluators    = [ 'C4_WRAPPER' ]  # evaluator options
+    results_array = []                # evaluation results default is an empty array
+
+    # ----------------------------------------------------------------- #
     # C4_WRAPPER
-    elif evaluatorType == evaluators[1] :
-      return c4_evaluator.runC4_wrapper( datalog_prog_path, table_list_path, savepath )
-  
+    if evaluatorType == evaluators[0] :
+      results_array = c4_evaluator.runC4_wrapper( allProgramData )
+
+    # ----------------------------------------------------------------- #
     # WHAAAAA????
     else :
       tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unrecognized evaluator type '" + evaluatorType + "', currently recognized evaluators are : " + str(evaluators) )
-  
+
+    # ----------------------------------------------------------------- #
+    # dump evaluation results locally
+    eval_results_dump_dir = os.path.abspath( os.getcwd() ) + "/data/"
+
+    # make sure data dump directory exists
+    if not os.path.isdir( eval_results_dump_dir ) :
+      print "WARNING : evalulation results file dump destination does not exist at " + eval_results_dump_dir
+      print "> creating data directory at : " + eval_results_dump_dir
+      os.system( "mkdir " + eval_results_dump_dir )
+      if not os.path.isdir( eval_results_dump_dir ) :
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unable to create evaluation results dump directory at " + eval_results_dump_dir )
+      print "...done."
+
+    # data dump directory exists
+    self.eval_results_dump_to_file( results_array, eval_results_dump_dir )
+
+    # ----------------------------------------------------------------- #
+    # parse results into a dictionary
+    parsedResults = tools.getEvalResults_dict_c4( results_array )
+
+    # ----------------------------------------------------------------- #
+
+    return parsedResults
+
+ 
+  ###############################
+  #  EVAL RESULTS DUMP TO FILE  #
+  ###############################
+  def eval_results_dump_to_file( self, results_array, eval_results_dump_dir ) :
+
+    eval_results_dump_file_path = eval_results_dump_dir + "eval_dump_" + str( self.fault_id ) + ".txt"
+
+    # save new contents
+    f = open( eval_results_dump_file_path, "w" )
+
+    for line in results_array :
+      
+      # output to stdout
+      if DEBUG :
+        print line
+
+      # output to file
+      f.write( line + "\n" )
+
+    f.close()
+ 
   
   ####################
   #  CHECK FOR BUGS  #
@@ -417,11 +450,12 @@ class LDFICore :
   ##########################
   # input a list of fault hypotheses
   # output the path to the new datalog program
-  def getNewDatalogProg( self, faultHypoList, eff, irCursor, iter_count ) :
+  def getNewDatalogProg( self, triggerFault, eff, irCursor, iter_count ) :
 
-    if len( faultHypoList ) > 0 :
-      return newProgGenerationTools.buildNewProg( faultHypoList, eff, irCursor, iter_count )
-  
+    if len( triggerFault ) > 0 :
+      allProgramData = newProgGenerationTools.buildNewProg( triggerFault, eff, irCursor, iter_count, self.allProgramData_noClocks )
+      return allProgramData
+
     else :
       tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : attempted to build a new datalog program, but no fault hypotheses exist." )
 

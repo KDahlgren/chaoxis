@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
 
-cmd="time python ../../src/drivers/driver1.py -n a,b,c -ff 2 --EOT 4 -f ./rdLog.ded --evaluator c4"
-#cmd="time python ../../src/drivers/driver1.py -n a,b,c -ff 3 --EOT 4 -f ./rdLog.ded --evaluator c4"
+cmd="time python ../../src/drivers/driver.py -n a,b,c -ff 2 --EOT 4 -f ./rdLog.ded --evaluator c4"
+#cmd="time python ../../src/drivers/driver.py -n a,b,c -ff 3 --EOT 4 -f ./rdLog.ded --evaluator c4"
 opt_cmd="cmd"
 
 rm ./IR.db
+rm ./tmp.txt
 
 if [ "$1" = "$opt_cmd" ]
 then

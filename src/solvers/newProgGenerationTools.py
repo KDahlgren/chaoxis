@@ -17,10 +17,12 @@ from types import *
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath )
+sys.path.append( os.path.abspath( __file__ + "/../.." ) ) # src/
+sys.path.append( os.path.abspath( __file__ + "/../../dedt" ) ) # src/
 
-from utils import dumpers, tools
+
+from utils       import dumpers, tools
+from translators import dumpers_c4
 
 # **************************************** #
 
@@ -33,12 +35,11 @@ DEBUG = False
 # input a set of solutions to the cnf formula in the form of sets of legible facts.
 #   each set of legible facts represents one fault hypothesis.
 # output chosen fault hypothesis (list of facts deleted from Clock)
-def buildNewProg( solnSet, eff, irCursor, iter_count ) :
+def buildNewProg( triggerFault, eff, irCursor, iter_count, allProgramData_noClocks ) :
 
   print "buildNewProg : iter_count  = " + str( iter_count )
   print "solnSet : ["
-  for s in solnSet :
-    print s
+  print triggerFault
   print "]"
 
   if DEBUG :
@@ -52,7 +53,7 @@ def buildNewProg( solnSet, eff, irCursor, iter_count ) :
   if os.path.isdir( testpath ) :
     pass
   else :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR1: directory for storing datalog programs does not exist:\n" + testpath + "\nThat's pretty weird. Aborting... " )
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : directory for storing datalog programs does not exist:\n" + testpath + "\nThat's pretty weird. Aborting... " )
 
   # save the old program
   oldprogpath = None
@@ -62,18 +63,11 @@ def buildNewProg( solnSet, eff, irCursor, iter_count ) :
 
   ##############################################
 
-  # need to pick one of the solutions
-  if len( solnSet ) < 2 :
-    preferredSoln = solnSet[0]
-  else :
-    preferredSoln = getPreferredSoln( solnSet, irCursor )
-    # case no preferred soln exists
-    if not preferredSoln :
-      return None
+  allFaultFacts = getAllClockFacts( triggerFault, irCursor ) # get all clock fact deletions associated with the trigger fault.
 
   # ----------------------------------------- #
   # parse clock soln records
-  parsedClockRecords = parseClock( preferredSoln )
+  parsedClockRecords = parseClock( allFaultFacts )
 
   if DEBUG :
     print "parsedClockRecords = "
@@ -94,25 +88,35 @@ def buildNewProg( solnSet, eff, irCursor, iter_count ) :
 
   if DEBUG :
     print "CHECK CLOCK TABLE HERE"
-
-  if DEBUG :
     print ">> CLOCK DUMP after <<"
     dumpers.clockDump( irCursor )
 
   # ----------------------------------------- #
-  # build a copy of the old program, minus the clock fact lines
-  copyProg( oldprogpath, testpath, newProgSavePath ) # edits the new program file directly
-
-  # add the new clock lines.
-  finalizeNewProg( testpath, newProgSavePath, irCursor )
+  # get new clock lines
+  newClockSet = finalizeNewProg( testpath, newProgSavePath, irCursor )
 
   ##############################################
 
-  # sanity checks are good for the soul  ~(^.^)~
-  if newProgSavePath :
-    return preferredSoln
-  else :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR: failed to write new program to " + newProgSavePath )
+  allProgramLines_noClocks = allProgramData_noClocks[0]
+  tableListArray           = allProgramData_noClocks[1]
+  allProgramLines          = allProgramLines_noClocks + newClockSet
+
+  if DEBUG :
+    print "------------------------------------"
+    print "allProgramLines_noClocks:"
+    print allProgramLines_noClocks
+    print
+    print "tableListArray:"
+    print tableListArray
+    print
+    print "newClockSet:"
+    print newClockSet
+    print
+    print "allProgramLines:"
+    print allProgramLines
+    print "------------------------------------"
+
+  return [ allProgramLines, tableListArray ]
 
 
 ######################
@@ -167,80 +171,63 @@ def shootClockRecs( parsedClockRecords, eff, irCursor ) :
   
       # execute query
       irCursor.execute( query )
-  
 
-########################
-#  GET PREFERRED SOLN  #
-########################
-# solnSet is an array
-# pick the first soln containing only clock facts
-# returns a list of one or more clock facts
-def getPreferredSoln( solnSet, irCursor ) :
 
-  solnChoice = None
+#########################
+#  GET ALL CLOCK FACTS  #
+#########################
+# returns a list of one or more clock facts.
+# fills out node crashes.
+def getAllClockFacts( triggerFault, irCursor ) :
 
-  for aSoln in solnSet :
-    if aSoln == [] : # skip empties
-      pass
+  dataList = parseClock( triggerFault )
+  dataList = dataList[0]
+  if "_" in dataList :
+    # get all corrsponding clock facts
+    src       = dataList[0]
+    dest      = dataList[1]
+    sndTime   = dataList[2]
+    delivTime = dataList[3]
 
-    # grab the first soln containing only clock facts
-    valid = True
-    for var in aSoln :
-      if not "clock(" in var :
-        valid = False
-    if valid :
-      solnChoice = aSoln
-      break
+    # optimistic by default
+    qSRC       = "src=='" + src + "'"
+    qDEST      = " AND dest=='" + dest + "'"
+    qSNDTIME   = " AND sndTime==" + sndTime + ""
+    qDELIVTIME = " AND delivTime==" + delivTime + ""
 
-  if solnChoice :
-    dataList = parseClock( solnChoice )
-    dataList = dataList[0]
-    if "_" in dataList :
-      # get all corrsponding clock facts
-      src       = dataList[0]
-      dest      = dataList[1]
-      sndTime   = dataList[2]
-      delivTime = dataList[3]
+    # erase query components as necessary
+    # EXISTING BUG TODO : does not work if _ in src --> need to handle ANDs more intelligently
+    if "_" in src :
+      qSRC  = ""
+    if "_" in dest :
+      qDEST = ""
+    if "_" in sndTime :
+      qSNDTIME = ""
+    if "_" in delivTime :
+      qDELIVTIME = ""
 
-      # optimistic by default
-      qSRC       = "src=='" + src + "'"
-      qDEST      = " AND dest=='" + dest + "'"
-      qSNDTIME   = " AND sndTime==" + sndTime + ""
-      qDELIVTIME = " AND delivTime==" + delivTime + ""
+    # set query
+    query = "SELECT src,dest,sndTime,delivTime FROM Clock WHERE " + qSRC + qDEST + qSNDTIME + qDELIVTIME
 
-      # erase query components as necessary
-      # EXISTING BUG TODO : does not work if _ in src --> need to handle ANDs more intelligently
-      if "_" in src :
-        qSRC  = ""
-      if "_" in dest :
-        qDEST = ""
-      if "_" in sndTime :
-        qSNDTIME = ""
-      if "_" in delivTime :
-        qDELIVTIME = ""
+    if DEBUG :
+      print "query = " + str(query)
 
-      # set query
-      query = "SELECT src,dest,sndTime,delivTime FROM Clock WHERE " + qSRC + qDEST + qSNDTIME + qDELIVTIME
+    # execute query
+    irCursor.execute( query )
+    solnList = irCursor.fetchall()
+    solnList = tools.toAscii_multiList( solnList )
 
-      if DEBUG :
-        print "query = " + str(query)
+    # format solns
+    solnChoice = []
+    for soln in solnList :
+      soln = [ str(i) for i in soln ] # convert all data to strings
+      atts = ",".join(soln)
+      solnChoice.append( "clock([" + atts + "])" )
 
-      # execute query
-      irCursor.execute( query )
-      solnList = irCursor.fetchall()
-      solnList = tools.toAscii_multiList( solnList )
-
-      # format solns
-      solnChoice = []
-      for soln in solnList :
-        soln = [ str(i) for i in soln ] # convert all data to strings
-        atts = ",".join(soln)
-        solnChoice.append( "clock([" + atts + "])" )
+    return solnChoice
 
   else :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no solution chosen." )
-
-  return solnChoice
+    return triggerFault
 
 
 #################
@@ -292,47 +279,6 @@ def resetClock( parsedClockRecords, irCursor ) :
   irCursor.execute( "UPDATE Clock SET simInclude='" + simInclude + "'" )
 
 
-###############
-#  COPY PROG  #
-###############
-def copyProg( oldProgPath, testpath, newProgPath ) :
-
-  programLines = []
-
-  # copy old program, except for clock lines
-  if os.path.isfile( oldProgPath ) :
-    outfile = open( oldProgPath, "r" )
-    programLines = outfile.readlines()
-    outfile.close()
-  else :
-    sys.exit( "FATAL ERROR: cannot open old C4 Overlog program at : " + oldProgPath )
-
-  # assumes program is formatted as a single line of concatenated program statements (may be c4 specific)
-  #programLines = programLines[0].split( ";" )
-
-  newProgLines = []
-  for line in programLines :
-    if not line.startswith( "clock(" ) :
-      newProgLines.append( line )
-
-  #newProg = "; ".join( newProgLines ) # <--- use this if program formatted as a series of concatenated lines.
-  newProg = "".join( newProgLines ) # <--- use this if lines are delimited by carriage returns.
-
-  ##############################################
-  # save the new c4 program
-  # existance check repetition is redundant, but very reassuring.
-  if programLines :
-    if os.path.isdir( testpath ) :
-      outfile = open( newProgPath, "w" )
-      outfile.write( newProg )
-      outfile.close()
-    else :
-      sys.exit( "FATAL ERROR: directory for saving C4 Overlog program does not exist at : " + testpath )
-  else :
-    sys.exit( "FATAL ERROR: no old program specified. Aborting..." )
-  ##############################################
-
-
 #######################
 #  FINALIZE NEW PROG  #
 #######################
@@ -363,19 +309,7 @@ def finalizeNewProg( testpath, newProgSavePath, irCursor ) :
   if not newClockLines :
     tools.bp( __name__, inspect.stack()[0][3], "ERROR: no new clock configurations to explore." )
 
-  ##############################################
-  # save the new c4 program
-  # repetition is redundant, but very reassuring.
-  if os.path.isdir( testpath ) :
-    outfile = open( newProgSavePath, "a" )
-    # appends to end of last line -> may mess with the correctness 
-    # in copyProg wrt the assumption that the program exists as a single line
-    outfile.write( newClockLines )
-    outfile.close()
-  else :
-    sys.exit( "FATAL ERROR2: directory for saving C4 Overlog program does not exist: " + testpath )
-  ##############################################
-
+  return [ x.rstrip() for x in newClockFacts ]
 
 #########
 #  EOF  #

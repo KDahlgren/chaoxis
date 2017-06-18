@@ -46,12 +46,13 @@ def existingDefine( name, definesNames ) :
 # input cursor for IR db
 # output the full path for the intermediate file containing the c4 datalog program.
 
-def c4datalog( table_list_path, datalog_prog_path, cursor ) :
+def c4datalog( cursor ) :
 
   goalName         = None
   provGoalNameOrig = None
 
-  tableListStr = "" # collect all table names delmited by a single comma only.
+  tableListStr   = "" # collect all table names delmited by a single comma only.
+  tableListArray = []
 
   # ----------------------------------------------------------- #
   # create goal defines
@@ -79,8 +80,9 @@ def c4datalog( table_list_path, datalog_prog_path, cursor ) :
       provGoalNameOrig = goalName.split( "_prov" )
       provGoalNameOrig = provGoalNameOrig[0]
 
-    # populate table string
+    # populate table information collection structures
     tableListStr += goalName + ","
+    tableListArray.append( goalName )
 
     # ////////////////////////////////////////////////////////// #
     # populate defines list for rule goals
@@ -149,6 +151,7 @@ def c4datalog( table_list_path, datalog_prog_path, cursor ) :
 
       # populate table string
       tableListStr += factName + ","
+      tableListArray.append( factName )
 
       # get goal attribute list
       cursor.execute( "SELECT attID,attType From FactAtt WHERE fid = '" + fid + "'" )
@@ -199,12 +202,7 @@ def c4datalog( table_list_path, datalog_prog_path, cursor ) :
 
   definesList.append( "define(clock,{string,string,int,int});\n" )
   tableListStr += "clock,"
-
-  # ----------------------------------------------------------- #
-  # add crash define
-
-  definesList.append( "define(crash,{string,string,int});\n" )
-  tableListStr += "crash"
+  tableListArray.append( "clock" )
 
   # ----------------------------------------------------------- #
   # add facts
@@ -225,13 +223,6 @@ def c4datalog( table_list_path, datalog_prog_path, cursor ) :
   clockFactList = dumpers_c4.dump_clock( cursor )
   if C4_TRANSLATOR_DEBUG :
     print "c4_translator: clockFactList = " + str( clockFactList )
-
-  # ----------------------------------------------------------- #
-  # add crash facts
-
-  crashFactList = dumpers_c4.dump_crash( cursor )
-  if C4_TRANSLATOR_DEBUG :
-    print "c4_translator: crashFactList = " + str( crashFactList )
 
   # ----------------------------------------------------------- #
   # add rules
@@ -266,15 +257,11 @@ def c4datalog( table_list_path, datalog_prog_path, cursor ) :
     print "*******************************************"
     print "table list str :"
     print tableListStr
-
-  # save table list to file
-  outfile = open( table_list_path, "w" )
-  outfile.write( tableListStr )
-  outfile.close()
-  
+    print "table list array :"
+    print tableListArray
 
   # ----------------------------------------------------------- #
-  # save program
+  # collect program statements
 
   if C4_TRANSLATOR_DEBUG :
     print "*******************************************"
@@ -287,13 +274,16 @@ def c4datalog( table_list_path, datalog_prog_path, cursor ) :
     print "ruleList :"
     print ruleList
 
-  listOfStatementLists = [ definesList, factList, clockFactList, crashFactList, ruleList ]
+  listOfStatementLists = [ definesList, factList, ruleList, clockFactList ]
   program              = tools.combineLines( listOfStatementLists )
 
-  # save c4 program to file
-  outfile = open( datalog_prog_path, "w" )
-  outfile.write( program )
-  outfile.close()
+  # break down into list of individual statements
+  allProgramLines = []
+  for group in listOfStatementLists :
+    for statement in group :
+      allProgramLines.append( statement.rstrip() )
+
+  return [ allProgramLines, tableListArray ]
 
 
 #########

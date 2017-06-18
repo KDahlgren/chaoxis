@@ -16,12 +16,11 @@ import inspect, os, sqlite3, sys, time
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 
-import driverTools
-
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
 from faultManager import FaultManager
+from utils        import parseCommandLineInput
 
 # **************************************** #
 
@@ -33,14 +32,9 @@ DEBUG = False
 
 C4_DUMP_SAVEPATH  = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
 TABLE_LIST_PATH   = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/programFiles/" + "tableListStr.data"
-DATALOG_PROG_PATH = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/programFiles/" + "c4program.olg"
 
 # remove files from previous runs or else suffer massive file collections.
-os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/*.txt" )
 os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/save_data/graphOutput/*.png" )
-os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/save_data/fault_injection/*.txt" )
-os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/*.data" )
-os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/evaluators/programFiles/*.olg" )
 
 ############
 #  DRIVER  #
@@ -51,7 +45,7 @@ def driver() :
 
   # get dictionary of commandline arguments.
   # exits here if user provides invalid inputs.
-  argDict = driverTools.parseArgs( )
+  argDict = parseCommandLineInput.parseCommandLineInput( )  # get dictionary of arguments.
 
   # instantiate IR database
   saveDB = os.getcwd() + "/IR.db"
@@ -59,7 +53,9 @@ def driver() :
   cursor = IRDB.cursor()
 
   # initialize fault manager
-  fm = FaultManager.FaultManager( C4_DUMP_SAVEPATH, TABLE_LIST_PATH, DATALOG_PROG_PATH, argDict, cursor )
+  fm = FaultManager.FaultManager( argDict, cursor )
+
+  # run LDFI on given spec (in file provided in argDict)
   fm.run()
 
   os.system( "rm IR.db" ) # delete db from previous run, if appicable

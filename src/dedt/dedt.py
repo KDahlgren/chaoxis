@@ -243,13 +243,7 @@ def rewrite( ruleMeta, cursor ) :
 # output nothing
 
 # WARNING: CANNOT write rules or facts on multiple lines.
-def runTranslator( cursor, dedFile, argDict, table_list_path, datalog_prog_path, evaluator ) :
-
-  if not table_list_path :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no path to file listing c4 paths specified." )
-
-  if not datalog_prog_path :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no path to c4 program specified." )
+def runTranslator( cursor, dedFile, argDict, evaluator ) :
 
   # ded to IR
   meta     = dedToIR( dedFile, cursor )
@@ -263,17 +257,17 @@ def runTranslator( cursor, dedFile, argDict, table_list_path, datalog_prog_path,
 
   # check for bugs
   if DEDT_DEBUG :
-    dumpers.factDump( cursor )
-    dumpers.ruleDump( cursor )
+    dumpers.factDump(  cursor )
+    dumpers.ruleDump(  cursor )
     dumpers.clockDump( cursor )
 
   # translate IR into datalog
   if evaluator == "c4" :
-    outpaths = c4_translator.c4datalog( table_list_path, datalog_prog_path, cursor )
+    allProgramLines = c4_translator.c4datalog( cursor )
   elif evaluator == "pyDatalog" :
-    outpaths = pydatalog_translator.getPyDatalogProg( cursor )
+    allProgramLines = pydatalog_translator.getPyDatalogProg( cursor )
 
-  return outpaths
+  return allProgramLines
 
 
 ##############################
@@ -307,7 +301,7 @@ def cleanUp( IRDB, saveDB ) :
 #######################
 # input command line arguments
 # output abs path to datalog program
-def translateDedalus( argDict, table_list_path, datalog_prog_path, cursor ) :
+def translateDedalus( argDict, cursor ) :
 
   # create tables
   createDedalusIRTables( cursor )
@@ -325,9 +319,10 @@ def translateDedalus( argDict, table_list_path, datalog_prog_path, cursor ) :
   fileDict = tools.getAllIncludedFiles( fileDict )
 
   # translate all input dedalus files into a single datalog program
-  evaluator = argDict[ 'evaluator' ]
+  evaluator = argDict[ 'evaluator' ] # flavor of datalog depends upon user's choice of evaluator.
+
   for dedfilename, status in fileDict.items() :
-    outpaths = runTranslator( cursor, dedfilename, argDict, table_list_path, datalog_prog_path, evaluator )
+    allProgramData = runTranslator( cursor, dedfilename, argDict, evaluator )
 
   if DEDT_DEBUG1 :
     dumpers.factDump(  cursor )
@@ -336,6 +331,7 @@ def translateDedalus( argDict, table_list_path, datalog_prog_path, cursor ) :
 
   # ----------------------------------------------------------------- #
 
+  return allProgramData
 
 #########
 #  EOF  #

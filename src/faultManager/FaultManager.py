@@ -2,7 +2,7 @@
 
 '''
 FaultManager.py
-  A long-lived tree data structure responsible for maintining
+  A long-lived tree data structure responsible for managing
   the fault hypotheses encountered over the course of a 
   series of injections.
 '''
@@ -19,8 +19,6 @@ import inspect, os, sqlite3, sys, time
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 
-import ConclusionTypes
-
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
@@ -30,7 +28,9 @@ from solvers import solverTools
 
 # **************************************** #
 
+
 DEBUG = True
+
 
 class FaultManager :
 
@@ -39,9 +39,6 @@ class FaultManager :
   #  ATTRIBS  #
   #############
   # files saving data dump and intermediate file locations
-  c4_dump_savepath  = None
-  table_list_path   = None
-  datalog_prog_path = None
   argDict           = None # dictionary of command line arguments
   cursor            = None # reference to the IR database
 
@@ -60,15 +57,12 @@ class FaultManager :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, c4_save, table_save, datalog_save, argDict, cursor ) :
+  def __init__( self, argDict, cursor ) :
 
     # set settings
     settings.settings( argDict[ "settings" ] )
 
-    # file paths + execution configs (do not change per execution of PyLDFI)
-    self.c4_dump_savepath  = c4_save
-    self.table_list_path   = table_save
-    self.datalog_prog_path = datalog_save
+    # set run data and database
     self.argDict           = argDict
     self.cursor            = cursor
 
@@ -76,7 +70,7 @@ class FaultManager :
     solver = solverTools.solveCNF( "PYCOSAT" )
 
     # instantiate LDFICore
-    self.core = LDFICore.LDFICore( self.c4_dump_savepath, self.table_list_path, self.datalog_prog_path, self.argDict, self.cursor, solver )
+    self.core = LDFICore.LDFICore( self.argDict, self.cursor, solver )
 
 
   #########
@@ -115,9 +109,6 @@ class FaultManager :
         print "* self.noNewSolns   = "              + str( self.noNewSolns    )
         print "* COMPLETED run_workflow() for "     + str( self.triggerFault  )
         print "**************************************************************"
-
-      #if self.core.fault_id == 2 :
-      #  tools.bp( __name__, inspect.stack()[0][3], "self.isBugFree = " + str( self.isBugFree() ) )
 
       # check if still bug free
       if not self.isBugFree() :
