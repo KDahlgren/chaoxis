@@ -24,13 +24,14 @@ from utils   import tools
 from solvers import newProgGenerationTools
 # **************************************** #
 
+
 DEBUG = tools.getConfig( "SOLVERS", "SOLVER_PYCOSAT_DEBUG", bool )
+
 
 ##########################
 #  CLASS SOLVER PYCOSAT  #
 ##########################
 class Solver_PYCOSAT :
-
 
   ################
   #  ATTRIBUTES  #
@@ -45,6 +46,7 @@ class Solver_PYCOSAT :
   prev_fmla       = None
   prev_soln       = None
   curr_fmla       = None
+
 
   #################
   #  CONSTRUCTOR  #
@@ -62,11 +64,11 @@ class Solver_PYCOSAT :
     self.curr_fmla = cnf_str
 
     # combine fmlas if applicable
-    if self.prev_fmla and not self.prev_fmla == self.curr_fmla :
-      #self.curr_fmla       = "(" + self.curr_fmla + ") OR " + self.prev_fmla # merge fmlas
-      self.curr_fmla       = self.curr_fmla + " OR " + self.prev_fmla # merge fmlas
-      self.currSolnAttempt = 1 # need to reset b/c new fmla
-      #tools.bp( __name__, inspect.stack()[0][3], "self.curr_fmla = " + self.curr_fmla + "\nself.prev_fmla = " + str(self.prev_fmla) )
+    #if self.prev_fmla and not self.prev_fmla == self.curr_fmla :
+    #  #self.curr_fmla       = "(" + self.curr_fmla + ") OR " + self.prev_fmla # merge fmlas
+    #  self.curr_fmla       = self.curr_fmla + " OR " + self.prev_fmla # merge fmlas
+    #  self.currSolnAttempt = 1 # need to reset b/c new fmla
+    #  #tools.bp( __name__, inspect.stack()[0][3], "self.curr_fmla = " + self.curr_fmla + "\nself.prev_fmla = " + str(self.prev_fmla) )
 
     self.fmlaVars   = SATVars_PYCOSAT.SATVars_PYCOSAT()
     self.satformula = []
@@ -102,7 +104,6 @@ class Solver_PYCOSAT :
     # save curr fmla as prev fmla
     if self.curr_fmla :
       self.prev_fmla = self.curr_fmla
-
 
 
   ###################

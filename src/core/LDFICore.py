@@ -136,9 +136,9 @@ class LDFICore :
       print "CHECKING FOR BUGS on results from triggerFault = " + str( triggerFault )
 
     # check for bugs
-    bugInfo         = self.checkForBugs( parsedResults, self.argDict[ "EOT" ] )
-    conclusion      = bugInfo[0]
-    explanation     = bugInfo[1]
+    bugInfo     = self.checkForBugs( parsedResults, self.argDict[ "EOT" ] )
+    conclusion  = bugInfo[0]
+    explanation = bugInfo[1]
 
     # update conclusion part of returns
     return_array[0] = conclusion
@@ -219,10 +219,10 @@ class LDFICore :
       # 6. solve CNF formula                         #
       # -------------------------------------------- #
 
-      self.currSolnAttempt = 1                          # reset soln bound b/c using new fmla
-      triggerFault         = self.solveCNF( finalFmla ) # grab a soln to the prov tree
-      return_array[2]      = triggerFault                      # update trigger fault part of returns
-      return_array[3]      = self.solver.noNewSolns            # update soln status in returns
+      self.currSolnAttempt = 1                           # reset soln bound b/c using new fmla
+      triggerFault         = self.solveCNF( finalFmla )  # grab a soln to the prov tree
+      return_array[2]      = triggerFault                # update trigger fault part of returns
+      return_array[3]      = self.solver.noNewSolns      # update soln status in returns
 
       return return_array # of the form [ conclusion/None, provTree_fmla/None, solutions/None ]
 

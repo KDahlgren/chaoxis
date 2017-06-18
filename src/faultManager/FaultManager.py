@@ -45,7 +45,6 @@ class FaultManager :
   # the instance of LDFICore
   core = None
 
-  # runtime data
   # transient data (change per iteration of run())
   conclusion    = None  # bug conclusion = None / FoundCounterexample / NoCounterexampleFound
   noNewSolns    = False # bool indicating whether more new solutions exist
