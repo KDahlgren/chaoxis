@@ -111,7 +111,8 @@ class ProvTree( ) :
   
     graph = pydot.Dot( graph_type = 'digraph', strict=True ) # strict => ignore duplicate edges
 
-    path  = IMGSAVEPATH + "/provtree_render_" + str(time.strftime("%d-%m-%Y")) + "_" + str( time.strftime( "%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs" )) + "_" + str(iter_count)
+    #path  = IMGSAVEPATH + "/provtree_render_" + str(time.strftime("%d-%m-%Y")) + "_" + str( time.strftime( "%H"+"hrs-"+"%M"+"mins-"+"%S" +"secs" )) + "_" + str(iter_count)
+    path  = IMGSAVEPATH + "/provtree_render_" + str(iter_count)
 
     # example: add "_buggyGraph" to the end of the name
     if addNameInfo :
