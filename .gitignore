@@ -14,6 +14,8 @@ save_data/fault_injection_solns/*
 dev_tests/**/*.txt
 dev_tests/**/*.db
 dev_tests/**/*.db-*
+dev_tests/**/data/*
+
 qa/**/*.txt
 qa/**/*.db
 qa/**/*.db-*

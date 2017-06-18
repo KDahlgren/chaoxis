@@ -6,7 +6,7 @@
 #  IMPORTS  #
 #############
 # standard python packages
-import os, sys, time
+import inspect, os, sys, time
 import pydot
 
 # import sibling packages HERE!!!
@@ -15,10 +15,12 @@ sys.path.append( packagePath )
 
 import DerivTree, GoalNode, RuleNode, FactNode, provTools
 
+from utils import tools
+
 # **************************************** #
 
 DEBUG       = False
-IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data/graphOutput" )
+IMGSAVEPATH = os.path.abspath( os.getcwd() ) + "/data"
 
 # --------------------------------------------------- #
 
