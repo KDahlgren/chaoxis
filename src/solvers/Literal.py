@@ -25,7 +25,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = False
+DEBUG = tools.getConfig( "SOLVERS", "LITERAL_DEBUG", bool )
 
 class Literal( BooleanFormula ) :
 

@@ -19,7 +19,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG       = False
+DEBUG       = tools.getConfig( "DERIVATION", "PROVTREE_DEBUG", bool )
 IMGSAVEPATH = os.path.abspath( os.getcwd() ) + "/data"
 
 # --------------------------------------------------- #

@@ -27,6 +27,7 @@ from translators import dumpers_c4
 # **************************************** #
 
 DEBUG = False
+#DEBUG = tools.getConfig( "SOLVERS", "NEWPROGGENERATIONTOOLS_DEBUG", bool )
 
 
 ####################

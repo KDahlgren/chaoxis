@@ -22,7 +22,7 @@ from utils import tools
 # **************************************** #
 
 
-DEBUG = False
+DEBUG = tools.getConfig( "DERIVATION", "DERIVTREE_DEBUG", bool )
 
 # --------------------------------------------------- #
 #                   DERIV TREE CLASS                  #

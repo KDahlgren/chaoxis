@@ -12,7 +12,7 @@ import tools
 #############
 #  GLOBALS  #
 #############
-DUMPERS_DEBUG = False
+DUMPERS_DEBUG = tools.getConfig( "UTILS", "DUMPERS_DEBUG", bool )
 
 
 ###############

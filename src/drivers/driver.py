@@ -20,7 +20,7 @@ packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
 from faultManager import FaultManager
-from utils        import parseCommandLineInput
+from utils        import parseCommandLineInput, tools
 
 # **************************************** #
 
@@ -28,7 +28,7 @@ from utils        import parseCommandLineInput
 #############
 #  GLOBALS  #
 #############
-DEBUG = False
+DEBUG = tools.getConfig( "DRIVERS", "DRIVER_DEBUG", bool )
 
 C4_DUMP_SAVEPATH  = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
 TABLE_LIST_PATH   = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/programFiles/" + "tableListStr.data"

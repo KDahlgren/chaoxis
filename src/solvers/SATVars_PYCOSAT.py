@@ -19,8 +19,7 @@ sys.path.append( packagePath )
 from utils import tools
 # **************************************** #
 
-
-DEBUG = True
+DEBUG = tools.getConfig( "SOLVERS", "SATVARS_PYCOSAT_DEBUG", bool )
 
 ######################
 #  SAT VARS PYCOSAT  #

@@ -21,8 +21,8 @@ from dedt  import Rule
 #############
 #  GLOBALS  #
 #############
-C4_TRANSLATOR_DEBUG   = False
-C4_TRANSLATOR_DEBUG_1 = False
+C4_TRANSLATOR_DEBUG   = tools.getConfig( "DEDT", "C4_TRANSLATOR_DEBUG", bool )
+C4_TRANSLATOR_DEBUG_1 = tools.getConfig( "DEDT", "C4_TRANSLATOR_DEBUG1", bool )
 
 
 #####################

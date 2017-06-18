@@ -22,7 +22,7 @@ from c4    import C4Wrapper
 C4_DYLIB     = '../../lib/c4/build/src/libc4/libc4.dylib'
 C4_EXEC_PATH = os.path.dirname(os.path.abspath( __file__ )) + "/../../lib/c4/build/src/c4i/c4i"
 
-DEBUG = False
+DEBUG = tools.getConfig( "EVALUATORS", "C4_EVALUATOR_DEBUG", bool )
 
 
 #####################

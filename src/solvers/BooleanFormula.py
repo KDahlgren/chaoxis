@@ -25,7 +25,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = False
+DEBUG       = tools.getConfig( "SOLVERS", "BOOLEANFORMULA_DEBUG", bool )
 IMGSAVEPATH = os.path.abspath( __file__  + "/../../../save_data/graphOutput" )
 
 

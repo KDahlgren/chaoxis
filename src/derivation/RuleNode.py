@@ -20,7 +20,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = False
+DEBUG = tools.getConfig( "DERIVATION", "RULENODE_DEBUG", bool )
 
 class RuleNode( Node ) :
 

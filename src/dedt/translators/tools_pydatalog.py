@@ -26,7 +26,7 @@ from dedt import dedalusParser
 #############
 #  GLOBALS  #
 #############
-TOOLS_PYDATALOG_DEBUG = False
+TOOLS_PYDATALOG_DEBUG = tools.getConfig( "DEDT", "TOOLS_PYDATALOG_DEBUG", bool )
 
 operators = [ "+", "-", "*", "/", "<", ">", "<=", ">=" ]
 

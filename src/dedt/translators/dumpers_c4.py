@@ -18,7 +18,7 @@ from utils import tools
 #############
 #  GLOBALS  #
 #############
-DUMPERS_C4_DEBUG = False
+DUMPERS_C4_DEBUG = tools.getConfig( "DEDT", "DUMPERS_C4_DEBUG", bool )
 
 
 #############

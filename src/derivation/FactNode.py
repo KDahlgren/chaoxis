@@ -18,7 +18,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = False
+DEBUG = tools.getConfig( "DERIVATION", "FACTNODE_DEBUG", bool )
 
 class FactNode( Node ) :
 

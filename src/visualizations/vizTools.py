@@ -26,7 +26,7 @@ from utils      import tools
 # **************************************** #
 
 
-DEBUG = False
+DEBUG = tools.getConfig( "VISUALIZATIONS", "VIZTOOLS_DEBUG", bool )
 
 
 ################################

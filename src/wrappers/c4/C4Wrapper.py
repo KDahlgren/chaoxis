@@ -18,7 +18,7 @@ sys.path.append( packagePath )
 from utils import tools
 # **************************************** #
 
-DEBUG = False
+DEBUG = tools.getConfig( "WRAPPERS", "C4_WRAPPER_DEBUG", bool )
 
 class C4Wrapper( object ) :
 

@@ -20,7 +20,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = False
+DEBUG = tools.getConfig( "DERIVATION", "GOALNODE_DEBUG", bool )
 
 class GoalNode( Node ) :
 

@@ -11,7 +11,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = False
+DEBUG = tools.getConfig( "DERIVATION", "NODE_DEBUG", bool )
 
 class Node( object ) :
 

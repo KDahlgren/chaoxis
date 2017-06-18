@@ -18,7 +18,7 @@ import dumpers, tools
 #############
 #  GLOBALS  #
 #############
-CLOCKTOOLS_DEBUG = False
+CLOCKTOOLS_DEBUG = tools.getConfig( "UTILS", "CLOCKTOOLS_DEBUG", bool )
 
 
 #################################

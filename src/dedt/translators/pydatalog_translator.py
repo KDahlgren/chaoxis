@@ -20,7 +20,7 @@ from utils import dumpers, extractors, tools
 #############
 #  GLOBALS  #
 #############
-PYDATALOG_TRANSLATOR_DEBUG = False
+PYDATALOG_TRANSLATOR_DEBUG = tools.getConfig( "DEDT", "PYDATALOG_TRANSLATOR_DEBUG", bool )
 
 operators = [ "+", "-", "*", "/", "<", ">", "<=", ">=" ]
 

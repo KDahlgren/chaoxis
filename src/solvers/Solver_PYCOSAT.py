@@ -24,7 +24,7 @@ from utils   import tools
 from solvers import newProgGenerationTools
 # **************************************** #
 
-DEBUG = True
+DEBUG = tools.getConfig( "SOLVERS", "SOLVER_PYCOSAT_DEBUG", bool )
 
 ##########################
 #  CLASS SOLVER PYCOSAT  #
@@ -231,9 +231,9 @@ class Solver_PYCOSAT :
         if "NOT" in literal :                 # do not include positive clock facts
           triggerFault.append( literal[4:] )  # strip off the NOT
 
-    if DEBUG :
-      triggerFault = self.removeCrashes( triggerFault ) # debugging only
-      triggerFault = self.removeSelfComms( triggerFault )
+    # disallow crashes and self comms in trigger faults
+    triggerFault = self.removeCrashes( triggerFault )
+    triggerFault = self.removeSelfComms( triggerFault )
 
     return triggerFault
 

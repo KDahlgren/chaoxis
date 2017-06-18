@@ -18,7 +18,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = True
+DEBUG = tools.getConfig( "EVALUATORS", "EVALTOOLS_DEBUG", bool )
 
 
 ####################

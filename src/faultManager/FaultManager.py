@@ -23,13 +23,13 @@ packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
 from core    import LDFICore
-from utils   import tools, settings
+from utils   import tools
 from solvers import solverTools
 
 # **************************************** #
 
 
-DEBUG = tools.getConfig( "FaultManager", "DEBUG", bool )
+DEBUG = tools.getConfig( "FAULTMANAGER", "FAULTMANAGER_DEBUG", bool )
 
 
 class FaultManager :
@@ -58,9 +58,6 @@ class FaultManager :
   #  CONSTRUCTOR  #
   #################
   def __init__( self, argDict, cursor ) :
-
-    # set settings
-    settings.settings( argDict[ "settings" ] )
 
     # set run data and database
     self.argDict           = argDict

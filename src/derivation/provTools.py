@@ -14,7 +14,7 @@ from utils import tools
 
 # **************************************** #
 
-DEBUG = False
+DEBUG = tools.getConfig( "DERIVATION", "PROVTOOLS_DEBUG", bool )
 C4_RESULTS_PATH = os.path.abspath( __file__ + "/../../../save_data/c4Output/c4dump.txt" )
 
 #################

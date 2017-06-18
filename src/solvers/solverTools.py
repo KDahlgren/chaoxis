@@ -30,8 +30,8 @@ from utils import tools
 
 # **************************************** #
 
-
 DEBUG = False
+#DEBUG = tools.getConfig( "SOLVERS", "SOLVERTOOLS_DEBUG", bool )
 
 
 ###############

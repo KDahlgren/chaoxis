@@ -25,9 +25,7 @@ from utils import tools
 
 # **************************************** #
 
-
-DEBUG = False
-
+DEBUG = tools.getConfig( "SOLVERS", "ENCODEDPROVTREE_CNF_DEBUG", bool )
 
 class EncodedProvTree_CNF :
 
