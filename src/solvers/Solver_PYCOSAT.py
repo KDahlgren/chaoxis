@@ -40,13 +40,14 @@ class Solver_PYCOSAT :
   satformula      = None
   currSolnAttempt = 1
   initFmla        = None  # the formula for the initial good execution.
+  numCrashes      = None
 
 
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, initFmla ) :
-    pass
+  def __init__( self, initFmla, numCrashes ) :
+    self.numCrashes = numCrashes
 
 
   ##############
@@ -56,7 +57,7 @@ class Solver_PYCOSAT :
 
     # set current fmla
     self.initFmla   = cnf_str
-    self.fmlaVars   = SATVars_PYCOSAT.SATVars_PYCOSAT()
+    self.fmlaVars   = SATVars_PYCOSAT.SATVars_PYCOSAT( self.numCrashes )
     self.satformula = []
 
     if DEBUG :

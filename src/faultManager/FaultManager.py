@@ -62,7 +62,7 @@ class FaultManager :
     self.cursor            = cursor
 
     # create a Solver_PYCOSAT insance
-    solver = solverTools.solveCNF( "PYCOSAT" )
+    solver = solverTools.solveCNF( "PYCOSAT", self.argDict[ "crashes" ] )
 
     # instantiate LDFICore
     self.core = LDFICore.LDFICore( self.argDict, self.cursor, solver )

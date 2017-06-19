@@ -38,10 +38,11 @@ class SATVars_PYCOSAT :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__(self):
-    self.var2num = {}
-    self.num2var = {}
-    self.counter = 1
+  def __init__( self, numCrashes ):
+    self.var2num    = {}
+    self.num2var    = {}
+    self.counter    = 1
+    self.numCrashes = numCrashes
 
 
   ######################
@@ -92,7 +93,7 @@ class SATVars_PYCOSAT :
   #  LOOKUP VAR  #
   ################
   # given variable, return the integer id
-  def lookupVar(self, var) :
+  def lookupVar( self, var ) :
     if DEBUG :
       print "var = " + str( var )
 
@@ -111,9 +112,22 @@ class SATVars_PYCOSAT :
       elif self.isSelfComm( var ) :
         return None
 
-      # remove crashes
-      elif self.isCrash( var ) :
-        return None
+      # filter crashes
+      elif self.numCrashes == 0 :
+        if self.isCrash( var ) :
+          return None
+        else :
+          currID = self.counter
+      
+          # assign the id
+          if "_NOT_" in var : # negate id if it's a negative variable
+            var                 = var.replace( "_NOT_", "" ) # cleaning hack for good aesthetics
+            self.var2num[ var ] = int( -1 ) * currID
+          else :
+            self.var2num[ var ] = currID
+      
+          self.num2var[ currID ] = var
+          self.counter += 1
 
       # --------------------------------------------------- #
       # this is an interesting clock fact
@@ -121,7 +135,7 @@ class SATVars_PYCOSAT :
         currID = self.counter
 
         # assign the id
-        if "NOT" in var : # negate id if it's a negative variable
+        if "_NOT_" in var : # negate id if it's a negative variable
           var                 = var.replace( "_NOT_", "" ) # cleaning hack for good aesthetics
           self.var2num[ var ] = int( -1 ) * currID
         else :

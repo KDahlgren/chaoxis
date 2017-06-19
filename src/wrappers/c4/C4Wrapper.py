@@ -53,10 +53,134 @@ class C4Wrapper( object ) :
       return None
 
 
+  ########################################################################################
+  #  GET INPUT PROG ONE GROUP FOR EVERYTHING BESIDES CLOCKS AND GROUP CLOCKS BY SNDTIME  #
+  ########################################################################################
+  # this is what molly does.
+  def getInputProg_one_group_for_everything_besides_clocks_and_group_clocks_by_sndTime( self, program ) :
+
+    other                = []
+    clockStatementGroups = [] # list of strings grouping clock statements by SndTime
+    currClockList        = ""
+    currTime             = 1
+
+    # only works if clock facts are sorted by increasing SndTime when 
+    # appearing in the input c4 line list.
+    # also only works if simulations start at time 1.
+    for i in range(0 ,len(program)) :
+
+      statement = program[i]
+      nextStatement = None
+      lastClock     = False
+
+      parsedStatement = statement.split( "(" )
+
+      # CASE : hit a clock fact
+      if parsedStatement[0] == "clock" :
+
+        # check if the next statement in the program also declares a clock fact
+        try :
+          nextStatement    = program[ i+1 ]
+          parsedStatement1 = nextStatement.split( "(" )
+          parsedClockArgs1 = parsedStatement1[1].split( "," ) # split clock fact arguments into a list
+          assert( parsedStatement1[0] == "clock" )
+        except :
+          currClockList += statement
+          lastClock      = True
+
+        parsedClockArgs = parsedStatement[1].split( "," ) # split clock fact arguments into a list
+
+        # check if SndTime is in the current group
+        if not lastClock and int( parsedClockArgs[2] ) == currTime :
+          currClockList += statement
+
+        # hit a clock fact in the next time group
+        elif not lastClock and int( parsedClockArgs[2] ) > currTime :
+          clockStatementGroups.append( currClockList ) # save the old clock group
+          currClockList  = ""                          # reset the clock group
+          currClockList += statement                   # reset the clock group
+          currTime       = int( parsedClockArgs[2] )   # reset the curr time
+
+        # hit a clock fact in the last time group
+        elif lastClock :
+          clockStatementGroups.append( currClockList ) # save the old clock group
+
+      # CASE : hit a non clock fact
+      else :
+        other.append( statement )
+
+    finalProg = []
+    other_str = "".join( other )
+    finalProg.append( other_str )             # add all non-clock clock statements
+    finalProg.extend( clockStatementGroups )  # add clock statements
+
+    return finalProg
+
+
   ######################################
-  #  GET INPUT PROG FILE GROUP CLOCKS  #
+  #  GET INPUT PROG GROUP CLOCKS ONLY  #
   ######################################
-  def getInputProg_group_clocks( self, program ) :
+  def getInputProg_group_clocks_only( self, program ) :
+
+    finalProg            = []
+    clockStatementGroups = [] # list of strings grouping clock statements by SndTime
+    currClockList        = ""
+    currTime             = 1
+
+    # only works if clock facts are sorted by increasing SndTime when 
+    # appearing in the input c4 line list.
+    # also only works if simulations start at time 1.
+    for i in range(0 ,len(program)) :
+
+      statement = program[i]
+      nextStatement = None
+      lastClock     = False
+
+      parsedStatement = statement.split( "(" )
+
+      # CASE : hit a clock fact
+      if parsedStatement[0] == "clock" :
+
+        # check if the next statement in the program also declares a clock fact
+        try :
+          nextStatement    = program[ i+1 ]
+          parsedStatement1 = nextStatement.split( "(" )
+          parsedClockArgs1 = parsedStatement1[1].split( "," ) # split clock fact arguments into a list
+          assert( parsedStatement1[0] == "clock" )
+        except :
+          currClockList += statement
+          lastClock = True
+
+        parsedClockArgs = parsedStatement[1].split( "," ) # split clock fact arguments into a list
+
+        # check if SndTime is in the current group
+        if not lastClock and int( parsedClockArgs[2] ) == currTime :
+          currClockList += statement
+
+        # hit a clock fact in the next time group
+        elif not lastClock and int( parsedClockArgs[2] ) > currTime :
+          clockStatementGroups.append( currClockList ) # save the old clock group
+          currClockList  = ""                          # reset the clock group
+          currClockList += statement                   # reset the clock group
+          currTime       = int( parsedClockArgs[2] )   # reset the curr time
+
+        # hit a clock fact in the last time group
+        elif lastClock :
+          clockStatementGroups.append( currClockList ) # save the old clock group
+
+      # CASE : hit a non clock fact
+      else :
+        finalProg.append( statement )
+
+    finalProg.extend( clockStatementGroups )  # add clock statements
+
+    return finalProg
+
+
+  ####################################################
+  #  GET INPUT PROG GROUP ALL AND CLOCKS BY SNDTIME  #
+  ####################################################
+  def getInputProg_group_all_and_clocks_by_sndtime( self, program ) :
 
     defineStatementsOnly = "" # string of defines statements only. no clocks or code.
     codeStatementsOnly   = "" # string of code statements only. no clock statements.
@@ -89,6 +213,7 @@ class C4Wrapper( object ) :
           parsedClockArgs1 = parsedStatement1[1].split( "," ) # split clock fact arguments into a list
           assert( parsedStatement1[0] == "clock" )
         except :
+          currClockList += statement
           lastClock = True
 
         parsedClockArgs = parsedStatement[1].split( "," ) # split clock fact arguments into a list
@@ -130,7 +255,9 @@ class C4Wrapper( object ) :
     tableList       = allProgramData[1] # := list of all tables in generated C4 program.
 
     # get full program
-    fullprog = self.getInputProg_group_clocks( allProgramLines ) # group statements, clocks by time.
+    #fullprog = self.getInputProg_group_all_and_clocks_by_sndtime( allProgramLines ) # group statements, clocks by time.
+    fullprog = self.getInputProg_one_group_for_everything_besides_clocks_and_group_clocks_by_sndTime( allProgramLines )
+    #fullprog = self.getInputProg_group_clocks_only( allProgramLines )
     #fullprog = allProgramLines # no grouping, every code line installed separately.
 
     # initialize c4 instance
