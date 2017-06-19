@@ -44,6 +44,50 @@ class SATVars_PYCOSAT :
     self.counter = 1
 
 
+  ######################
+  #  NOT A CLOCK FACT  #
+  ######################
+  def notAClockFact( self, var ) :
+    if not "clock__OPENPAR____OPENBRA__" in var :
+      return True
+    else :
+      return False
+
+
+  ##################
+  #  IS SELF COMM  #
+  ##################
+  def isSelfComm( self, var ) :
+    fact = self.getClockVarContents( var )
+    if fact[0] == fact[1] :
+      return True
+    else :
+      return False
+
+
+  ##############
+  #  IS CRASH  #
+  ##############
+  def isCrash( self, var ) :
+    fact = self.getClockVarContents( var )
+    if fact[1] == "_" :
+      return True
+    else :
+      return False
+
+
+  ############################
+  #  GET CLOCK VAR CONTENTS  #
+  ############################
+  def getClockVarContents( self, var ) :
+    # isolate the first and second components of the clock fact
+    fact = var.split( "__OPENPAR____OPENBRA__" )
+    fact = fact[-1]
+    fact = fact.replace( "__CLOSBRA____CLOSPAR__", "" )
+    fact = fact.split( "__COMMA__" ) # the complete tuple as an array [ src, dest, sndTime, delivTime ]
+    return fact
+
+
   ################
   #  LOOKUP VAR  #
   ################
@@ -55,9 +99,24 @@ class SATVars_PYCOSAT :
     # check if variable already mapped in var2num
     if not self.var2num.has_key( var ) :
 
+      # --------------------------------------------------- #
+      # filter out non-clock facts
       # remove non clock facts from fmla
-      if not "clock" in var :
+      if self.notAClockFact( var ) :
         return None
+
+      # --------------------------------------------------- #
+      # filter out uninteresting clock facts
+      # remove self comms
+      elif self.isSelfComm( var ) :
+        return None
+
+      # remove crashes
+      elif self.isCrash( var ) :
+        return None
+
+      # --------------------------------------------------- #
+      # this is an interesting clock fact
       else :
         currID = self.counter
 

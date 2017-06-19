@@ -49,11 +49,14 @@ class LDFICore :
   cursor                  = None  # a reference to the IR database
   allProgramData_noClocks = []    # [ allProgramLines (minus clocks), tableListArray ]
   fault_id                = 1     # id of the current fault to inject. start at 1 for pycosat.
-  currSolnAttempt         = 1     # controls depth of soln search in pycosat. must start at 1.
   solver                  = None
 
-  # --------------------------------- #
+  initFmla                = None  # the formula obtained from the initial good execution
 
+  stopAtIt                = None  # flag for ensuring only one evaluation iteration over custom solutions
+  customFault             = None  # a str for maintaining the trigger fault
+
+  # --------------------------------- #
 
   #################
   #  CONSTRUCTOR  #
@@ -62,7 +65,6 @@ class LDFICore :
     self.argDict           = argDict
     self.cursor            = cursor
     self.solver            = solver
-
 
   ##################
   #  RUN WORKFLOW  #
@@ -78,12 +80,12 @@ class LDFICore :
   #  6. solve the CNF formula using some solver
   #  7. generate the new datalog program for the next iteration
   #
-  def run_workflow( self, triggerFault, old_provTree_fmla ) :
+  def run_workflow( self, triggerFault ) :
 
     # initialize return array
     return_array = []
     return_array.append( None )  # := conclusion
-    return_array.append( None )  # := provTree_fmla
+    return_array.append( None )  # := explanation
     return_array.append( None )  # := triggerFault
     return_array.append( None )  # := noNewSolns
 
@@ -142,7 +144,13 @@ class LDFICore :
 
     # update conclusion part of returns
     return_array[0] = conclusion
+    return_array[1] = explanation
 
+    # break execution if running on a custom fault
+    if self.stopAtIt == self.fault_id :
+      return_array[2] = self.customFault  # the custom fault
+      return_array[3] = True              # update trigger fault part of returns
+      return return_array
 
     ##############################################
     # CASE 1 :                                   # 
@@ -151,48 +159,43 @@ class LDFICore :
     ##############################################
     if conclusion == "FoundCounterexample" :
       return_array[2] = triggerFault
+      return_array[3] = True
       return return_array
 
 
-    ##############################################
-    # CASE 2 :                                   # 
-    #   Found a vacuously correct execution.     #
-    #   No new prov tree.                        #
-    #   Find another new soln over the previous  #
-    #   CNF fmla.                                #
-    #   fault_id already updated in              #
-    #   FaultManager.                            #
-    ##############################################
+    #############################################
+    # CASE 2 :                                  # 
+    #   Found a vacuously correct execution.    #
+    #   No new prov tree.                       #
+    #   Find another new soln over the initial  #
+    #   CNF fmla.                               #
+    #   fault_id already updated solver         #
+    #   instance.                               #
+    #############################################
     elif conclusion == "NoCounterexampleFound" and explanation == "VACUOUS" :
 
-      if old_provTree_fmla :
+      if self.fault_id > 1 :
 
         # -------------------------------------------- #
         # 6. solve CNF formula                         #
         # -------------------------------------------- #
 
-        return_array[1]       = old_provTree_fmla                   # no change in fmla
-        self.currSolnAttempt += 1                                   # increment soln bound b/c still using same fmla
-        triggerFault          = self.solveCNF( old_provTree_fmla )  # grab another soln to the old fmla
-        return_array[2]       = triggerFault                        # update trigger fault part of returns
-        return_array[3]       = self.solver.noNewSolns              # update soln status in returns
+        triggerFault    = self.solveCNF()  # grab another soln to the old fmla
+        return_array[2] = triggerFault     # update trigger fault part of returns
 
         return return_array # of the form [ conclusion/None, provTree_fmla/None, solutions/None ]
-
-      elif not old_provTree_fmla and not self.fault_id > 1 :
-        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no previous prov fmla and not initial run. Aborting..." )
 
       else :
         print "self.fault_id = " + str( self.fault_id )
         tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : illogical, captain. hit a vacuous result without injecting faults. Aborting..." )
 
 
-    ##############################################
-    # CASE 3 :                                   # 
-    #   Found a correct execution, not vacuous.  #
-    #   Can build new prov tree.                 #
-    #   Find a new soln over the new tree.       #
-    ##############################################
+    ###############################################
+    # CASE 3 :                                    # 
+    #   Found a correct execution.                #
+    #   Can build new prov tree.                  #
+    #   Find another soln over the initial fmla.  #
+    ###############################################
     else :
 
       # ----------------------------------------------- #
@@ -204,27 +207,23 @@ class LDFICore :
       # -------------------------------------------- #
       # 5. generate CNF formula                      #
       # -------------------------------------------- #
- 
-      # fmla is of the form ~( CNF ) because we're 
-      # equating solns with fault scenarios. 
-      provTree_fmla = self.tree_to_CNF( provTreeComplete )
 
-      # grab the textual version of the fmla
-      finalFmla = provTree_fmla.cnfformula
+      if self.fault_id == 1 : 
+        # fmla is of the form ~( CNF ) because we're 
+        # equating solns with fault scenarios. 
+        provTree_fmla = self.tree_to_CNF( provTreeComplete )
 
-      # update CNF component of returns
-      return_array[1] = finalFmla
+        # grab the textual version of the fmla
+        self.initFmla = provTree_fmla.cnfformula
 
       # -------------------------------------------- #
       # 6. solve CNF formula                         #
       # -------------------------------------------- #
 
-      self.currSolnAttempt = 1                           # reset soln bound b/c using new fmla
-      triggerFault         = self.solveCNF( finalFmla )  # grab a soln to the prov tree
-      return_array[2]      = triggerFault                # update trigger fault part of returns
-      return_array[3]      = self.solver.noNewSolns      # update soln status in returns
+      triggerFault    = self.solveCNF()  # grab a new soln to the prov tree
+      return_array[2] = triggerFault     # update trigger fault part of returns
 
-      return return_array # of the form [ conclusion/None, provTree_fmla/None, solutions/None ]
+      return return_array # of the form [ conclusion/None, triggerFault/None ]
 
 
   ########################
@@ -415,36 +414,30 @@ class LDFICore :
   ###############
   # input a cnf formula instance
   # output a list of fault hypotheses to try during the next LDFI iteration
-  def solveCNF( self, finalFmla ) :
- 
-    self.solver.setFmla( finalFmla ) 
+  def solveCNF( self ) :
 
-    # --------------------------------------------------- #
+    # --------------------------------------------------------------- #
+    # only solve over the fmla corresponding to the initial good run
+    if self.fault_id == 1 : 
+      self.solver.setFmla( self.initFmla ) 
+
+    # --------------------------------------------------------------- #
     # pick one new trigger fault
+    # increment of currSolnAttempt handled in Solver_PYCOSAT
 
-    triggerFault = self.solver.oneNewTriggerFault( )
+    customFault = tools.getConfig( "CORE", "CUSTOM_FAULT", list )
+    if customFault and not self.stopAtIt :
+      triggerFault     = customFault
+      self.stopAtIt    = self.fault_id + 1
+      self.customFault = customFault
+    else :
+      triggerFault = self.solver.oneNewTriggerFault( )
 
-    # --------------------------------------------------- #
+    # --------------------------------------------------------------- #
   
     return triggerFault
 
 
-  #######################
-  #  REMOVE DUPLICATES  #
-  #######################
-  # given a list of strings
-  # output list of unique strings
-  def removeDuplicates( self, solnList ) :
-   
-    uniqueList = []
-    for s in solnList :
-      if s : # skip empties
-        if not s in uniqueList :
-          uniqueList.append( s )
-  
-    return uniqueList
-  
-  
   ##########################
   #  GET NEW DATALOG PROG  #
   ##########################
@@ -459,25 +452,6 @@ class LDFICore :
     else :
       tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : attempted to build a new datalog program, but no fault hypotheses exist." )
 
-
-  ####################
-  #  REMOVE CRASHES  #
-  ####################
-  # input a soln consisting only of clock facts.
-  # outputs a list of containing solutions such that each solution contains 
-  # the original set of clock facts, minus the clock facts indicating crash failures( e.g. clock('a','_',1,_) )
-  def removeCrashes( self, soln ) :
-    
-    cleanSoln = []
-    for clockFact in soln :
-      content = newProgGenerationTools.getContents( clockFact )
-      content = content.split( "," )
-      if content[1] == "_" : # sender is the same as the receiver
-        pass
-      else :
-        cleanSoln.append( clockFact )
-
-    return cleanSoln
 
 #########
 #  EOF  #

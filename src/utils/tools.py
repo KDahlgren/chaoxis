@@ -35,25 +35,61 @@ def bp( filename, funcname, msg ) :
 ################
 def getConfig( section, option, dataType ) :
 
+  # ---------------------------------------------- #
   # create config parser instance
   configs = ConfigParser.ConfigParser( )
 
+  # ---------------------------------------------- #
   # read defaults first
-  defaultsPath = os.path.abspath( __file__ + "/.." ) + "/defaults.ini" # assume stored in src/utils/
-  configs.read( defaultsPath )
+  defaults_path = os.path.abspath( __file__ + "/.." ) + "/defaults.ini" # assume stored in src/utils/
+  configs.read( defaults_path )
 
+  # ---------------------------------------------- #
   # read user-specified settings, if applicable
-  settingsPath = os.path.abspath( os.getcwd() ) + "settings.ini"
-  if os.path.isfile( settingsPath ) : # check if file exists first.
-    configs.read( settingsPath )
+  settings_path = os.path.abspath( os.getcwd() ) + "/settings.ini"
+  if os.path.isfile( settings_path ) : # check if file exists first.
+    configs.read( settings_path )
 
+  # ---------------------------------------------- #
+  # check if all debugs off
+  debugs = configs.get( "GENERAL", "ALL_DEBUGS_OFF" ) # this is read as a str, not a bool
+  if debugs == "True" :
+    all_debug_off_path = os.path.abspath( __file__ + "/.." ) + "/all_debugs_off.ini" # assume stored in src/utils/
+    configs.read( all_debug_off_path )
+
+  # ---------------------------------------------- #
+  # handle boolean configure types
   if dataType == bool :
-      if configs.get(section, option) == "True"  :
-        return True
-      else :
-        return False
+    if configs.get(section, option) == "True"  :
+      return True
+    else :
+      return False
+
+  # ---------------------------------------------- #
+  # handle list configure types
+  elif dataType == list :
+
+    if section == "CORE" and option == "CUSTOM_FAULT" :
+      if configs.get(section, option) == "None" :
+        return None
+
+    list_str   = configs.get(section, option)
+    list_str   = list_str.translate( None, string.whitespace )  # remove extra spaces and newlines
+    list_str   = list_str[1:]                                   # remove leading open bracket
+    list_str   = list_str[:-1]                                  # remove trailing close bracket
+    list_array = list_str.split( "','" )                        # convert string to array
+    clean_array = []
+    for x in list_array :
+      x = x.replace( "'", "" )                                  # remove straggling apostrophes
+      clean_array.append( x )
+
+    return clean_array
+
+  # ---------------------------------------------- #
+  # otherwise treat as a string
   else :
     return configs.get(section, option)
+
 
 ############
 #  GET ID  #

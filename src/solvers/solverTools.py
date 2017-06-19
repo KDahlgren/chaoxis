@@ -43,7 +43,7 @@ def solveCNF( solverType ) :
 
   # create a PYCOSAT solver instance
   if solverType == solvers[0] :
-    return Solver_PYCOSAT.Solver_PYCOSAT( )
+    return Solver_PYCOSAT.Solver_PYCOSAT( "PYCOSAT" )
 
   # WHAAAAA???
   else :
@@ -92,7 +92,7 @@ def getConjuncts( cnfFormula_str ) :
   if DEBUG :
     print "masterList = " + str( masterList )
 
-  return masterList
+  return masterList # needs to be a list of lists b/c using a map in Solver_PYCOSAT
 
 
 ####################
