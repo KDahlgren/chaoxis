@@ -56,15 +56,32 @@ class LDFICore :
   stopAtIt                = None  # flag for ensuring only one evaluation iteration over custom solutions
   customFault             = None  # a str for maintaining the trigger fault
 
+  currSolnSet             = []    # a list of the current set of solutions to explore. 
+                                  # filters out uninteresting solutions.
+                                  # ordered by solution size.
+
+  no_soln_constraints     = True  # boolean controlling the enforcement of constraints on the types,
+                                  # characteristics, and/or orderings of solutions tested by the LDFICore
+
+  N                       = None  # integer. the size of the solution buffer.
+                                  # the max number of solutions in currSolnSet at any point during the execution.
+
   # --------------------------------- #
 
   #################
   #  CONSTRUCTOR  #
   #################
   def __init__( self, argDict, cursor, solver ) :
-    self.argDict           = argDict
-    self.cursor            = cursor
-    self.solver            = solver
+    self.argDict             = argDict
+    self.cursor              = cursor
+    self.solver              = solver
+    self.no_soln_constraints = tools.getConfig( "GENERAL", "NO_SOLN_CONSTRAINTS", bool )
+    self.N                   = tools.getConfig( "GENERAL", "N", int )
+
+    # cannot run with no solution constraints if user speifies run constraints.
+    if self.no_soln_constraints and self.argDict[ "crashes" ] > -1 :
+      tools.bp( __name__, inspect.stack()[0][3], "ERROR : NO_SOLN_CONSTRAINTS is true, but run specifies a requirement of 0 or more crashes : numCrashes = " + str( self.argDict[ "crashes" ] ) + "\nIf you wish to run with solution constraints (e.g. no crashes, 1 crash, ... ; solutions \nordered by smallest to largest ; etc. ), be sure to set \n'NO_SOLN_CONSTRAINTS = False' under the '[GENERAL]' heading of a settings.ini file in your run directory. \nNO_SOLN_CONSTRAINTS defaults to True for completeness." )
+
 
   ##################
   #  RUN WORKFLOW  #
@@ -180,10 +197,9 @@ class LDFICore :
         # 6. solve CNF formula                         #
         # -------------------------------------------- #
 
-        triggerFault    = self.solveCNF()  # grab another soln to the old fmla
-        return_array[2] = triggerFault     # update trigger fault part of returns
-
-        return return_array # of the form [ conclusion/None, provTree_fmla/None, solutions/None ]
+        triggerFault    = self.getTriggerFault()
+        return_array[2] = triggerFault
+        return return_array # [ conclusion/None, explanation/None, nextTriggerFault/None, noNewSolns/None ]
 
       else :
         print "self.fault_id = " + str( self.fault_id )
@@ -220,10 +236,35 @@ class LDFICore :
       # 6. solve CNF formula                         #
       # -------------------------------------------- #
 
-      triggerFault    = self.solveCNF()  # grab a new soln to the prov tree
-      return_array[2] = triggerFault     # update trigger fault part of returns
+      triggerFault    = self.getTriggerFault()  # grab a new soln to the formula
+      return_array[2] = triggerFault            # update trigger fault part of returns
 
-      return return_array # of the form [ conclusion/None, triggerFault/None ]
+      return return_array # [ conclusion/None, explanation/None, nextTriggerFault/None, noNewSolns/None ]
+
+
+  #######################
+  #  GET TRIGGER FAULT  #
+  #######################
+  # grab one trigger fault to try during the next iteration
+  def getTriggerFault( self ) :
+
+    # no solution constraints: check every satisfying solution of the formula
+    if self.no_soln_constraints :
+      triggerFault = self.solveCNF( 1 )  # grab one new solution as the next trigger fault
+
+    # yes solution constraints: check only interesting satisfying solutions of the formula
+    else :
+      # fill currSolnSet if necessary
+      if self.currSolnSet == [] :
+        if self.N > 1 :
+          self.currSolnSet.extend( self.solveCNF( self.N ) )  # refill the current solution set of constrained trigger faults.
+        else :
+          self.currSolnSet.append( self.solveCNF( self.N ) )  # refill the current solution set of constrained trigger faults.
+
+      # take the 0th element of the currSolnSet as the next trigger fault.
+      triggerFault = self.currSolnSet.pop( 0 )
+
+    return triggerFault
 
 
   ########################
@@ -414,7 +455,8 @@ class LDFICore :
   ###############
   # input a cnf formula instance
   # output a list of fault hypotheses to try during the next LDFI iteration
-  def solveCNF( self ) :
+  # TODO: THIS IS PYCOSAT SPECIFIC!!! FW: GENERALIZE!!!
+  def solveCNF( self, buffersize ) :
 
     # --------------------------------------------------------------- #
     # only solve over the fmla corresponding to the initial good run
@@ -422,20 +464,30 @@ class LDFICore :
       self.solver.setFmla( self.initFmla ) 
 
     # --------------------------------------------------------------- #
-    # pick one new trigger fault
-    # increment of currSolnAttempt handled in Solver_PYCOSAT
+    # get a new set of trigger faults
+    # currSolnAttempt increment handled in Solver_PYCOSAT
 
     customFault = tools.getConfig( "CORE", "CUSTOM_FAULT", list )
+    if not customFault == None and self.N > 1 :
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : specified a custom fault, " + str( customFault ) + ", but also specified a solution set buffer size greater than 1: N = " + str( self.N ) )
+
+    # solve over a custom fault
     if customFault and not self.stopAtIt :
-      triggerFault     = customFault
+      triggerFaultSet  = customFault  # set of one fault
       self.stopAtIt    = self.fault_id + 1
       self.customFault = customFault
+
+    # solve over solution set satisfying the fmla.
+    # customFault is None and N (buffersize) >= 1
     else :
-      triggerFault = self.solver.oneNewTriggerFault( )
+      if buffersize > 1 :
+        triggerFaultSet = self.solver.setOfNewTriggerFaults( buffersize )
+      else :
+        triggerFaultSet = self.solver.oneNewTriggerFault( ) # set of one fault
 
     # --------------------------------------------------------------- #
-  
-    return triggerFault
+
+    return triggerFaultSet
 
 
   ##########################

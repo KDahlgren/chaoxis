@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 
-cmd="time python ../../src/drivers/driver.py -n a,b,c --EOT 4 -f ./simplog.ded --evaluator c4"
+cmd="time python ../../src/drivers/driver.py -c 0 -n a,b,c --EOT 4 -f ./simplog.ded --evaluator c4"
+#cmd="time python ../../src/drivers/driver.py -n a,b,c --EOT 4 -f ./simplog.ded --evaluator c4"
 opt_cmd="cmd"
 
 rm ./IR.db

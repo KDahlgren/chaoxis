@@ -92,8 +92,10 @@ class SATVars_PYCOSAT :
   ################
   #  LOOKUP VAR  #
   ################
-  # given variable, return the integer id
+  # given a variable from a solution, return the integer id
+  # after filtering non-clock facts and uninteresting clock facts to None.
   def lookupVar( self, var ) :
+
     if DEBUG :
       print "var = " + str( var )
 
@@ -127,7 +129,7 @@ class SATVars_PYCOSAT :
             self.var2num[ var ] = currID
       
           self.num2var[ currID ] = var
-          self.counter += 1
+          self.counter          += 1
 
       # --------------------------------------------------- #
       # this is an interesting clock fact
@@ -142,7 +144,7 @@ class SATVars_PYCOSAT :
           self.var2num[ var ] = currID
 
         self.num2var[ currID ] = var
-        self.counter += 1
+        self.counter          += 1
 
       return self.var2num[ var ] # return the list of nums corresponding to vars in the dic
 

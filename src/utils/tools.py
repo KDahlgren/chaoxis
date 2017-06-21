@@ -86,6 +86,12 @@ def getConfig( section, option, dataType ) :
     return clean_array
 
   # ---------------------------------------------- #
+  # handle int configure types
+
+  elif dataType == int :
+    return int( configs.get( section, option ) )
+
+  # ---------------------------------------------- #
   # otherwise treat as a string
   else :
     return configs.get(section, option)

@@ -38,10 +38,13 @@ class Solver_PYCOSAT :
   ################
   fmlaVars        = None
   satformula      = None
+  prevSolnAttempt = 0
   currSolnAttempt = 1
   initFmla        = None  # the formula for the initial good execution.
   numCrashes      = None
-
+  prevLastSoln    = None  # maintain the previous last soln. 
+                          # if current last soln == prev last soln, 
+                          # then no new solutions exist.
 
   #################
   #  CONSTRUCTOR  #
@@ -122,13 +125,31 @@ class Solver_PYCOSAT :
     if DEBUG :
       print "solutions: self.satformula = " + str( self.satformula )
 
-    # grab an initial soln
+    # grab a new soln
     soln = self.getSoln()
 
     # convert soln into a trigger fault
-    triggerFault = self.getTrigger( soln )
+    triggerFault = self.convertToTrigger( soln )
 
     return triggerFault
+
+
+  ###############################
+  #  SET OF NEW TRIGGER FAULTS  #
+  ###############################
+  def setOfNewTriggerFaults( self, buffersize ) :
+
+    # grab a set of new solutions
+    solnSet = self.getSolnSet( buffersize )
+ 
+    tools.bp( __name__, inspect.stack()[0][3], "solnSet = " + str( solnSet ) )
+
+    # convert solutions into trigger faults
+    triggerFaultSet = []
+    for aSoln in solnSet :
+      triggerFaultSet.append( self.convertToTrigger( aSoln ) )
+
+    return triggerFaultSet
 
 
   ##############
@@ -136,7 +157,7 @@ class Solver_PYCOSAT :
   ##############
   def getSoln( self ) :
 
-    # grab all solns up to currSolnAttempt. returns a list. the largest element will be new.
+    # grab all solns up to currSolnAttempt. returns a list of size == currSolnAttempt. the largest element will be new.
     solnList = list( itertools.islice( pycosat.itersolve( self.satformula ), self.currSolnAttempt ) )
     self.currSolnAttempt += 1
 
@@ -146,17 +167,136 @@ class Solver_PYCOSAT :
 
     # grab a new soln from the solver
     aSoln = frozenset( map( self.fmlaVars.lookupNum, solnList[-1]) ) # new solns are added to the end.
-    aSoln = self.getLegibleFmla( aSoln ) 
+    aSoln = self.getLegibleSoln( aSoln ) 
 
     return aSoln
 
 
+  ##################
+  #  GET SOLN SET  #
+  ##################
+  # grab a new set of solutions of size = buffersize
+  def getSolnSet( self, buffersize ) :
+
+    # set currSolnAttempt to buffersize
+    self.currSolnAttempt = buffersize
+
+    # initialize filtered solution set to empty. collect valid solutions in loop.
+    filteredSolnSet = []
+
+    while filteredSolnSet == [] :
+
+      print "========================================================="
+      print "self.prevSolnAttempt = " + str( self.prevSolnAttempt )
+      print "self.currSolnAttempt = " + str( self.currSolnAttempt )
+
+      # grab all solns up to currSolnAttempt. returns a list of size currSolnAttempt. the new soln set is prevSolnAttempt through currSolnAttempt-1
+      fullSolnList          = list( itertools.islice( pycosat.itersolve( self.satformula ), self.currSolnAttempt ) )
+      solnSet               = fullSolnList[ self.prevSolnAttempt : self.currSolnAttempt ]
+      self.prevSolnAttempt  = self.currSolnAttempt
+      self.currSolnAttempt += buffersize
+
+      print "fullSolnList         = " + str( fullSolnList         )
+      print "solnSet              = " + str( solnSet              )
+
+      if DEBUG :
+        print "self.prevSolnAttempt = " + str( self.prevSolnAttempt )
+        print "self.currSolnAttempt = " + str( self.currSolnAttempt )
+        print "solnSet              = " + str( solnSet              )
+
+      # make solutions legible
+      legibleSolnSet = []
+      for aSoln in solnSet :
+        aSoln = frozenset( map( self.fmlaVars.lookupNum, aSoln ) ) # new solns are added to the end.
+        aSoln = self.getLegibleSoln( aSoln )
+        legibleSolnSet.append( aSoln )
+
+      print ">> legible soln set = " + str( legibleSolnSet )
+
+      # apply filters
+      filteredSolnSet = self.applyFilters( legibleSolnSet )
+
+      # pycosat will return the same list if currSolnAttempt exceeds 
+      # maximum number of unique solutions.
+      # break if last element of new soln list is identical to the last
+      # element of the previous soln list.
+      if fullSolnList[-1] == self.prevLastSoln :
+        tools.bp( __name__, inspect.stack()[0][3], "no new solns!" )
+
+      # otherwise, new solutions exist.
+      else :
+        print
+        print fullSolnList[-1]
+        print self.prevLastSoln
+        print
+        self.prevLastSoln = fullSolnList[-1] # reset previous last soln
+
+      #if self.currSolnAttempt / buffersize == 3 :
+      #  tools.bp( __name__, inspect.stack()[0][3], "stop da its!" )
+
+    tools.bp( __name__, inspect.stack()[0][3], "filteredSolnSet = " + str( filteredSolnSet ) )
+    return filteredSolnSet
+
+
+  ###################
+  #  APPLY FILTERS  #
+  ###################
+  def applyFilters( self, legibleSolnSet ) :
+
+    filteredSolnSet = []
+
+    # filter out solutions with invalid number of crashes
+    for soln in legibleSolnSet :
+      if self.validNumCrashes( soln, self.numCrashes ) :
+        filteredSolnSet.append( soln )
+
+    # order solutions from smallest to largest in number of negative literals
+    #
+
+    return filteredSolnSet
+
+
+  #######################
+  #  VALID NUM CRASHES  #
+  #######################
+  # given a solution, count the number of crash failures required by the solution
+  # and check if the number equals the number of crashes specified for the run.
+  def validNumCrashes( self, soln, numCrashes ) :
+
+    n = 0
+    for literal in soln :
+      if "NOT " in literal : # only negative literals specify omission/crash failures
+        literal = literal.replace( "NOT ", "" ) # remove the NOT for convenience
+        clockData = self.getClockFactContents( literal )
+        if clockData[1] == "_" :
+          n += 1
+
+    print "n=" + str(n)
+
+    if n == numCrashes :
+      return True
+    else :
+      return False
+
+
+  #############################
+  #  GET CLOCK FACT CONTENTS  #
+  #############################
+  def getClockFactContents( self, fact ) :
+    # isolate the first and second components of the clock fact
+    tup = fact.split( "([" )
+    tup = tup[-1]
+    tup = tup.replace( "])", "" )
+    tup = tup.split( "," ) # the complete tuple as an array [ src, dest, sndTime, delivTime ]
+    return tup
+
+
   ######################
-  #  GET LEGIBLE FMLA  #
+  #  GET LEGIBLE SOLN  #
   ######################
   # given messy raw solution
   # output legible version
-  def getLegibleFmla( self, aSoln ) :
+  def getLegibleSoln( self, aSoln ) :
 
     fmlaStr = []  # stores the legible version of the soln.
 
@@ -167,12 +307,12 @@ class Solver_PYCOSAT :
     return fmlaStr
 
 
-  #################
-  #  GET TRIGGER  #
-  #################
+  ########################
+  #  CONVERT TO TRIGGER  #
+  ########################
   # positive clock facts imply the execution was good because the facts DID NOT happen.
   # handling these is future work.
-  def getTrigger( self, soln ) :
+  def convertToTrigger( self, soln ) :
 
     if DEBUG :
       print "IN GETTRIGGER()"

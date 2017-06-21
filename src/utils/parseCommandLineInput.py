@@ -21,7 +21,7 @@ def parseCommandLineInput( ) :
   parser.add_argument("-ff", "--EFF", type=int, help="end of finite failures (default 2)", default = 2)
   parser.add_argument("-f", "--file", help="input dedalus file (1 minimum required)", required=True) 
   parser.add_argument("-s", "--settings", help="input the complete path to a settings file\n(default = " + os.getcwd()+"/settings.txt" + ")", default=os.getcwd()+"/settings.txt" ) 
-  parser.add_argument("-c", "--crashes", type=int, help="number of crash failures (default 0)", default = 0)
+  parser.add_argument("-c", "--crashes", type=int, help="number of crash failures (default 0)", default = -1)
   parser.add_argument("-n", "--nodes", type=str, help="a comma-separated set of nodes indicating an all-to-all topology (optionally specify topology facts in input file(s))")
   parser.add_argument("--solver", type=str,  choices=['z3', 'sat4j', 'ilp'], help="the solver to use")
   parser.add_argument("--evaluator", type=str,  choices=['c4', 'pyDatalog'], help="the evaluator to use", default = "pyDatalog")
