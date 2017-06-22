@@ -9,9 +9,9 @@
 import inspect, os, sys, time
 import pydot
 
+# ------------------------------------------------------ #
 # import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/.." )
-sys.path.append( packagePath )
+sys.path.append( os.path.abspath( __file__ + "/.." ) )
 
 import DerivTree, GoalNode, RuleNode, FactNode, provTools
 
@@ -71,9 +71,11 @@ class ProvTree( ) :
   #  GENERATE PROV TREE  #
   ########################
   # populates self.subtrees
+  # DerivTree Constructor Fields : ( name, rid, treeType, isNeg, provAttMap, record, results, cursor )
   def generateProvTree( self, name, seedRecord ) :
-    return DerivTree.DerivTree( name, None, "goal", False, None, seedRecord, self.parsedResults, self.cursor )
- 
+    newSubTree = DerivTree.DerivTree( name, None, "goal", False, None, seedRecord, self.parsedResults, self.cursor )
+    self.subtrees.append( newSubTree )
+
 
   #################
   #  MERGE TREES  #
@@ -131,7 +133,6 @@ class ProvTree( ) :
       nodes.extend( topology[0] )
       edges.extend( topology[1] )
 
-  
     if DEBUG :
       print "... in createGraph :" 
       print "nodes : " + str(len(nodes))

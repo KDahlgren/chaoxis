@@ -260,6 +260,13 @@ class C4Wrapper( object ) :
     #fullprog = self.getInputProg_group_clocks_only( allProgramLines )
     #fullprog = allProgramLines # no grouping, every code line installed separately.
 
+    # ----------------------------------------- #
+    # KD : bcsat debugging session 6/21/17
+    print "PRINTING PROG"
+    for x in fullprog :
+      print x
+    # ----------------------------------------- #
+
     # initialize c4 instance
     self.lib.c4_initialize()
     self.c4_obj = self.lib.c4_make( None, 0 )

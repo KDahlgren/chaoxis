@@ -16,9 +16,7 @@ import inspect, os, sqlite3, sys, time
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-
-packagePath  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath )
+sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
 from dedt           import dedt, dedalusParser
 from derivation     import ProvTree
@@ -232,6 +230,8 @@ class LDFICore :
         # grab the textual version of the fmla
         self.initFmla = provTree_fmla.cnfformula
 
+      tools.bp( __name__, inspect.stack()[0][3], "break here." )
+
       # -------------------------------------------- #
       # 6. solve CNF formula                         #
       # -------------------------------------------- #
@@ -394,29 +394,34 @@ class LDFICore :
     else :
       sys.exit( "ERROR: No access to evaluation results.\nAborting..." ) # sanity check
   
-    # ------------------------------------------------------------- #
+    # ------------------------------------------------------------------------------ #
     # there exist results and eot post records.
     if DEBUG :
       print "\n~~~~ BUILDING PROV TREE ~~~~"
   
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+    # ------------------------------------------------------------------------------ #
     # initialize provenance tree structure
     provTreeComplete = ProvTree.ProvTree( "FinalState", parsedResults, irCursor )
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+    # ------------------------------------------------------------------------------ #
     # populate prov tree
     for seedRecord in postrecords_eot :
       if DEBUG :
         print " ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
         print "           NEW POST RECORD "
         print "seedRecord = " + str( seedRecord )
-      newProvTree = provTreeComplete.generateProvTree( "post", seedRecord )
-      provTreeComplete.subtrees.append( newProvTree )
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-  
+      provTreeComplete.generateProvTree( "post", seedRecord )
+    # ------------------------------------------------------------------------------ #
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+    # KD : bcast node debugging session 6/21/17
+    #provTreeComplete.createGraph( None, iter_count )
+    #tools.bp( __name__, inspect.stack()[0][3], "built prov tree and created graph." )
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+ 
     if OUTPUT_PROV_TREES_ON :
       provTreeComplete.createGraph( None, iter_count )
-    # ------------------------------------------------------------- #
+    # ------------------------------------------------------------------------------ #
 
     return provTreeComplete
   

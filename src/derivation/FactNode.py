@@ -41,8 +41,8 @@ class FactNode( Node ) :
 
     # check to make sure the record exists as a fact
     if not self.verifyTriggerRecord() :
-      print ">>> WARNING! triggerRecord " + str( record ) + " does not exist in the results: " + str( results ) + "\nCreating FactNode anyway..."
-    #  tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : self.triggerRecord = " + str(self.triggerRecord) + " is not a fact in the '" + str(self.name) + "' table results:\n" + str(self.results[self.name]) )
+      #print ">>> WARNING! triggerRecord " + str( record ) + " does not exist in the results: " + str( results ) + "\nCreating FactNode anyway..."
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : self.triggerRecord = " + str(self.triggerRecord) + " is not a fact in the '" + str(self.name) + "' table results:\n" + str(self.results[self.name]) )
 
 
   #############

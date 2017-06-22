@@ -10,8 +10,7 @@ import ConfigParser, inspect, os, random, re, string, sys, numbers
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath )
+sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
 import dumpers
 # ------------------------------------------------------ #
@@ -28,6 +27,7 @@ TOOLS_DEBUG = False
 #  BREAKPOINT (bp)  #
 #####################
 def bp( filename, funcname, msg ) :
+  os.system( "rm IR.db" )
   sys.exit( "BREAKPOINT in file " + filename + " at function " + funcname + " :\n>>> " + msg )
 
 ################
@@ -406,7 +406,6 @@ def attSearchPass2( pydatalogRule ) :
 #############
 # check if a particular string corresponds to the name of a fact table.
 def isFact( goalName, cursor ) :
-    attIDsName = None
     cursor.execute( "SELECT attID,attName FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(goalName) + "'" )
     attIDsNames = cursor.fetchall()
     attIDsNames = toAscii_multiList( attIDsNames )
@@ -420,6 +419,110 @@ def isFact( goalName, cursor ) :
       return True
     else :
       return False
+
+########################
+#  CLEAN FACT RECORDS  #
+########################
+def cleanFactRecords( factRecords_raw ) :
+
+  pastIDs     = []
+  factRecords = []  # list of lists of strings
+  currRecord  = []  # list of strings
+
+  for i in range(0, len(factRecords_raw)) :
+    currRecord  = []
+    currAtt     = factRecords_raw[i]
+    currfid     = currAtt[0]
+    currAttID   = currAtt[1]
+    currAttName = currAtt[2]
+    currTimeArg = currAtt[3]
+
+    currAttName = currAttName.replace( "'", "" )
+    currAttName = currAttName.replace( '"', '' )
+
+    if not currfid in pastIDs :
+      currRecord.append( currAttName )
+
+      for j in range( i+1, len( factRecords_raw ) ) :
+        nextAtt     = factRecords_raw[j]
+        nextfid     = nextAtt[0]
+        nextAttID   = nextAtt[1]
+        nextAttName = nextAtt[2]
+        nextTimeArg = nextAtt[3]
+
+        nextAttName = nextAttName.replace( "'", "" )
+        nextAttName = nextAttName.replace( '"', '' )
+
+        if currfid == nextfid :
+          currRecord.append( nextAttName )
+        else :
+          currRecord.append( currTimeArg )
+          factRecords.append( currRecord )
+          break
+
+    pastIDs.append( currfid )
+
+  return factRecords
+
+
+##################
+#  IS FACT NODE  #
+##################
+# check if the node should be a fact node
+def isFactNode( goalName, triggerRecordList, cursor ) :
+
+  cursor.execute( "SELECT Fact.fid,attID,attName,timeArg FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(goalName) + "'" )
+  factRecords_raw = cursor.fetchall()
+  factRecords_raw = toAscii_multiList( factRecords_raw )
+
+  print "factRecords_raw :"
+  for r in factRecords_raw :
+    print r
+
+  factRecords = cleanFactRecords( factRecords_raw )
+
+  print
+  print "factRecords :"
+  for r in factRecords :
+    print r
+
+  # has to be a fact
+  if goalName == "clock" :
+    return True
+
+  elif isFact( goalName, cursor ) :
+
+    print "goalName = " + str( goalName )
+    print "triggerRecordList = " + str( triggerRecordList )
+
+    if triggerRecordList == [] :
+      return True
+
+    if type( triggerRecordList[0][1] ) is list :
+      flag = True
+      for trig in triggerRecordList :
+        print "trig = " + str( trig )
+        trigRecList = trig[2]
+        print "trigRecList = " + str( trigRecList )
+        for trigRec in trigRecList :
+          if not trigRec in factRecords :
+            return False
+
+      if flag :
+        return True
+      else :
+        return False
+
+    else :
+      for rec in triggerRecordList :
+        if not rec in factRecords :
+          print "RETURNING FALSE"
+          return False
+      print "RETURNING TRUE"
+      return True # otherwise
+
+  else :
+    return False
 
 
 ######################

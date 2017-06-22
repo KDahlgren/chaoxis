@@ -75,6 +75,13 @@ class GoalNode( Node ) :
       # rule relation.
       triggerRecordList = self.getAllTriggerRecords( pgattMaps )
 
+      # -------------------------------------------------- #
+      # KD : bcast debugging session 6/21/17
+      if self.name == "bcast" :
+        print self.__str__() + " : pgattMaps         = " + str( pgattMaps )
+        print self.__str__() + " : triggerRecordList = " + str( triggerRecordList )
+      # -------------------------------------------------- #
+
     # ***************************************************************** #
     # ***************************************************************** #
 
@@ -91,6 +98,13 @@ class GoalNode( Node ) :
     else :
       self.setDescendants( triggerRecordList )
 
+      # -------------------------------------------------- #
+      # KD : bcast debugging session 6/21/17
+      if self.name == "bcast" :
+        print self.__str__() + " : self.descendants  = " + str( self.descendants )
+        #tools.bp( __name__, inspect.stack()[0][3], "hit a bcast" )
+      # -------------------------------------------------- #
+
 
   #############
   #  __STR__  #
@@ -102,19 +116,6 @@ class GoalNode( Node ) :
       return negStr + " " + self.name + "(" + str(self.record) + ")"
     else :
       return self.name + "(" + str(self.record) + ")"
-
-
-  #############
-  #  DISPLAY  #
-  #############
-  # the string representation of a GoalNode
-  def display( self ) :
-    if self.isNeg :
-      negStr = "_NOT_ "
-      myStr =  negStr + "," + self.name + "(" + str(self.record) + ")"
-    else :
-      myStr = self.name + "(" + str(self.record) + ")"
-    return str( myStr )
 
 
   ###################
@@ -480,10 +481,13 @@ class GoalNode( Node ) :
   # and when multiple firing records exist for the particular.
   def setDescendants( self, triggerRecordList ) :
 
+    if self.name == "node" :
+      print ">>>> " + self.__str__() + " : " +  str( triggerRecordList )
+
     # ==================================================== #
     # ==================================================== #
-    #   CASE goal is a fact
-    if tools.isFact( self.name, self.cursor ) :
+    #   CASE goal is a fact node
+    if tools.isFactNode( self.name, triggerRecordList, self.cursor ) :
 
       # ************************************************* #
       #                HANDLE CLOCK FACTS                 #
@@ -504,7 +508,17 @@ class GoalNode( Node ) :
         # get complete list of trigger records
         trigList = []
         for trigRec in triggerRecordList :
-          trigList.extend( trigRec[2] )
+          provID     = trigRec[0]
+          provAttMap = trigRec[1]
+          recList    = trigRec[2]
+
+          # for empty record lists, use node record.
+          if recList == [] :
+            trigList.extend( [ self.record ] )
+
+          # otherwise, spawn fact nodes to all records
+          else :
+            trigList.extend( trigRec[2] )
 
         #tools.bp( __name__, inspect.stack()[0][3], "trigList = " + str(trigList) )
 
@@ -515,10 +529,19 @@ class GoalNode( Node ) :
     # ==================================================== #
     #   CASE goal is a rule
     else :
+
       for trigRec in triggerRecordList :
         provID     = trigRec[0]
         provAttMap = trigRec[1]
         recList    = trigRec[2]
+
+        # --------------------------------------- #
+        # KD : bcast debugging session 6/21/17
+        print "trigRec    = " + str( trigRec )
+        print "provID     = " + str( provID )
+        print "provAttMap = " + str( provAttMap )
+        print "recList    = " + str( recList )
+        # --------------------------------------- #
 
         # spawn a rule for each valid record
         for rec in recList :

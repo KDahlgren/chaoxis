@@ -42,6 +42,7 @@ class DerivTree( ) :
   provAttMap     = None
   idPair         = None
 
+
   ####################
   #  IS FINAL STATE  #
   ####################
@@ -84,7 +85,27 @@ class DerivTree( ) :
       print " self.isNeg    = " + str( self.isNeg )
       print "=================================="
 
+    # -------------------------------------------------- #
+    # KD : bcast debugging session 6/21/17
+    if self.name == "bcast" :
+      print "************************************** "
+      print "self.name     = " + self.name
+      print "self.treeType = " + self.treeType
+      print "record        = " + str( record )
+
+    # -------------------------------------------------- #
+
     self.generateDerivTree( record )
+
+    # -------------------------------------------------- #
+    # KD : bcast debugging session 6/21/17
+    if self.name == "bcast" :
+      print "self.root     = " + str( self.root )
+      print "self.root.descendants :"
+      #print self.root.descendants
+      print "************************************** "
+    # -------------------------------------------------- #
+
 
   # ------------------------------------------ #
   #########################

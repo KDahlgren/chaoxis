@@ -278,7 +278,9 @@ def toCNF_sympy( sympy_info ) :
   for symbol_str in symbol_str_list :
     exec( symbol_str )
 
-  # NOT the formula because LDFI is interested in the set of variable 
+  #tools.bp( __name__, inspect.stack()[0][3], "sympy_fmla = " + str(sympy_fmla) )
+
+  # NOT the CNF formula because LDFI is interested in the set of variable 
   #   assignments which render the original formula false.
   #   Therefore, need solutions for making !origfmla _true_.
   sympy_fmla = "~(" + sympy_fmla + ")"
