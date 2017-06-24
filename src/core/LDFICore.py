@@ -230,7 +230,7 @@ class LDFICore :
         # grab the textual version of the fmla
         self.initFmla = provTree_fmla.cnfformula
 
-      tools.bp( __name__, inspect.stack()[0][3], "break here." )
+      #tools.bp( __name__, inspect.stack()[0][3], "break here." )
 
       # -------------------------------------------- #
       # 6. solve CNF formula                         #
