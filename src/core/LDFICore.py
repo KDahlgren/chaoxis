@@ -47,7 +47,9 @@ class LDFICore :
   cursor                  = None  # a reference to the IR database
   allProgramData_noClocks = []    # [ allProgramLines (minus clocks), tableListArray ]
   fault_id                = 1     # id of the current fault to inject. start at 1 for pycosat.
-  solver                  = None
+  solver                  = None  # an instance of the chosen solver
+  crashFacts              = None  # the list of crash facts involved in a solution
+  numCrashes              = 0     # number of crashes allowable in solutions for this execution
 
   initFmla                = None  # the formula obtained from the initial good execution
 
@@ -75,9 +77,10 @@ class LDFICore :
     self.solver              = solver
     self.no_soln_constraints = tools.getConfig( "GENERAL", "NO_SOLN_CONSTRAINTS", bool )
     self.N                   = tools.getConfig( "GENERAL", "N", int )
+    self.numCrashes          = self.argDict[ "crashes" ]
 
     # cannot run with no solution constraints if user speifies run constraints.
-    if self.no_soln_constraints and self.argDict[ "crashes" ] > -1 :
+    if self.no_soln_constraints and self.numCrashes > -1 :
       tools.bp( __name__, inspect.stack()[0][3], "ERROR : NO_SOLN_CONSTRAINTS is true, but run specifies a requirement of 0 or more crashes : numCrashes = " + str( self.argDict[ "crashes" ] ) + "\nIf you wish to run with solution constraints (e.g. no crashes, 1 crash, ... ; solutions \nordered by smallest to largest ; etc. ), be sure to set \n'NO_SOLN_CONSTRAINTS = False' under the '[GENERAL]' heading of a settings.ini file in your run directory. \nNO_SOLN_CONSTRAINTS defaults to True for completeness." )
 
 
@@ -228,18 +231,48 @@ class LDFICore :
         provTree_fmla = self.tree_to_CNF( provTreeComplete )
 
         # grab the textual version of the fmla
-        self.initFmla = provTree_fmla.cnfformula
-
-      #tools.bp( __name__, inspect.stack()[0][3], "break here." )
+        #self.initFmla = provTree_fmla.cnfformula              # not simplified
+        self.initFmla   = provTree_fmla.cnfformula_simplified  # simplified
+        self.crashFacts = provTree_fmla.crashFacts
 
       # -------------------------------------------- #
       # 6. solve CNF formula                         #
       # -------------------------------------------- #
 
-      triggerFault    = self.getTriggerFault()  # grab a new soln to the formula
-      return_array[2] = triggerFault            # update trigger fault part of returns
+      triggerFault     = self.getTriggerFault()          # grab a new soln to the formula
+      fullTriggerFault = self.setCrashes( triggerFault ) # only check faults with specified numbers of crashes
+      return_array[2]  = triggerFault                    # update trigger fault part of returns
+
+      tools.bp( __name__, inspect.stack()[0][3], "return_array[2] = " + str( return_array[2] ) + "\ncrashFacts = " + str( self.crashFacts ) )
 
       return return_array # [ conclusion/None, explanation/None, nextTriggerFault/None, noNewSolns/None ]
+
+
+  #################
+  #  SET CRASHES  #
+  #################
+  def setCrashes( self, triggerFault ) :
+
+    # if no crashes, only test omission faults.
+    if self.numCrashes < 1 :
+      return triggerFault
+
+    # else, test solutions with only specified number of crashes
+    else :
+      allPermsOfCrashes = self.all_perms( self.crashFacts )
+
+      tools.bp( __name__, inspect.stack()[0][3], "allPermsOfCrashes = " + str( allPermsOfCrashes ) )
+
+
+  #  ALL PERMS  #
+  def all_perms(elements):
+    if len(elements) <=1:
+      yield elements
+    else:
+      for perm in all_perms(elements[1:]):
+        for i in range(len(elements)):
+          # nb elements[0:1] works in both string and list contexts
+          yield perm[:i] + elements[0:1] + perm[i:]
 
 
   #######################
@@ -256,10 +289,21 @@ class LDFICore :
     else :
       # fill currSolnSet if necessary
       if self.currSolnSet == [] :
+
+        # CASE : buffer size bigger than 1
         if self.N > 1 :
-          self.currSolnSet.extend( self.solveCNF( self.N ) )  # refill the current solution set of constrained trigger faults.
+          # grab the solution set data
+          triggerFault_data  = self.solveCNF( self.N )
+          triggerFaultSet    = triggerFault_data[0]
+          triggerFaultStatus = triggerFault_data[1]
+
+          # refill the current solution set of constrained trigger faults.
+          self.currSolnSet.extend( triggerFaultSet )
+
+        # CASE : buffer size equal 1
         else :
-          self.currSolnSet.append( self.solveCNF( self.N ) )  # refill the current solution set of constrained trigger faults.
+          # refill the current solution set of constrained trigger faults.
+          self.currSolnSet.append( self.solveCNF( 1 ) )
 
       # take the 0th element of the currSolnSet as the next trigger fault.
       triggerFault = self.currSolnSet.pop( 0 )
@@ -439,11 +483,17 @@ class LDFICore :
     provTree_fmla = EncodedProvTree_CNF.EncodedProvTree_CNF( provTreeComplete )
   
     if provTree_fmla.rawformula :
-      print ">>> provTree_fmla.rawformula = " + str( provTree_fmla.rawformula )
+      print ">>> provTree_fmla.rawformula = \n" + str( provTree_fmla.rawformula )
       print
-      print ">>> provTree_fmla.rawformula.display() = " + str( provTree_fmla.rawformula.display() )
+      print ">>> provTree_fmla.rawformula_simplified = \n" + str( provTree_fmla.rawformula_simplified )
       print
-      print ">>> provTree_fmla.cnfformula = " + str( provTree_fmla.cnfformula )
+      print ">>> provTree_fmla.rawformula.display() = \n" + str( provTree_fmla.rawformula.display() )
+      print
+      print ">>> provTree_fmla.rawformula_simplified.display() = \n" + str( provTree_fmla.rawformula_simplified.display() )
+      print
+      print ">>> provTree_fmla.cnfformula = \n" + str( provTree_fmla.cnfformula )
+      print
+      print ">>> provTree_fmla.cnfformula_simplified = \n" + str( provTree_fmla.cnfformula_simplified )
       print
 
       if OUTPUT_TREE_CNF_ON :
@@ -486,13 +536,11 @@ class LDFICore :
     # customFault is None and N (buffersize) >= 1
     else :
       if buffersize > 1 :
-        triggerFaultSet = self.solver.setOfNewTriggerFaults( buffersize )
+        triggerFault_data   = self.solver.setOfNewTriggerFaults( buffersize )
+        return triggerFault_data
       else :
         triggerFaultSet = self.solver.oneNewTriggerFault( ) # set of one fault
-
-    # --------------------------------------------------------------- #
-
-    return triggerFaultSet
+        return [ triggerFaultSet, False ]
 
 
   ##########################

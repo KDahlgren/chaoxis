@@ -100,12 +100,12 @@ def getConjuncts( cnfFormula_str ) :
 ####################
 # convert a raw boolean formula to cnf, if possible,
 # using sympy.
-def convertToCNF( rawBooleanFmla_str ) :
+def convertToCNF( rawBooleanFmla_string ) :
 
   cnfFmla = None
 
   # transform booleanFmla into the sympy format
-  sympy_info = format_sympy( rawBooleanFmla_str ) # returns tuple of ( sympy formula string, symbol string )
+  sympy_info = format_sympy( rawBooleanFmla_string ) # returns tuple of ( sympy formula string, symbol string )
 
   # run the transformed fmla through the smypy cnf converter
   res = toCNF_sympy( sympy_info )

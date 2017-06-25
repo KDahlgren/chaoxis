@@ -140,16 +140,18 @@ class Solver_PYCOSAT :
   def setOfNewTriggerFaults( self, buffersize ) :
 
     # grab a set of new solutions
-    solnSet = self.getSolnSet( buffersize )
+    soln_data = self.getSolnSet( buffersize )
+    solnSet = soln_data[0]
+    status  = soln_data[1] # True => more solns exist, False => no more solns exist
  
-    tools.bp( __name__, inspect.stack()[0][3], "solnSet = " + str( solnSet ) )
+    #tools.bp( __name__, inspect.stack()[0][3], "solnSet = " + str( solnSet ) )
 
     # convert solutions into trigger faults
     triggerFaultSet = []
     for aSoln in solnSet :
       triggerFaultSet.append( self.convertToTrigger( aSoln ) )
 
-    return triggerFaultSet
+    return [ triggerFaultSet, status ]
 
 
   ##############
@@ -221,7 +223,8 @@ class Solver_PYCOSAT :
       # break if last element of new soln list is identical to the last
       # element of the previous soln list.
       if fullSolnList[-1] == self.prevLastSoln :
-        tools.bp( __name__, inspect.stack()[0][3], "no new solns!" )
+        #tools.bp( __name__, inspect.stack()[0][3], "no new solns!" )
+        return [ filteredSolnSet, False ]
 
       # otherwise, new solutions exist.
       else :
@@ -234,8 +237,8 @@ class Solver_PYCOSAT :
       #if self.currSolnAttempt / buffersize == 3 :
       #  tools.bp( __name__, inspect.stack()[0][3], "stop da its!" )
 
-    tools.bp( __name__, inspect.stack()[0][3], "filteredSolnSet = " + str( filteredSolnSet ) )
-    return filteredSolnSet
+    #tools.bp( __name__, inspect.stack()[0][3], "filteredSolnSet = " + str( filteredSolnSet ) )
+    return [ filteredSolnSet, True ]
 
 
   ###################

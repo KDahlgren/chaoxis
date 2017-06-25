@@ -12,7 +12,7 @@ EncodedProvTree.py
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect, os, sys
+import inspect, os, string, sys
 
 import AndFormula, OrFormula, Literal, solverTools
 
@@ -34,16 +34,268 @@ class EncodedProvTree_CNF :
   ################
   rawformula = None  # a BooleanFormula, not neccessarily in CNF
   cnfformula = None  # a CNF formula string
-
+  crashFacts = []
 
   #################
   #  CONSTRUCTOR  #
   #################
   def __init__( self, provTree ) :
+
+    # -------------------------------------------------------------------------------- #
+    # build raw formulas directly from rule-goal graphs
     self.rawformula            = self.convertToBoolean( provTree )
     self.rawformula_simplified = self.convertToBoolean_simplified( provTree )
-    self.rawBooleanFmla_str    = self.rawformula.display()
+
+    # -------------------------------------------------------------------------------- #
+    # trees of AndFormulas and OrFormulas
+    self.rawBooleanFmla_str            = self.rawformula.display()
+    self.rawBooleanFmla_simplified_str = self.rawformula_simplified.display()
+
+    # -------------------------------------------------------------------------------- #
+    # convert the raw formulas into cnf
+    # unsimplified version :
     self.cnfformula            = solverTools.convertToCNF( self.rawBooleanFmla_str )
+
+    # simplified version :
+    simp_raw_fmla              = self.simplify( self.rawBooleanFmla_simplified_str )
+    simp_raw_fmla              = self.resolveParens( simp_raw_fmla )
+    self.cnfformula_simplified = solverTools.convertToCNF( simp_raw_fmla )
+
+
+  ##############
+  #  SIMPLIFY  #
+  ##############
+  # simplify string versions of raw boolean formulas generated from prov trees
+  # 1. removes all PLACEHOLDERS for non-clock facts
+  # 2. removes all self comms
+  # 3. removes all crashes and collects the crashes in the crashFact list attribute
+  def simplify( self, fmla ) :
+
+    simplified_fmla = self.purgePlaceholders( fmla )                   # remove PLACEHOLDERs
+    simplified_fmla = self.removeSelfComms( simplified_fmla )          # remove self comms
+    simplified_fmla = self.collectAndRemoveCrashes( simplified_fmla )  # remove crashes
+
+    return simplified_fmla
+
+
+  ####################
+  #  RESOLVE PARENS  #
+  ####################
+  # fmla should contain only inter-node clock comms at this point with poorly resolved sets of parens. 
+  def resolveParens( self, fmla ) :
+
+    # get list of all clock facts
+    clockFactList = self.getClockFactList( fmla )
+
+    # resolve parens per clock fact according to patterns
+    for cf in clockFactList :
+
+      # PATTERN : (cf)
+      if "(" + cf + ")" in fmla :
+        fmla = fmla.replace( "(" + cf + ")", cf )
+        return self.resolveParens( fmla )
+
+      # PATTERN : ( cf)
+      elif "( " + cf + ")" in fmla :
+        fmla = fmla.replace( "( " + cf + ")", cf )
+        return self.resolveParens( fmla )
+
+      # PATTERN : (cf )
+      elif "(" + cf + " )" in fmla :
+        fmla = fmla.replace( "(" + cf + " )", cf )
+        return self.resolveParens( fmla )
+
+      # PATTERN : ( cf )
+      elif "( " + cf + " )" in fmla :
+        fmla = fmla.replace( "( " + cf + " )", cf )
+        return self.resolveParens( fmla )
+
+    # BASE CASE!!!
+    return fmla
+
+
+  ################################
+  #  COLLECT AND REMOVE CRASHES  #
+  ################################
+  def collectAndRemoveCrashes( self, fmla ) :
+
+    # get list of all clock facts
+    clockFactList = self.getClockFactList( fmla )
+
+    # get subset representing crashes
+    for cf in clockFactList :
+      factTuple = self.getContents( cf )
+      if factTuple[1] == "_" :
+        self.crashFacts.append( cf )
+
+    # remove crashes from fmla
+    for cf in self.crashFacts :
+      fmla = fmla.replace( cf, "_PLACEHOLDER_" )
+
+    #tools.bp( __name__, inspect.stack()[0][3], "fmla = " + str( fmla ) )
+    fmla = self.purgePlaceholders( fmla )
+
+    return fmla
+
+
+  #######################
+  #  REMOVE SELF COMMS  #
+  #######################
+  def removeSelfComms( self, fmla ) :
+
+    # get list of all clock facts
+    clockFactList = self.getClockFactList( fmla )
+
+    # get subset representing self comms
+    selfComms = []
+    for cf in clockFactList :
+      factTuple = self.getContents( cf )
+      if factTuple[0] == factTuple[1] :
+        selfComms.append( cf )
+
+    # remove self comms from fmla
+    for sc in selfComms :
+      fmla = fmla.replace( sc, "_PLACEHOLDER_" )
+
+    fmla = self.purgePlaceholders( fmla )
+
+    return fmla
+
+
+  ##################
+  #  GET CONTENTS  #
+  ##################
+  # input clock fact string
+  # extract the data from the clock fact
+  def getContents( self, clockFact ) :
+  
+    openParen   = None
+    closedParen = None
+    for i in range(0,len(clockFact)) :
+      if clockFact[i] == "(" :
+        openParen = i
+      elif clockFact[i] == ")" :
+        closedParen = i
+
+    factContents = clockFact[ openParen+2 : closedParen-1 ]
+    factContents_list = factContents.split( ", " )
+
+    temp = []
+    for f in factContents_list :
+      t = f.replace( "'", "" )
+      temp.append( t )
+    factContentsList = temp
+
+    return factContentsList
+
+
+  #########################
+  #  GET CLOCK FACT LIST  #
+  #########################
+  def getClockFactList( self, fmla ) :
+
+    clockFactList = [] # initialize
+
+    # get starting indexes for clock substrings
+    indexList = []
+    for i in range( 0, len(fmla) ) :
+      currChar = fmla[i]
+      if i < len(fmla) - 8 :
+        if fmla[i:i+8] == "clock(['" :
+          indexList.append( i )
+      else :
+        break
+
+    # retrive full clock facts
+    for ind in indexList :
+      clockFactList.append( fmla[ind:ind+27] )
+
+    if not clockFactList == [] :
+      return clockFactList
+    else :
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no clock facts in fmla = " + str( fmla ) )
+
+
+  ########################
+  #  PURGE PLACEHOLDERS  #
+  ########################
+  # remove all placeholders from raw boolean formulas according to a set of recognized patterns.
+  def purgePlaceholders( self, fmla ) :
+
+    # CASE fmla already passed through simplification steps
+    if "_PLACEHOLDER_" in fmla :
+
+      # ----------------------------------------------------------------------------- #
+      # AND
+      if "( _PLACEHOLDER_ AND _PLACEHOLDER_ )" in fmla :
+        fmla = fmla.replace( "( _PLACEHOLDER_ AND _PLACEHOLDER_ )", "_PLACEHOLDER_" )
+        return self.simplify( fmla )
+
+      elif "( _PLACEHOLDER_ AND clock(" in fmla :
+        splitfmla = fmla.split( "( _PLACEHOLDER_ AND clock(" )
+        fmla      = "( clock(".join( splitfmla )
+        return self.simplify( fmla )
+
+      elif ") AND _PLACEHOLDER_ )" in fmla :
+        fmla = fmla.replace( ") AND _PLACEHOLDER_ )", ") )" )
+        return self.simplify( fmla )
+
+      elif " ( _PLACEHOLDER_ ) AND " in fmla :
+        fmla = fmla.replace( " ( _PLACEHOLDER_ ) AND ", "" )
+        return self.simplify( fmla )
+
+      elif " AND ( _PLACEHOLDER_ ) " in fmla :
+        fmla = fmla.replace( " AND ( _PLACEHOLDER_ ) ", "" )
+        return self.simplify( fmla )
+
+      # ----------------------------------------------------------------------------- #
+      # OR
+      elif "( _PLACEHOLDER_ OR _PLACEHOLDER_ )" in fmla :
+        fmla = fmla.replace( "( _PLACEHOLDER_ OR _PLACEHOLDER_ )", "_PLACEHOLDER_" )
+        return self.simplify( fmla )
+
+      elif "( _PLACEHOLDER_ OR clock(" in fmla :
+        splitfmla = fmla.split( "( _PLACEHOLDER_ OR clock(" )
+        fmla      = "( clock(".join( splitfmla )
+        return self.simplify( fmla )
+
+      elif ") OR _PLACEHOLDER_ )" in fmla :
+        fmla = fmla.replace( ") OR _PLACEHOLDER_ )", ") )" )
+        return self.simplify( fmla )
+
+      elif " ( _PLACEHOLDER_ ) OR " in fmla :
+        fmla = fmla.replace( " ( _PLACEHOLDER_ ) OR ", "" )
+        return self.simplify( fmla )
+
+      elif " OR ( _PLACEHOLDER_ ) " in fmla :
+        fmla = fmla.replace( " OR ( _PLACEHOLDER_ ) ", "" )
+        return self.simplify( fmla )
+
+      # ----------------------------------------------------------------------------- #
+      # UNARY
+      elif "( _PLACEHOLDER_ )" in fmla :
+        fmla = fmla.replace( "( _PLACEHOLDER_ )", "_PLACEHOLDER_" )
+        return self.simplify( fmla )
+
+      elif "(_PLACEHOLDER_ )" in fmla :
+        fmla = fmla.replace( "(_PLACEHOLDER_ )", "_PLACEHOLDER_" )
+        return self.simplify( fmla )
+
+      elif "( _PLACEHOLDER_)" in fmla :
+        fmla = fmla.replace( "( _PLACEHOLDER_)", "_PLACEHOLDER_" )
+        return self.simplify( fmla )
+
+      elif "(_PLACEHOLDER_)" in fmla :
+        fmla = fmla.replace( "(_PLACEHOLDER_)", "_PLACEHOLDER_" )
+        return self.simplify( fmla )
+
+      else :
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unrecognized _PLACEHOLDER_ pattern in fmla = " + str(fmla) )
+
+    # BASE CASE : no placeholders in fmla
+    else :
+      return fmla
+
 
   #############
   #  DISPLAY  #
@@ -184,9 +436,6 @@ class EncodedProvTree_CNF :
   ###################################
   def convertToBoolean_simplified( self, provTree ) :
   
-    #if not provTree.isFinalState() :
-    #  displayTree( provTree )
-  
     fmla = None # initialize
   
     # -------------------------------------------------- #
@@ -222,19 +471,20 @@ class EncodedProvTree_CNF :
     # -------------------------------------------------- #
     # case prov tree rooted at goal
     elif provTree.root.treeType == "goal" :
-  
-      # case goal is negative => change when supporting negative provenance.
+
+      # case goal has no descendants
       if len( provTree.root.descendants ) == 0 :
-        #fmla       = OrFormula.OrFormula()
-        print " > Adding " + str( provTree.root ) + " to fmla unary."
-        #fmla.unary = Literal.Literal( str( provTree.root ) )
-        fmla       = Literal.Literal( str( provTree.root ) )
+        #print " > Adding " + str( provTree.root ) + " to fmla."
+        #fmla = Literal.Literal( str( provTree.root ) )
+        # only add clock facts to fmla, otherwise add placeholders
+        print " > Adding _PLACEHOLDER_ to fmla."
+        fmla = Literal.Literal( "_PLACEHOLDER_" )
   
       # case goal has 1 or more rule descendants only
       elif self.checkDescendantTypes( provTree, "rule" ) :
-        fmla      = OrFormula.OrFormula()          # empty
-        leftRules = provTree.root.descendants[:-1] # of type list
-        rightRule = provTree.root.descendants[-1]  # not a list
+        fmla      = OrFormula.OrFormula()           # empty
+        leftRules = provTree.root.descendants[:-1]  # of type list
+        rightRule = provTree.root.descendants[-1]   # not a list
   
         # branch on left rules contents
         if len( leftRules ) > 1 :
@@ -243,13 +493,13 @@ class EncodedProvTree_CNF :
           fmla.unary  = None
   
         elif len( leftRules ) < 1 :
-          fmla.left  = None
-          fmla.unary = self.convertToBoolean_simplified( rightRule )
+          fmla.left   = None
+          fmla.unary  = self.convertToBoolean_simplified( rightRule )
   
         else : # leftRules contains only one rule
-          fmla.unary = None
-          fmla.left  = self.convertToBoolean_simplified( leftRules[0] )
-          fmla.right = self.convertToBoolean_simplified( rightRule )
+          fmla.unary  = None
+          fmla.left   = self.convertToBoolean_simplified( leftRules[0] )
+          fmla.right  = self.convertToBoolean_simplified( rightRule )
   
       # case goal has one or more fact descendants only
       # goals with more than 1 fact contain wildcards
@@ -257,9 +507,15 @@ class EncodedProvTree_CNF :
       #   because the wildcard fact is true if any of the underlying
       #   facts are true.
       elif self.checkDescendantTypes( provTree, "fact" ) :
-        print " > Adding " + str( provTree.root ) + " to fmla."
-        fmla = Literal.Literal( str( provTree.root ) ) # <--- BASE CASE!!!
-        print " > Added " + str( provTree.root ) + " to fmla."
+        # only add clock facts to formula, otherwise add placeholders
+        if provTree.root.name == "clock" :
+          print " > Adding " + str( provTree.root ) + " to fmla."
+          fmla = Literal.Literal( str( provTree.root ) ) # <--- BASE CASE!!!
+          print " ...done adding " + str( provTree.root ) + " to fmla."
+        else :
+          print " > Adding placeholder to fmla."
+          fmla = Literal.Literal( "_PLACEHOLDER_" ) # <--- BASE CASE!!!
+          print " ...done adding _PLACEHOLDER to fmla."
   
       # case universe implodes
       else :
