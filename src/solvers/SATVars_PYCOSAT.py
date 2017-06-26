@@ -38,55 +38,10 @@ class SATVars_PYCOSAT :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, numCrashes ):
+  def __init__( self ) :
     self.var2num    = {}
     self.num2var    = {}
     self.counter    = 1
-    self.numCrashes = numCrashes
-
-
-  ######################
-  #  NOT A CLOCK FACT  #
-  ######################
-  def notAClockFact( self, var ) :
-    if not "clock__OPENPAR____OPENBRA__" in var :
-      return True
-    else :
-      return False
-
-
-  ##################
-  #  IS SELF COMM  #
-  ##################
-  def isSelfComm( self, var ) :
-    fact = self.getClockVarContents( var )
-    if fact[0] == fact[1] :
-      return True
-    else :
-      return False
-
-
-  ##############
-  #  IS CRASH  #
-  ##############
-  def isCrash( self, var ) :
-    fact = self.getClockVarContents( var )
-    if fact[1] == "_" :
-      return True
-    else :
-      return False
-
-
-  ############################
-  #  GET CLOCK VAR CONTENTS  #
-  ############################
-  def getClockVarContents( self, var ) :
-    # isolate the first and second components of the clock fact
-    fact = var.split( "__OPENPAR____OPENBRA__" )
-    fact = fact[-1]
-    fact = fact.replace( "__CLOSBRA____CLOSPAR__", "" )
-    fact = fact.split( "__COMMA__" ) # the complete tuple as an array [ src, dest, sndTime, delivTime ]
-    return fact
 
 
   ################
@@ -102,49 +57,17 @@ class SATVars_PYCOSAT :
     # check if variable already mapped in var2num
     if not self.var2num.has_key( var ) :
 
-      # --------------------------------------------------- #
-      # filter out non-clock facts
-      # remove non clock facts from fmla
-      if self.notAClockFact( var ) :
-        return None
-
-      # --------------------------------------------------- #
-      # filter out uninteresting clock facts
-      # remove self comms
-      elif self.isSelfComm( var ) :
-        return None
-
-      # filter crashes
-      elif self.numCrashes == 0 :
-        if self.isCrash( var ) :
-          return None
-        else :
-          currID = self.counter
-      
-          # assign the id
-          if "_NOT_" in var : # negate id if it's a negative variable
-            var                 = var.replace( "_NOT_", "" ) # cleaning hack for good aesthetics
-            self.var2num[ var ] = int( -1 ) * currID
-          else :
-            self.var2num[ var ] = currID
-      
-          self.num2var[ currID ] = var
-          self.counter          += 1
-
-      # --------------------------------------------------- #
-      # this is an interesting clock fact
+      currID = self.counter
+  
+      # assign the id
+      if "_NOT_" in var : # negate id if it's a negative variable
+        var                 = var.replace( "_NOT_", "" ) # cleaning hack for good aesthetics
+        self.var2num[ var ] = int( -1 ) * currID
       else :
-        currID = self.counter
+        self.var2num[ var ] = currID
 
-        # assign the id
-        if "_NOT_" in var : # negate id if it's a negative variable
-          var                 = var.replace( "_NOT_", "" ) # cleaning hack for good aesthetics
-          self.var2num[ var ] = int( -1 ) * currID
-        else :
-          self.var2num[ var ] = currID
-
-        self.num2var[ currID ] = var
-        self.counter          += 1
+      self.num2var[ currID ] = var
+      self.counter          += 1
 
       return self.var2num[ var ] # return the list of nums corresponding to vars in the dic
 

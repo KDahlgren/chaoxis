@@ -37,13 +37,13 @@ DEBUG = False
 ###############
 #  SOLVE CNF  #
 ###############
-def solveCNF( solverType, numCrashes ) :
+def solveCNF( solverType ) :
 
   solvers = [ "PYCOSAT" ]
 
   # create a PYCOSAT solver instance
   if solverType == solvers[0] :
-    return Solver_PYCOSAT.Solver_PYCOSAT( "PYCOSAT", numCrashes )
+    return Solver_PYCOSAT.Solver_PYCOSAT( "PYCOSAT" )
 
   # WHAAAAA???
   else :

@@ -62,7 +62,7 @@ class FaultManager :
     self.cursor            = cursor
 
     # create a Solver_PYCOSAT insance
-    solver = solverTools.solveCNF( "PYCOSAT", self.argDict[ "crashes" ] )
+    solver = solverTools.solveCNF( "PYCOSAT" )
 
     # instantiate LDFICore
     self.core = LDFICore.LDFICore( self.argDict, self.cursor, solver )
@@ -85,6 +85,9 @@ class FaultManager :
       # results := [ conclusion/None, noNewSolns/None, triggerFault/None ]
       results = self.core.run_workflow( self.triggerFault )
 
+      # collect old fault for records
+      oldTriggerFault = self.triggerFault
+
       # grab data from run
       # provTree_fmla       is not None iff no conclusion exists.
       # likewise, solution  is not None iff no conclusion exists.
@@ -101,9 +104,19 @@ class FaultManager :
       print "* self.conclusion                    : " + str( self.conclusion    )
       print "* self.explanation                   : " + str( self.explanation   )
       print "* self.noNewSolns                    : " + str( self.noNewSolns    )
-      print "* COMPLETED run_workflow() for fault : " + str( self.triggerFault  )
+      print "* COMPLETED run_workflow() for fault : " + str( oldTriggerFault    )
+      if not self.noNewSolns :
+        print "* NEXT trigger fault                 : " + str( self.triggerFault  )
       print "**************************************************************"
       print
+
+      # CASE : fmla suggested by spec is not satisfiable. therefore, protocol is correct.
+      if oldTriggerFault == None and self.triggerFault == None :
+        print "* Final Conclusion : input is PyLDFI-certified to be correct."
+        print
+        print "**************************************************************"
+        print
+        break
 
       # break infinite execution if no new solutions exist.
       if self.noNewSolns :

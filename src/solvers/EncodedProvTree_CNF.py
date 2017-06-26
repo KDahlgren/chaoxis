@@ -61,6 +61,21 @@ class EncodedProvTree_CNF :
     simp_raw_fmla              = self.resolveParens( simp_raw_fmla )
     self.cnfformula_simplified = solverTools.convertToCNF( simp_raw_fmla )
 
+    # clean crashFacts
+    self.cleanCrashFacts()
+
+
+  #######################
+  #  CLEAN CRASH FACTS  #
+  #######################
+  # clean crash facts for formatting consistency
+  def cleanCrashFacts( self ) :
+    tmp = []
+    for c in self.crashFacts :
+      c = c.translate( None, string.whitespace )  # clean extra whitespace for consistency
+      c = c.replace( "'", "" )                    # clean apostrophes for consistency
+      tmp.append( c )
+    self.crashFacts = tmp
 
   ##############
   #  SIMPLIFY  #
@@ -255,6 +270,7 @@ class EncodedProvTree_CNF :
         return self.simplify( fmla )
 
       elif "( _PLACEHOLDER_ OR clock(" in fmla :
+        tools.bp( __name__, inspect.stack()[0][3], "TODO check this pattern: fmla = " + fmla )
         splitfmla = fmla.split( "( _PLACEHOLDER_ OR clock(" )
         fmla      = "( clock(".join( splitfmla )
         return self.simplify( fmla )

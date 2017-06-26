@@ -41,7 +41,6 @@ class Solver_PYCOSAT :
   prevSolnAttempt = 0
   currSolnAttempt = 1
   initFmla        = None  # the formula for the initial good execution.
-  numCrashes      = None
   prevLastSoln    = None  # maintain the previous last soln. 
                           # if current last soln == prev last soln, 
                           # then no new solutions exist.
@@ -49,8 +48,8 @@ class Solver_PYCOSAT :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, initFmla, numCrashes ) :
-    self.numCrashes = numCrashes
+  def __init__( self, initFmla ) :
+    pass
 
 
   ##############
@@ -60,7 +59,7 @@ class Solver_PYCOSAT :
 
     # set current fmla
     self.initFmla   = cnf_str
-    self.fmlaVars   = SATVars_PYCOSAT.SATVars_PYCOSAT( self.numCrashes )
+    self.fmlaVars   = SATVars_PYCOSAT.SATVars_PYCOSAT( )
     self.satformula = []
 
     if DEBUG :
@@ -140,18 +139,14 @@ class Solver_PYCOSAT :
   def setOfNewTriggerFaults( self, buffersize ) :
 
     # grab a set of new solutions
-    soln_data = self.getSolnSet( buffersize )
-    solnSet = soln_data[0]
-    status  = soln_data[1] # True => more solns exist, False => no more solns exist
+    solnSet = self.getSolnSet( buffersize )
  
-    #tools.bp( __name__, inspect.stack()[0][3], "solnSet = " + str( solnSet ) )
-
     # convert solutions into trigger faults
     triggerFaultSet = []
     for aSoln in solnSet :
       triggerFaultSet.append( self.convertToTrigger( aSoln ) )
 
-    return [ triggerFaultSet, status ]
+    return triggerFaultSet
 
 
   ##############
@@ -183,103 +178,50 @@ class Solver_PYCOSAT :
     # set currSolnAttempt to buffersize
     self.currSolnAttempt = buffersize
 
-    # initialize filtered solution set to empty. collect valid solutions in loop.
-    filteredSolnSet = []
+    print "========================================================="
+    print "self.prevSolnAttempt = " + str( self.prevSolnAttempt )
+    print "self.currSolnAttempt = " + str( self.currSolnAttempt )
 
-    while filteredSolnSet == [] :
+    # grab all solns up to currSolnAttempt. returns a list of size currSolnAttempt. the new soln set is prevSolnAttempt through currSolnAttempt-1
+    fullSolnList          = list( itertools.islice( pycosat.itersolve( self.satformula ), self.currSolnAttempt ) )
+    solnSet               = fullSolnList[ self.prevSolnAttempt : self.currSolnAttempt ]
+    self.prevSolnAttempt  = self.currSolnAttempt
+    self.currSolnAttempt += buffersize
 
-      print "========================================================="
+    print "fullSolnList         = " + str( fullSolnList         )
+    print "solnSet              = " + str( solnSet              )
+
+    if DEBUG :
       print "self.prevSolnAttempt = " + str( self.prevSolnAttempt )
       print "self.currSolnAttempt = " + str( self.currSolnAttempt )
-
-      # grab all solns up to currSolnAttempt. returns a list of size currSolnAttempt. the new soln set is prevSolnAttempt through currSolnAttempt-1
-      fullSolnList          = list( itertools.islice( pycosat.itersolve( self.satformula ), self.currSolnAttempt ) )
-      solnSet               = fullSolnList[ self.prevSolnAttempt : self.currSolnAttempt ]
-      self.prevSolnAttempt  = self.currSolnAttempt
-      self.currSolnAttempt += buffersize
-
-      print "fullSolnList         = " + str( fullSolnList         )
       print "solnSet              = " + str( solnSet              )
 
-      if DEBUG :
-        print "self.prevSolnAttempt = " + str( self.prevSolnAttempt )
-        print "self.currSolnAttempt = " + str( self.currSolnAttempt )
-        print "solnSet              = " + str( solnSet              )
+    # make solutions legible
+    legibleSolnSet = []
+    for aSoln in solnSet :
+      aSoln = frozenset( map( self.fmlaVars.lookupNum, aSoln ) ) # new solns are added to the end.
+      aSoln = self.getLegibleSoln( aSoln )
+      legibleSolnSet.append( aSoln )
 
-      # make solutions legible
-      legibleSolnSet = []
-      for aSoln in solnSet :
-        aSoln = frozenset( map( self.fmlaVars.lookupNum, aSoln ) ) # new solns are added to the end.
-        aSoln = self.getLegibleSoln( aSoln )
-        legibleSolnSet.append( aSoln )
+    print ">> legible soln set = " + str( legibleSolnSet )
 
-      print ">> legible soln set = " + str( legibleSolnSet )
+    # pycosat will return the same list if currSolnAttempt exceeds 
+    # maximum number of unique solutions.
+    # break if last element of new soln list is identical to the last
+    # element of the previous soln list.
+    if fullSolnList[-1] == self.prevLastSoln :
+      #tools.bp( __name__, inspect.stack()[0][3], "no new solns!" )
+      return []
 
-      # apply filters
-      filteredSolnSet = self.applyFilters( legibleSolnSet )
-
-      # pycosat will return the same list if currSolnAttempt exceeds 
-      # maximum number of unique solutions.
-      # break if last element of new soln list is identical to the last
-      # element of the previous soln list.
-      if fullSolnList[-1] == self.prevLastSoln :
-        #tools.bp( __name__, inspect.stack()[0][3], "no new solns!" )
-        return [ filteredSolnSet, False ]
-
-      # otherwise, new solutions exist.
-      else :
-        print
-        print fullSolnList[-1]
-        print self.prevLastSoln
-        print
-        self.prevLastSoln = fullSolnList[-1] # reset previous last soln
-
-      #if self.currSolnAttempt / buffersize == 3 :
-      #  tools.bp( __name__, inspect.stack()[0][3], "stop da its!" )
-
-    #tools.bp( __name__, inspect.stack()[0][3], "filteredSolnSet = " + str( filteredSolnSet ) )
-    return [ filteredSolnSet, True ]
-
-
-  ###################
-  #  APPLY FILTERS  #
-  ###################
-  def applyFilters( self, legibleSolnSet ) :
-
-    filteredSolnSet = []
-
-    # filter out solutions with invalid number of crashes
-    for soln in legibleSolnSet :
-      if self.validNumCrashes( soln, self.numCrashes ) :
-        filteredSolnSet.append( soln )
-
-    # order solutions from smallest to largest in number of negative literals
-    #
-
-    return filteredSolnSet
-
-
-  #######################
-  #  VALID NUM CRASHES  #
-  #######################
-  # given a solution, count the number of crash failures required by the solution
-  # and check if the number equals the number of crashes specified for the run.
-  def validNumCrashes( self, soln, numCrashes ) :
-
-    n = 0
-    for literal in soln :
-      if "NOT " in literal : # only negative literals specify omission/crash failures
-        literal = literal.replace( "NOT ", "" ) # remove the NOT for convenience
-        clockData = self.getClockFactContents( literal )
-        if clockData[1] == "_" :
-          n += 1
-
-    print "n=" + str(n)
-
-    if n == numCrashes :
-      return True
+    # otherwise, new solutions exist.
     else :
-      return False
+      print
+      print fullSolnList[-1]
+      print self.prevLastSoln
+      print
+      self.prevLastSoln = fullSolnList[-1] # reset previous last soln
+
+      return legibleSolnSet
 
 
   #############################
