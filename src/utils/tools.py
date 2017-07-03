@@ -45,17 +45,17 @@ def getConfig( section, option, dataType ) :
   configs.read( defaults_path )
 
   # ---------------------------------------------- #
-  # read user-specified settings, if applicable
-  settings_path = os.path.abspath( os.getcwd() ) + "/settings.ini"
-  if os.path.isfile( settings_path ) : # check if file exists first.
-    configs.read( settings_path )
-
-  # ---------------------------------------------- #
   # check if all debugs off
   debugs = configs.get( "GENERAL", "ALL_DEBUGS_OFF" ) # this is read as a str, not a bool
   if debugs == "True" :
     all_debug_off_path = os.path.abspath( __file__ + "/.." ) + "/all_debugs_off.ini" # assume stored in src/utils/
     configs.read( all_debug_off_path )
+
+  # ---------------------------------------------- #
+  # read user-specified settings, if applicable
+  settings_path = os.path.abspath( os.getcwd() ) + "/settings.ini"
+  if os.path.isfile( settings_path ) : # check if file exists first.
+    configs.read( settings_path )
 
   # ---------------------------------------------- #
   # handle boolean configure types
@@ -554,7 +554,7 @@ def checkDataTypes( rid, cursor ) :
         if op in eqn :
           varList = eqn.split( op )
       if varList :
-        print "varList = " + str(varList)
+        #print "varList = " + str(varList)
         # for each variable, get the types.
         typeList = []
         for var in varList :

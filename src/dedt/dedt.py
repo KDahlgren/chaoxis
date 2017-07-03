@@ -9,16 +9,15 @@ dedt.py
 '''
 IR SCHEMA:
 
-Fact           (fid text, name text, timeArg text)
-FactAtt        (fid text, attID int, attName text, attType text)
-Rule           (rid text, goalName text, goalTimeArg text, rewritten text)
-GoalAtt        (rid text, attID int, attName text, attType text)
-Subgoals       (rid text, sid text, subgoalName text, subgoalTimeArg text)
-SubgoalAtt     (rid text, sid text, attID int, attName text, attType text)
-SubgoalAddArgs (rid text, sid text, argName text)
-Equation       (rid text, eid text, eqn text)
-Clock          (src text, dest text, sndTime int, delivTime int, simInclude text)
-Crash          (src text, dest text, sndTime int, delivTime int, simInclude text)
+Fact           ( fid text, name text,     timeArg text                                           )
+FactAtt        ( fid text, attID int,     attName text,     attType text                         )
+Rule           ( rid text, goalName text, goalTimeArg text, rewritten text                       )
+GoalAtt        ( rid text, attID int,     attName text,     attType text                         )
+Subgoals       ( rid text, sid text,      subgoalName text, subgoalTimeArg text                  )
+SubgoalAtt     ( rid text, sid text,      attID int,        attName text,        attType text    )
+SubgoalAddArgs ( rid text, sid text,      argName text                                           )
+Equation       ( rid text, eid text,      eqn text                                               )
+Clock          ( src text, dest text,     sndTime int,      delivTime int,       simInclude text )
 
 '''
 
@@ -26,13 +25,13 @@ import inspect, os, string, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-packagePath1  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath1 )
+sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
 from utils import dumpers, extractors, tools, parseCommandLineInput
 import clockRelation
 import dedalusParser
 import dedalusRewriter
+import negativeWrites
 import provenanceRewriter
 import Fact, Rule
 
@@ -228,6 +227,9 @@ def rewrite( ruleMeta, cursor ) :
 
   # rewrite intitial facts and rules
   dedalusRewriter.rewriteDedalus( cursor )
+
+  # negative writes
+  #negativeWrites.negativeWrites( cursor )
 
   # add provenance rules
   provenanceRewriter.rewriteProvenance( ruleMeta, cursor )

@@ -119,14 +119,14 @@ class Fact :
       elif data.isdigit() :
         typeList.append( "int" )
       else :
-        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : Fact " + self.display() + " contains a datum of unrecognized type.\npyLDFI currently only recognizes strings surrounded by either double or single quotes and integers.\nAborting..." )
+        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : Fact " + self.display() + " contains a datum of unrecognized type.\npyLDFI currently only recognizes (i) strings surrounded by either double or single quotes and (ii) integers.\nAborting..." )
 
     return typeList
 
 
-  # ------------------------------------- #
-  #              DISPLAY                  #
-
+  #############
+  #  DISPLAY  #
+  #############
   # print fact to stdout
   def display( self ) :
     prettyFact = ""
@@ -152,6 +152,7 @@ class Fact :
     #print prettyFact
 
     return prettyFact
+
 
 #########
 #  EOF  #

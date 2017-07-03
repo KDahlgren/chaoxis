@@ -25,6 +25,7 @@ timeAtt_snd    = "SndTime"
 timeAtt_deliv  = "DelivTime"
 rewrittenFlag  = "True"
 
+
 ############################
 #  GET DEDUCTIVE RULE IDS  #
 ############################
@@ -35,6 +36,7 @@ def getDeductiveRuleIDs( cursor ) :
   ridList = tools.toAscii_list( ridList )
   return ridList
 
+
 ############################
 #  GET INDUCTIVE RULE IDS  #
 ############################
@@ -44,6 +46,7 @@ def getInductiveRuleIDs( cursor ) :
   ridList = tools.toAscii_list( ridList )
   return ridList
 
+
 ###############################
 #  GET ASYNCHRONOUS RULE IDS  #
 ###############################
@@ -52,6 +55,7 @@ def getAsynchronousRuleIDs( cursor ) :
   ridList = cursor.fetchall()
   ridList = tools.toAscii_list( ridList )
   return ridList
+
 
 #####################
 #  GET SUBGOAL IDS  #

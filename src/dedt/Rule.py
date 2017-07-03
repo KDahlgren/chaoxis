@@ -18,7 +18,7 @@ from utils import dumpers, extractors, tools
 
 DEBUG = tools.getConfig( "DEDT", "RULE_DEBUG", bool )
 
-opList = [ "notin" ] # TODO: make this configurable
+opList   = [ "notin" ] # TODO: make this configurable
 arithOps = [ "+", "-", "*", "/" ]
 
 class Rule :
@@ -26,15 +26,15 @@ class Rule :
   ################
   #  ATTRIBUTES  #
   ################
-  rid        = ""
-  cursor     = None
+  rid      = ""
+  cursor   = None
 
   #################
   #  CONSTRUCTOR  #
   #################
   def __init__( self, rid, cursor ) :
-    self.rid    = rid
-    self.cursor = cursor
+    self.rid      = rid
+    self.cursor   = cursor
 
   # ------------------------------------- #
   #                GET                    #
@@ -47,11 +47,14 @@ class Rule :
     self.cursor.execute( "SELECT goalName FROM Rule WHERE rid = '" + self.rid + "'" )
     nameList = self.cursor.fetchall()
     nameList = tools.toAscii_list( nameList )
-    if not nameList == None :
+
+    if not nameList == None and not nameList == [] :
       if len(nameList) == 1 :
         return nameList[0]
       else :
         sys.exit( "ERROR: Rule possesses more than one goal : " + nameList )
+    else :
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : rid does not correspond to a goal." )
 
   ###################
   #  GET REWRITTEN  #
@@ -382,7 +385,8 @@ class Rule :
   # return the type maps for all attribute vars appearing in the body of a rule.
   #
   # for each head att, iterate over subgoal list.
-  # if head att appears in subgoal, add subgoal and corresponding attID to candidate subgoal list.
+  # if head att appears in subgoal, add subgoal and corresponding 
+  # attID to candidate subgoal list.
   # iterate over candidate subgoal list.
   # if any subgoal is a fact, take the attType from one of the facts.
   # else pick record the current rid, pick a non-fact subgoal, and recurse.
@@ -391,13 +395,16 @@ class Rule :
 
     subgoals_namesAndAtts = self.getInfo_subgoals_namesAndAtts( body_str )
 
+    if self.getGoalName() == "post" :
+      print "head_atts             = " + str( head_atts )
+      print "body_str              = " + str( body_str )
+      print "subgoals_namesAndAtts = " + str( subgoals_namesAndAtts )
+      #tools.bp( __name__, inspect.stack()[0][3], "break here." )
+
     # iterate over parsed subgoals
     allAttTypeMaps = {}
 
-    for i in range(0,len(head_atts)) :
-
-      currIndex = i
-      hatt      = head_atts[ currIndex ]
+    for hatt in head_atts :
 
       if "Time" in hatt :
         allAttTypeMaps[ hatt ] = 'int'
@@ -406,7 +413,9 @@ class Rule :
       if DEBUG :
         print "hatt = " + hatt
 
-      candSubs = [] # list of subgoal names containing the hatt attribute and index at which hatt appears.
+      # list of subgoal names containing the hatt attribute 
+      # and index at which hatt appears.
+      candSubs = []
 
       # get list of subs containing the attribute
       for sub in subgoals_namesAndAtts :
@@ -416,11 +425,14 @@ class Rule :
         if hatt in sattList :
           candSubs.append( [ subName, sattList.index( hatt ) ] )
 
-      # pick an authoratative sub to use as a starting point for discovering the type of the current att.
-      # prefer facts. if no facts, prefer non-recursive subgoals. otherwise, pick a recursive subgoal.
+      # pick an authoratative sub to use as a starting 
+      # point for discovering the type of the current att.
+      # prefer facts. if no facts, prefer non-recursive 
+      # subgoals. otherwise, pick a recursive subgoal.
       if len( candSubs ) > 0 :
 
-        flag_DoNotExit = True # bool controlling repeated iterations over candSubs.
+        # bool controlling repeated iterations over candSubs.
+        flag_DoNotExit = True
 
         # prefer facts
         for sub in candSubs :
@@ -435,7 +447,8 @@ class Rule :
             flag_DoNotExit = False
             break # break out of candSubs loop
 
-        # no facts in rule with the particular attribute under consideration. pick a non-fact subgoal and recurse.
+        # no facts in rule with the particular attribute 
+        # under consideration. pick a non-fact subgoal and recurse.
         if flag_DoNotExit :
 
           # find the first subgoal containing the reference to the hatt attribute
@@ -459,6 +472,7 @@ class Rule :
     if DEBUG :
       print "currRIDList = " + str(currRIDList) + "\ncurrSubName = " + str(currSubName) + "\ncurrIndex = " + str(currIndex)
 
+    # --------------------------------------------- #
     # BASE CASE : currSubName is a fact
     # grab data type at index currIndex
     if tools.isFact( currSubName, self.cursor ) :
@@ -467,6 +481,7 @@ class Rule :
       attType = tools.toAscii_str( attType )
       return attType
 
+    # --------------------------------------------- #
     # RECURSIVE CASE
     else :
       # get list of rids for currSubName.
@@ -538,10 +553,12 @@ class Rule :
   ##################
   #  GET TYPE MAP  #
   ##################
-  # return a list of attribute name, attribute type maps in the form of arrays
+  # return a list of [ attribute name, attribute type ] maps in the form of arrays
   def getTypeMap( self, subNameAndAtts ) :
     subname = subNameAndAtts[0]
     subatts = subNameAndAtts[1]
+
+    tools.bp( __name__, inspect.stack()[0][3], "subNameAndAtts = " + str( subNameAndAtts ) )
 
     atts_inRuleBody = subatts
 

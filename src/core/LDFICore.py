@@ -232,6 +232,7 @@ class LDFICore :
 
       if self.fault_id == 1 : 
         provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], self.fault_id, self.cursor )
+        #tools.bp( __name__, inspect.stack()[0][3], "built provTree!" )
 
       # -------------------------------------------- #
       # 5. generate CNF formula                      #

@@ -15,6 +15,16 @@ import tools
 DUMPERS_DEBUG = tools.getConfig( "UTILS", "DUMPERS_DEBUG", bool )
 
 
+##################
+#  PROGRAM DUMP  #
+##################
+# dump entire (preformatted) program to stdout
+def programDump( cursor ) :
+  factDump(  cursor )
+  clockDump( cursor )
+  ruleDump(  cursor )
+
+
 ###############
 #  RULE DUMP  #
 ###############
@@ -22,8 +32,7 @@ DUMPERS_DEBUG = tools.getConfig( "UTILS", "DUMPERS_DEBUG", bool )
 # output nothing, print all rules to stdout
 def ruleDump( cursor ) :
 
-  if DUMPERS_DEBUG :
-    print "********************\nProgram Rules :"
+  print "********************\nProgram Rules :"
 
   rules = []
 
@@ -140,9 +149,8 @@ def ruleDump( cursor ) :
     newRule = []
 
   # print rules
-  if DUMPERS_DEBUG :
-    for r in rules :
-      print ''.join(r)
+  for r in rules :
+    print ''.join(r)
 
 
 ###############
@@ -152,8 +160,7 @@ def ruleDump( cursor ) :
 # output nothing, print all facts to stdout
 def factDump( cursor ) :
 
-  if DUMPERS_DEBUG :
-    print "********************\nProgram Facts :"
+  print "********************\nProgram Facts :"
 
   facts = []
 
@@ -195,8 +202,7 @@ def factDump( cursor ) :
 
   # print facts
   for f in facts :
-    if DUMPERS_DEBUG :
-      print ''.join(f)
+    print ''.join(f)
 
 
 ################
