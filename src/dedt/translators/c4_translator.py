@@ -205,6 +205,13 @@ def c4datalog( cursor ) :
   tableListArray.append( "clock" )
 
   # ----------------------------------------------------------- #
+  # add not_clock define
+
+  definesList.append( "define(not_clock,{string,string,int,int});\n" )
+  tableListStr += "not_clock,"
+  tableListArray.append( "not_clock" )
+
+  # ----------------------------------------------------------- #
   # add facts
 
   cursor.execute( "SELECT fid FROM Fact" )

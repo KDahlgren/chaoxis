@@ -182,9 +182,16 @@ class LDFICore :
     #   Return immediately.                      #
     ##############################################
     if conclusion == "FoundCounterexample" :
-      return_array[2] = triggerFault
-      return_array[3] = True
-      return return_array
+      if self.fault_id > 1 :
+        return_array[2] = triggerFault # triggerFault
+        return_array[3] = True         # noNewSolns
+        return return_array
+      else :
+        print "\n* Not building provenance graph because no post records after first evaluation.",
+        return_array[1] += "\n*                                      Therefore, specification is invalid without injecting faults." # explanation.
+        return_array[2] = "None" # triggerFault
+        return_array[3] = True   # noNewSolns
+        return return_array
 
 
     #############################################
@@ -232,7 +239,7 @@ class LDFICore :
 
       if self.fault_id == 1 : 
         provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], self.fault_id, self.cursor )
-        #tools.bp( __name__, inspect.stack()[0][3], "built provTree!" )
+        tools.bp( __name__, inspect.stack()[0][3], "built provTree!" )
 
       # -------------------------------------------- #
       # 5. generate CNF formula                      #

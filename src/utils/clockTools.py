@@ -5,7 +5,7 @@ clockTools.py
   methods for adding clock subgoals to different rule types.
 '''
 
-import os, random, re, string, sys
+import inspect, os, random, re, string, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -21,6 +21,60 @@ import dumpers, tools
 CLOCKTOOLS_DEBUG = tools.getConfig( "UTILS", "CLOCKTOOLS_DEBUG", bool )
 
 
+####################
+#  IS NOT SUBGOAL  #
+####################
+def isNotSubgoal( cursor, rid, c ) :
+
+  cursor.execute( "SELECT sid,subgoalName FROM Subgoals WHERE rid='" + rid + "'" )
+  subgoalsData = cursor.fetchall()
+  subgoalsData = tools.toAscii_multiList( subgoalsData )
+
+  for sub in subgoalsData :
+    sid  = sub[0]
+    name = sub[1]
+
+    cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid='" + rid + "' AND sid='" + sid + "'" )
+    subgoalAttData = cursor.fetchall()
+    subgoalAttData = tools.toAscii_multiList( subgoalAttData )
+
+    firstAtt = subgoalAttData[0]
+    attID    = firstAtt[0]
+    attName  = firstAtt[1]
+
+    if c == attName and "not_" in name :
+      return True
+
+  return False
+
+
+###################
+#  IS DM SUBGOAL  #
+###################
+def isDMSubgoal( cursor, rid, c ) :
+
+  cursor.execute( "SELECT sid,subgoalName FROM Subgoals WHERE rid='" + rid + "'" )
+  subgoalsData = cursor.fetchall()
+  subgoalsData = tools.toAscii_multiList( subgoalsData )
+
+  for sub in subgoalsData :
+    sid  = sub[0]
+    name = sub[1]
+
+    cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid='" + rid + "' AND sid='" + sid + "'" )
+    subgoalAttData = cursor.fetchall()
+    subgoalAttData = tools.toAscii_multiList( subgoalAttData )
+
+    firstAtt = subgoalAttData[0]
+    attID    = firstAtt[0]
+    attName  = firstAtt[1]
+
+    if c == attName and "dm_" in name :
+      return True
+
+  return False
+
+
 #################################
 #  ADD CLOCK SUBGOAL DEDUCTIVE  #
 #################################
@@ -32,6 +86,7 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   for att in firstSubgoalAtts :
     if (not '"' in att) and (not "'" in att) :
       baseAtt = att
+      break
 
   if CLOCKTOOLS_DEBUG :
     print "CLOCKTOOLS_DEBUG: For rule : " + str( dumpers.reconstructRule( rid, cursor ) + "\n    firstSubgoalAtts = " + str(firstSubgoalAtts) )
@@ -39,7 +94,10 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   # iterate over all first atts
   for c in firstSubgoalAtts :
     if (not c == baseAtt) and ( (not '"' in att) and (not "'" in att) ) :
-      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in deductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
+      if isNotSubgoal( cursor, rid, c ) or isDMSubgoal( cursor, rid, c ) :
+        pass
+      else :
+        sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in deductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
 
   # get first att in first subgoal, assume specifies 'sender' node
   firstAtt = baseAtt
@@ -76,7 +134,10 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
     #cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
-    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
+    if newAttID < 2 :
+      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','string')")
+    else :
+      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
     newAttID += 1
 
   # save subgoal additional args
@@ -101,7 +162,10 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
 
   for c in firstSubgoalAtts :
     if not c == baseAtt :
-      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in inductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
+      if isNotSubgoal( cursor, rid, c ) or isDMSubgoal( cursor, rid, c ) :
+        pass
+      else :
+        sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in inductive rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
 
   # get first att in first subgoal, assume specifies 'sender' node
   firstAtt = baseAtt
@@ -138,7 +202,10 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
     #cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
-    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
+    if newAttID < 2 :
+      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','string')")
+    else :
+      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
     newAttID += 1
 
   # save subgoal additional args
@@ -163,7 +230,10 @@ def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAt
 
   for c in firstSubgoalAtts :
     if not c == baseAtt :
-      sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in async rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
+      if isNotSubgoal( cursor, rid, c ) or isDMSubgoal( cursor, rid, c ) :
+        pass
+      else :
+        sys.exit("Syntax error:\n   Offending rule:\n      " + dumpers.reconstructRule( rid, cursor ) + "\n   The first attribute of all positive subgoals in async rules must be identical. Semantically, the first attribute is expected to represent the message sender.\n    First att list for positive subgoals: " + str(firstSubgoalAtts) )
 
   # get first att in first subgoal, assume specifies 'sender' node
   firstAtt = baseAtt
@@ -196,7 +266,10 @@ def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAt
     if CLOCKTOOLS_DEBUG :
       print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
     #cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
-    cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
+    if newAttID < 2 :
+      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','string')")
+    else :
+      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
     newAttID += 1
 
   # save subgoal additional args

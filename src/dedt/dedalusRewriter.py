@@ -175,7 +175,7 @@ def rewriteDeductive( cursor ) :
         # while we're here, collect the first attribute of this subgoal
         cursor.execute("SELECT attName FROM SubgoalAtt WHERE SubgoalAtt.sid == '" + s + "' AND SubgoalAtt.attID == '" + str(0) + "'")
         firstAtt = cursor.fetchone()
-        if (not firstAtt == None) and (not addArg == "notin") :
+        if (not firstAtt == None) and (not addArg == "notin") : # need branch on notin for safety
           firstAtt = tools.toAscii_str( firstAtt )
           firstSubgoalAtts.append( firstAtt )
         else :
@@ -188,7 +188,7 @@ def rewriteDeductive( cursor ) :
         clockTools.addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv, cursor )
       else :
         print dumpers.reconstructRule( rid, cursor )
-        tools.bp( __name__, inspect.stack()[0][3], "You've got major probs, mate. The subgoals of this rule have no attributes.\nfirstSubgoalAtts = " + str(firstSubgoalAtts) )
+        tools.bp( __name__, inspect.stack()[0][3], "We've got major probs, mate. The subgoals of this rule have no attributes.\nfirstSubgoalAtts = " + str(firstSubgoalAtts) + "\nMake sure the rule is safe." )
 
     #tools.bp( __name__, inspect.stack()[0][3], "new rule : " + str(dumpers.reconstructRule(rid, cursor)) )
 

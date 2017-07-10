@@ -268,11 +268,18 @@ def resetClock( parsedClockRecords, irCursor ) :
 # build the final version of the new program with the new clock fact configuration
 def finalizeNewProg( irCursor ) :
 
+  # ---------------------------------------------------- #
   # get all clock facts where simInclude == True
   irCursor.execute( "SELECT src,dest,sndTime,delivTime FROM Clock WHERE simInclude=='True'" )
   res = irCursor.fetchall()
   res = tools.toAscii_multiList( res )
 
+  # get all clock facts where simInclude == False (this is the complement of Clock)
+  irCursor.execute( "SELECT src,dest,sndTime,delivTime FROM Clock WHERE simInclude=='True'" )
+  comp = irCursor.fetchall()
+  comp = tools.toAscii_multiList( comp )
+
+  # ---------------------------------------------------- #
   # copy all True clock facts into the new program
   newClockFacts = []
   for data in res :
@@ -292,7 +299,32 @@ def finalizeNewProg( irCursor ) :
   if not newClockLines :
     tools.bp( __name__, inspect.stack()[0][3], "ERROR: no new clock configurations to explore." )
 
+  # ---------------------------------------------------- #
+  # copy all False clock facts into the new program
+  newClockFacts_comp = []
+  for data in comp :
+    src       = data[0]
+    dest      = data[1]
+    sndTime   = data[2]
+    delivTime = data[3]
+    # replace any single quotes with double quotes
+    src  = src.replace(  '"', "'" )
+    dest = dest.replace( '"', "'" )
+    newClockLine = 'clock("' + src + '","' + dest + '",' + str( sndTime ) + "," + str( delivTime ) + ") ;\n"
+    newClockFacts_comp.append( newClockLine )
+
+  # concatenate all clock facts into a single line
+  newClockLines = None
+  newClockLines = "".join( newClockFacts_comp )
+  if not newClockLines :
+    tools.bp( __name__, inspect.stack()[0][3], "ERROR: no new not_clock configurations to explore." )
+
+  # ---------------------------------------------------- #
+
+  newClockFacts.extend( newClockFacts_comp )
+
   return [ x.rstrip() for x in newClockFacts ]
+
 
 #########
 #  EOF  #

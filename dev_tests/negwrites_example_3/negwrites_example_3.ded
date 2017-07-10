@@ -1,0 +1,24 @@
+node("a","a")@1 ;
+node("a","b")@1 ;
+node("b","a")@1 ;
+
+b("a","i")@1 ;
+b("a","j")@1 ;
+b("a","k")@1 ;
+b("b","b")@1 ;
+
+// Supplying the exact complement of node.
+not_node("a","i")@1 ;
+not_node("a","j")@1 ;
+not_node("a","k")@1 ;
+not_node("b","b")@1 ;
+not_node(Y,Z)@next :- not_node(Y,Z) ; //persistence rule
+
+// perform demorgans on rule a
+not_a(Y,Z) :- not_node(Y,Z) ;
+
+// remaining lines of original program
+b(X,Y)   @next :- b(X,Y);
+node(X,Y)@next :- node(X,Y);
+pre(Z)         :- b(Z,Z) ;
+post(Z)        :- b(X,Z),not_a(X,Z);

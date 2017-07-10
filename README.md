@@ -35,6 +35,10 @@ python pyLDFI_TestEnsemble.py
 * You can view a dump of the last execution simulation results in pyldfi/save_data/c4Output/c4dump.txt
 * You can view the sequence of datalog programs, decorated with timestamps indicating generation time, used over the course of an LDFI simulation in pyldfi/src/evaluators/programFiles/
 
+## Dedalus Specification Writing GOTCHAS!
+1. relation names must be all lower case and contain only alphanumeric characters or underscores.
+2. variable names may be strings of one or more alphanumeric characters, but the first character must be a capital letter.
+
 ## More Exercises
 
 * Run simplelog/ with output from pyldfi/dev_tests/simpleLog/ :

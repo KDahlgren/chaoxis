@@ -4,16 +4,14 @@
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect, os, sys, time
+import inspect, os, string, sys, time
 
 from ctypes import *
 from types  import *
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-
-packagePath  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath )
+sys.path.append( os.path.abspath( __file__ + "/../../.." ) )
 
 from utils import tools
 # **************************************** #
@@ -262,9 +260,19 @@ class C4Wrapper( object ) :
 
     # ----------------------------------------- #
     # KD : bcsat debugging session 6/21/17
-    print "PRINTING PROG"
+    print "PRINTING RAW INPUT PROG"
     for x in fullprog :
       print x
+
+    print "PRINTING LEGIBLE INPUT PROG"
+    for line in fullprog :
+      line = line.split( ";" )
+      for statement in line :
+        statement = statement.rstrip()
+        if not statement == "" :
+          statement = statement + ";"
+          print statement
+
     # ----------------------------------------- #
 
     # initialize c4 instance
@@ -336,14 +344,64 @@ if __name__ == '__main__' :
   w = C4Wrapper( '../../../lib/c4/build/src/libc4/libc4.dylib' ) # initializes c4
 
   # /////////////////////////////////// #
-  prog1      = "./myTest.olg"
-  table_file = "./tableListStr_myTest.data"
-  w.run( prog1, table_file, "./myTest_save.txt" )
+  rf = open( "./myTest.olg", "r" )
+  prog1 = []
+  for line in rf :
+    line = line.rstrip()
+    prog1.append( line )
+  rf.close()
+
+  rf = open( "./tableListStr_myTest.data", "r" )
+  table_str1 = rf.readline()
+  table_str1 = table_str1.rstrip()
+  table_str1 = table_str1.split( "," )
+
+  w.run( [ prog1, table_str1 ] )
 
   # /////////////////////////////////// #
-  prog2       = "c4program.olg"
-  table_file2 = "tableListStr.data"
-  w.run( prog2, table_file2, "./prog2_save.txt" )
+  rf = open( "./c4program.olg", "r" )
+  prog2 = []
+  for line in rf :
+    line = line.rstrip()
+    prog2.append( line )
+  rf.close()
+
+  rf = open( "./tableListStr.data", "r" )
+  table_str2 = rf.readline()
+  table_str2 = table_str2.rstrip()
+  table_str2 = table_str2.split( "," )
+
+  w.run( [ prog2, table_str2 ] )
+
+  # /////////////////////////////////// #
+  rf = open( "./prog3.olg", "r" )
+  prog3 = []
+  for line in rf :
+    line = line.rstrip()
+    prog3.append( line )
+  rf.close()
+
+  rf = open( "./tableListStr_prog3.data", "r" )
+  table_str3 = rf.readline()
+  table_str3 = table_str3.rstrip()
+  table_str3 = table_str3.split( "," )
+
+  print w.run( [ prog3, table_str3 ] )
+
+  # /////////////////////////////////// #
+  rf = open( "./prog4.olg", "r" )
+  prog4 = []
+  for line in rf :
+    line = line.rstrip()
+    prog4.append( line )
+  rf.close()
+
+  rf = open( "./tableListStr_prog4.data", "r" )
+  table_str4 = rf.readline()
+  table_str4 = table_str4.rstrip()
+  table_str4 = table_str4.split( "," )
+
+  print w.run( [ prog4, table_str4 ] )
 
 
 #########

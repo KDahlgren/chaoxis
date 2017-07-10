@@ -8,6 +8,9 @@ dumpers.py
 import inspect, os, sys
 import tools
 
+# ------------------------------------------------------ #
+# import sibling packages HERE!!!
+# ------------------------------------------------------ #
 
 #############
 #  GLOBALS  #

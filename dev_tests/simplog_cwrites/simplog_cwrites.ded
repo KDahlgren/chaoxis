@@ -1,0 +1,78 @@
+node("a","c")@1 ;
+node("a","b")@1 ;
+node("a","c")@1 ;
+node("b","a")@1 ;
+node("b","b")@1 ;
+node("b","c")@1 ;
+node("c","a")@1 ;
+node("c","b")@1 ;
+node("c","c")@1 ;
+bcast("a","hello")@1 ;
+
+not_node_log( "couldbeshit", "couldbeshit")@1 ;
+not_node_log( "couldbeshit", "couldbeshit")@1 ;
+not_node_log( "couldbeshit", "couldbeshit")@1 ;
+not_node_log( "couldbeshit", "couldbeshit")@1 ;
+not_node_log( "couldbeshit", "couldbeshit")@1 ;
+not_node_log(X,Y)@next :- not_node_log(X,Y) ;
+
+not_node_missing_log( "couldbeshit", "couldbeshit")@1 ;
+not_node_missing_log( "couldbeshit", "couldbeshit")@1 ;
+not_node_missing_log( "couldbeshit", "couldbeshit")@1 ;
+not_node_missing_log( "couldbeshit", "couldbeshit")@1 ;
+not_node_missing_log( "couldbeshit", "couldbeshit")@1 ;
+not_node_missing_log(X,Y)@next :- not_node_missing_log(X,Y) ;
+
+not_missing_log( "couldbeshit", "couldbeshit")@1 ;
+not_missing_log(X,Y)@next :- not_missing_log(X,Y) ;
+
+not_bcast_pre( "couldbeshit", "couldbeshit")@1 ;
+not_bcast_pre( "couldbeshit", "couldbeshit")@1 ;
+not_bcast_pre( "couldbeshit", "couldbeshit")@1 ;
+not_bcast_pre( "couldbeshit", "couldbeshit")@1 ;
+not_bcast_pre( "couldbeshit", "couldbeshit")@1 ;
+not_bcast_pre(X,Y)@next :- not_bcast_pre(X,Y) ;
+
+not_bcast_dm_log( "couldbeshit", "nothello")@1 ;
+not_bcast_dm_log( "couldbeshit", "nothello")@1 ;
+not_bcast_dm_log( "couldbeshit", "nothello")@1 ;
+not_bcast_dm_log( "couldbeshit", "nothello")@1 ;
+not_bcast_dm_log( "couldbeshit", "nothello")@1 ;
+not_bcast_dm_log(X,Y)@next :- not_bcast_dm_log(X,Y) ;
+
+dm_missing_log_dom_x("thisisastr")@1 ;
+dm_missing_log_dom_a("thisisastr")@1 ;
+dm_missing_log_dom_pl("thisisastr")@1 ;
+
+dm_log_dom_node("thisisastr")@1 ;
+dm_log_dom_node1("thisisastr")@1 ;
+dm_log_dom_node2("thisisastr")@1 ;
+dm_log_dom_pload("thisisastr")@1 ;
+
+node(Node,Neighbor)@next :- node(Node,Neighbor) ;
+log(Node,Pload) :- log(Node,Pload) ;
+log(Node2,Pload) :- bcast(Node1,Pload),node(Node1,Node2) ;
+log(Node,Pload) :- bcast(Node,Pload) ;
+missing_log(A,Pl) :- log(X,Pl),node(X,A), not_log(A,Pl) ;
+pre(X,Pl) :- log(X,Pl), not_bcast_pre(X,Pl) ;
+post(X,Pl) :- log(X,Pl), not_missing_log(_,Pl) ;
+
+dm_missing_log(A,Pl,X) :-  log(A,Pl),dm_missing_log_dom_x(X),X=="thisisastr" ;
+dm_missing_log(A,Pl,X) :-  not_log(X,Pl),dm_missing_log_dom_a(A),A=="thisisastr";
+dm_missing_log(A,Pl,X) :-  not_node_missing_log(X,A),dm_missing_log_dom_pl(Pl),Pl=="thisisastr";
+not_missing_log(A,Pl) :- dm_missing_log(A,Pl,X);
+
+dm_log(Node1,Pload,Node,Node2) :-  not_bcast_dm_log(Node1,Pload), not_bcast_dm_log(Node,Pload), not_log(Node,Pload),dm_log_dom_node2(Node2),Node2=="thisisastr" ;
+dm_log(Node1,Pload,Node,Node2) :-  not_bcast_dm_log(Node1,Pload), not_bcast_dm_log(Node,Pload), dm_log_dom_node2(Node2),Node2=="thisisastr" ;
+dm_log(Node1,Pload,Node,Node2) :-  not_bcast_dm_log(Node1,Pload), not_log(Node,Pload), dm_log_dom_node2(Node2),Node2=="thisisastr" ;
+dm_log(Node1,Pload,Node,Node2) :-  not_bcast_dm_log(Node1,Pload), dm_log_dom_node(Node), dm_log_dom_node2(Node2),Node=="thisisastr",Node2=="thisisastr" ;
+dm_log(Node1,Pload,Node,Node2) :-  not_node_log(Node1,Node2), not_bcast_dm_log(Node,Pload), not_log(Node,Pload) ;
+dm_log(Node1,Pload,Node,Node2) :-  not_node_log(Node1,Node2), not_bcast_dm_log(Node,Pload) ;
+dm_log(Node1,Pload,Node,Node2) :-  not_node_log(Node1,Node2), not_log(Node,Pload), ;
+dm_log(Node1,Pload,Node,Node2) :-  not_node_log(Node1,Node2), dm_log_dom_node(Node), dm_log_dom_pload(Pload), Node=="thisisastr", Pload=="thisisastr" ;
+dm_log(Node1,Pload,Node,Node2) :-  not_bcast_dm_log(Node,Pload), not_log(Node,Pload),dm_log_dom_node1(Node1), dm_log_dom_node2(Node2), Node1=="thisisastr",Node2=="thisisastr" ;
+dm_log(Node1,Pload,Node,Node2) :-  not_bcast_dm_log(Node,Pload),dm_log_dom_node1(Node1), dm_log_dom_node2(Node2), Node1=="thisisastr",Node2=="thisisastr" ;
+dm_log(Node1,Pload,Node,Node2) :-  not_log(Node,Pload),dm_log_dom_node1(Node1), dm_log_dom_node2(Node2), Node1=="thisisastr",Node2=="thisisastr" ; ;
+not_log(Node,Pload) :- dm_log(Node1,Pload,Node,Node2);
+
+

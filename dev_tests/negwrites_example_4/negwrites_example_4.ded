@@ -1,0 +1,29 @@
+node("a","a")@1 ;
+node("a","b")@1 ;
+node("b","a")@1 ;
+
+b("a","i")@1 ;
+b("a","j")@1 ;
+b("a","k")@1 ;
+b("b","b")@1 ;
+
+// Supplying the exact complement of node.
+// the complement of node differs depending upon the context of the calling rule.
+// will the complements ever disagree?
+not_node_rpost("a","i")@1 ;
+not_node_rpost("a","j")@1 ;
+not_node_rpost("a","k")@1 ;
+not_node_rpost("b","b")@1 ;
+not_node_rpost(Y,Z)@next :- not_node_rpost(Y,Z) ; //persistence rule
+
+// perform demorgans on rule a because a appears as a negated subgoal in post.
+not_a_rpost(Y,Z) :- not_node_rpost(Y,Z) ;
+
+// replace negative subogal with positive version of negated subgoal
+post(Z) :- b(X,Y),not_a_rpost(X,Z);
+
+// remaining lines of original program
+b(X,Y)   @next :- b(X,Y)    ;
+node(X,Y)@next :- node(X,Y) ;
+pre(Z)         :- b(Z,Z)    ;
+a(Y,Z)         :- node(Y,Z) ; //keep original line in case used as positive subgoal in another rule.

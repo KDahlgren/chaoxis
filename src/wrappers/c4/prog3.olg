@@ -1,0 +1,10 @@
+define(a,{string,string,int});
+define(b,{string,int,int}); 
+define(c,{int}); 
+define(post,{string}) ; 
+a( "a", "a", 1 ) ; 
+a( "a", "b", 1 ) ; 
+a( "a", "c", 1 ) ; 
+c( 10 ) ;
+b( Y, Z, W ) :- a( X, Y, Z ),c(W),W==10 ; 
+post( X ) :- b(X, Y, Z) ;

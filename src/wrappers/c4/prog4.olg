@@ -1,0 +1,6 @@
+define(a,{string,string,int});
+define(b,{string,int,int}); 
+a( "a", "a", 1 ) ; 
+a( "a", "b", 1 ) ; 
+a( "a", "c", 1 ) ; 
+b( Y, Z, Z ) :- a( X, Y, Z ) ;

@@ -140,16 +140,6 @@ def initClockRelation( cursor, argDict ) :
   else :
     sys.exit( "ERROR: No node topology specified! Aborting..." )
 
-  return None
-
-##########################
-#  BUILD CLOCK RELATION  #
-##########################
-# input IR database cursor
-# create a clock relation
-# output nothing
-def buildClockRelation( cursor ) :
-  return None
 
 #########
 #  EOF  #

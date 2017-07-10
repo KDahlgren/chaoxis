@@ -203,7 +203,7 @@ def dedToIR( filename, cursor ) :
   # ----------------------------------------------------------- #
   # set goal attribute types for all rules
   for rule in ruleMeta :
-    rule.setAttTypes()
+    rule.setAttTypes() # allows undefines to bleed through????
 
   return ( factMeta, ruleMeta )
 
@@ -255,17 +255,15 @@ def runTranslator( cursor, dedFile, argDict, evaluator ) :
   starterClock( cursor, argDict )
 
   # dedalus and provenance rewrite to final IR
-  rewrite( ruleMeta, cursor )
+  rewrite( ruleMeta, cursor ) # <- here.
 
   # check for bugs
   if DEDT_DEBUG :
-    dumpers.factDump(  cursor )
-    dumpers.ruleDump(  cursor )
-    dumpers.clockDump( cursor )
+    dumpers.programDump( cursor )
 
   # translate IR into datalog
   if evaluator == "c4" :
-    allProgramLines = c4_translator.c4datalog( cursor )
+    allProgramLines = c4_translator.c4datalog( cursor ) # <- here.
   elif evaluator == "pyDatalog" :
     allProgramLines = pydatalog_translator.getPyDatalogProg( cursor )
 

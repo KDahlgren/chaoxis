@@ -1,0 +1,12 @@
+node("a","b")@1 ;
+node("b","a")@1 ;
+b("a","b")@1 ;
+b("c","a")@1 ;
+b("d","i")@1 ;
+
+post(X) :- b(X,Z),notin a(X,Z) ;
+b(X,Y)@next    :- b(X,Y);
+node(X,Y)@next :- node(X,Y);
+a(Y,Z)         :- node(Y,Z) ;
+
+pre(X) :- b(X,Z) ;
