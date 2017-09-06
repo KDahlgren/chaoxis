@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-import os, sys, time
+# contains ~*~ magic ~*~ installation code.
 
-# TODO: place magical installation code here
+import os, sys, time
 
 C4_FINDAPR_PATH = "./lib/c4/cmake/FindApr.cmake"
 SETUP_DEBUG     = True
@@ -163,10 +163,8 @@ def deduplicateSetup() :
 def setAPR( path ) :
   # set one of the candidate APR paths
   newCmd = 'set(APR_INCLUDES "' + path + '")'
-  #cmd = "echo '" + newCmd + "' | cat - " + C4_FINDAPR_PATH + " > temp && mv temp " + C4_FINDAPR_PATH
   cmd = "(head -48 " + C4_FINDAPR_PATH + "; " + "echo '" + newCmd + "'; " + "tail -n +49 " + C4_FINDAPR_PATH + ")" + " > temp ; mv temp " + C4_FINDAPR_PATH + ";"
   os.system( cmd )
-  #os.system( "make deps" )
   os.system( "make c4" )
 
 
@@ -210,12 +208,6 @@ def main() :
 
   # download submodules
   os.system( "make get-submodules" )
-  # copy over template c4 main
-  print "Copying template c4 main ..."
-  os.system( "cp ./src/templateFiles/c4i_template.c ./lib/c4/src/c4i/c4i.c" )
-  print "...done copying template c4 main."
-
-  #os.system( "make c4" )
 
   # ---------------------------------------------- #
   # run make for c4
@@ -243,13 +235,10 @@ def main() :
       print "... Done installing C4 Datalog evaluator"
       print "C4 install using APR path : " + path
       print "done installing c4."
+      break
     else :
       sys.exit( "failed to install C4. No fully functioning APR found." )
-  # ---------------------------------------------- #
 
-  # run make for everything else
-  #os.system( "make" )
- 
   # ---------------------------------------------- #
   # set p5 file paths
   set_PYLDFI_VIZ_paths()

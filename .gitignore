@@ -1,6 +1,7 @@
 .DS_Store
 *.swp
 
+src/ui/*.html
 src/evaluators/programFiles/*.txt
 src/evaluators/programFiles/*.olg
 src/evaluators/programFiles/*.olg*
