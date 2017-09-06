@@ -210,6 +210,10 @@ def main() :
   os.system( "make get-submodules" )
 
   # ---------------------------------------------- #
+  # run make for orik
+  os.system( "make orik" )
+
+  # ---------------------------------------------- #
   # run make for c4
   # find candidate apr locations
   apr_path_cands = getAPR_list()
@@ -241,7 +245,7 @@ def main() :
 
   # ---------------------------------------------- #
   # set p5 file paths
-  set_PYLDFI_VIZ_paths()
+  #set_PYLDFI_VIZ_paths()
  
 
 ###################

@@ -1,19 +1,45 @@
 all: deps
 
-deps: get-submodules c4 z3
+deps: get-submodules orik c4 z3
 
 clean:
+	rm -r lib/orik/
 	rm -r lib/c4/build
 	rm -r lib/z3/build
 	rm -r lib/p5/build
 
+get-submodules:
+	git submodule init
+	git submodule update
+
+# -------------------------------------- #
+#                 ORIK                   #
+# -------------------------------------- #
+cleanorik:
+	rm -r lib/orik/
+
+orik:
+	cd lib/orik/ ; python setup.py ;
+
+# -------------------------------------- #
+#                  C4                    #
+# -------------------------------------- #
 cleanc4:
 	rm -r lib/c4/build
 
+c4: lib/c4/build/src/libc4/libc4.dylib
+
+lib/c4/build/src/libc4/libc4.dylib:
+	@which cmake > /dev/null
+	cd lib/c4 && mkdir -p build
+	cd lib/c4/build && cmake ..
+	( cd lib/c4/build && make ) 2>&1 | tee c4_out.txt;
+
+# -------------------------------------- #
+#                  Z3                    #
+# -------------------------------------- #
 cleanz3:
 	rm -r lib/z3/build
-
-c4: lib/c4/build/src/libc4/libc4.dylib
 
 z3: lib/z3/build/z3-dist
 
@@ -29,19 +55,3 @@ lib/z3/build/libz3.dylib:
 	cd lib/z3 && python scripts/mk_make.py --prefix=z3-dist
 	cd lib/z3/build && make -j4
 
-lib/c4/build/src/libc4/libc4.dylib:
-	@which cmake > /dev/null
-	cd lib/c4 && mkdir -p build
-	cd lib/c4/build && cmake ..
-	( cd lib/c4/build && make ) 2>&1 | tee c4_out.txt;
-
-get-submodules:
-	git submodule init
-	git submodule update
-
-CMAKE-installed:
-
-# SBT command for running only the fast unit tests and excluding the slower
-# end-to-end tests (which have been tagged using ScalaTest's `Slow` tag):
-fast-test: deps
-	sbt "testOnly *Suite -- -l org.scalatest.tags.Slow"
