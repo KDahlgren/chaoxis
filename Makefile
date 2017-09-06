@@ -19,7 +19,7 @@ cleanorik:
 	rm -r lib/orik/
 
 orik:
-	cd lib/orik/ ; python setup.py ;
+	cd lib/orik/ ; git pull origin master ; python setup.py ;
 
 # -------------------------------------- #
 #                  C4                    #
