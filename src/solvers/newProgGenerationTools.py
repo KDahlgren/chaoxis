@@ -18,14 +18,14 @@ from types import *
 # ------------------------------------------------------ #
 # import orik packages HERE!!!
 if not os.path.abspath( __file__ + "/../../../lib/orik/src") in sys.path :
-  sys.path.insert(0, os.path.abspath( __file__ + "/../../../lib/orik/src") )
+  sys.path.insert(0, os.path.abspath( __file__ + "/../../../lib/orik/src/dedt") )
 
 from translators import dumpers_c4
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 sys.path.append( os.path.abspath( __file__ + "/../.." ) ) # src/
-sys.path.append( os.path.abspath( __file__ + "/../../dedt" ) ) # src/
+#sys.path.append( os.path.abspath( __file__ + "/../../dedt" ) ) # src/
 
 
 from utils       import dumpers, tools

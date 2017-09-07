@@ -1,0 +1,10 @@
+
+a("str")@1 ;
+c("str")@1 ;
+d("str")@1 ;
+
+g(X) :- a(X), notin b(X) ;
+b(X) :- c(X), notin d(X) ;
+
+pre(X) :- g(X) ;
+post(X) :- pre(X) ;

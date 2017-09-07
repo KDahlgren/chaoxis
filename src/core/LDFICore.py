@@ -657,8 +657,8 @@ class LDFICore :
     # currSolnAttempt increment handled in Solver_PYCOSAT
 
     customFault = tools.getConfig( "CORE", "CUSTOM_FAULT", list )
-    if not customFault == None and self.N > 1 :
-      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : specified a custom fault, " + str( customFault ) + ", but also specified a solution set buffer size greater than 1: N = " + str( self.N ) )
+    #if not customFault == None and self.N > 1 :
+    #  tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : specified a custom fault, " + str( customFault ) + ", but also specified a solution set buffer size greater than 1: N = " + str( self.N ) )
 
     # solve over a custom fault
     if customFault and not self.stopAtIt :
