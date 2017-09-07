@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 
-#cmd="python ../../src/drivers/driver.py -n a,b,c -f ./replog.ded -f ./bcast_edb.ded -f ./deliv_assert.ded --evaluator c4"
-cmd="time python ../../src/drivers/driver.py -n a,b,c --EOT 4 -f ./replog_v2.ded --evaluator c4"
+#cmd="python ../../src/drivers/pyldfi.py -n a,b,c -f ./replog.ded -f ./bcast_edb.ded -f ./deliv_assert.ded --evaluator c4"
+cmd="time python ../../src/drivers/pyldfi.py -n a,b,c --EOT 4 -f ./replog_v2.ded --evaluator c4"
 opt_cmd="cmd"
 
 rm ./IR.db

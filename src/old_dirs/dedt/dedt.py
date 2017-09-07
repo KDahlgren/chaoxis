@@ -247,6 +247,8 @@ def rewrite( ruleMeta, cursor ) :
 # WARNING: CANNOT write rules or facts on multiple lines.
 def runTranslator( cursor, dedFile, argDict, evaluator ) :
 
+  print "running runTranslator from pyldfi"
+
   # ded to IR
   meta     = dedToIR( dedFile, cursor )
   ruleMeta = meta[1]

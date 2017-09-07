@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-cmd="time python ../../src/drivers/driver.py -c 0 -n a,b --EOT 4 -f ./negwrites_example_1.ded --evaluator c4"
+cmd="time python ../../src/drivers/pyldfi.py -c 0 -n a,b --EOT 4 -f ./negwrites_example_1.ded --evaluator c4"
 opt_cmd="cmd"
 
 rm ./IR.db

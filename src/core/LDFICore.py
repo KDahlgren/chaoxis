@@ -15,15 +15,23 @@ LDFICore.py
 import ast, inspect, itertools, os, sqlite3, string, sys, time
 
 # ------------------------------------------------------ #
-# import sibling packages HERE!!!
-sys.path.append( os.path.abspath( __file__ + "/../.." ) )
+# import orik packages HERE!!!
+if not os.path.abspath( __file__ + "/../../../lib/orik/src") in sys.path :
+  sys.path.insert(0, os.path.abspath( __file__ + "/../../../lib/orik/src") )
 
-from dedt           import dedt, dedalusParser
-from derivation     import ProvTree
+from dedt       import dedt, dedalusParser
+from derivation import ProvTree
+from evaluators import c4_evaluator, evalTools
+
+# ------------------------------------------------------ #
+# import sibling packages HERE!!!
+if not os.path.abspath( __file__ + "/../.." ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../.." ) )
+
 from utils          import parseCommandLineInput, tools
-from evaluators     import c4_evaluator, evalTools
 from solvers        import EncodedProvTree_CNF, newProgGenerationTools, solverTools
 from visualizations import vizTools
+
 
 # **************************************** #
 

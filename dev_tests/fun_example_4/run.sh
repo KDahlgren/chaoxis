@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-cmd="python ../../src/drivers/driver.py -n a,b,c -f ./fun_example_4.ded --evaluator c4"
+cmd="python ../../src/drivers/pyldfi.py -n a,b,c -f ./fun_example_4.ded --evaluator c4"
 opt_cmd="cmd"
 
 if [ "$1" = "$opt_cmd" ]

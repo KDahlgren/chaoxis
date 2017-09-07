@@ -16,11 +16,17 @@ vizTools.py
 import inspect, os, sys
 
 # ------------------------------------------------------ #
+# import orik packages HERE!!!
+if not os.path.abspath( __file__ + "/../../../lib/orik/src") in sys.path :
+  sys.path.insert(0, os.path.abspath( __file__ + "/../../../lib/orik/src") )
+
+from derivation import ProvTree
+
+# ------------------------------------------------------ #
 # import sibling packages HERE!!!
 packagePath  = os.path.abspath( __file__ + "/../.." )
 sys.path.append( packagePath )
 
-from derivation import ProvTree
 from utils      import tools
 
 # **************************************** #

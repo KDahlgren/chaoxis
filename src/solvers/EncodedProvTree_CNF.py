@@ -263,6 +263,10 @@ class EncodedProvTree_CNF :
         fmla = fmla.replace( " AND ( _PLACEHOLDER_ ) ", "" )
         return self.simplify( fmla )
 
+      elif " _PLACEHOLDER_ AND " in fmla :
+        fmla = fmla.replace( "_PLACEHOLDER_ AND ", "" )
+        return self.simplify( fmla )
+
       # ----------------------------------------------------------------------------- #
       # OR
       elif "( _PLACEHOLDER_ OR _PLACEHOLDER_ )" in fmla :
