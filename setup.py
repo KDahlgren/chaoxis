@@ -213,35 +213,35 @@ def main() :
   # run make for orik
   os.system( "make orik" )
 
-  # ---------------------------------------------- #
-  # run make for c4
-  # find candidate apr locations
-  apr_path_cands = getAPR_list()
-  
-  # set correct apr location
-  flag    = True
-  for path in apr_path_cands :
-    try :
-      deduplicateSetup()
-    except IOError :
-      setAPR( path )
+  ## ---------------------------------------------- #
+  ## run make for c4
+  ## find candidate apr locations
+  #apr_path_cands = getAPR_list()
+  #
+  ## set correct apr location
+  #flag    = True
+  #for path in apr_path_cands :
+  #  try :
+  #    deduplicateSetup()
+  #  except IOError :
+  #    setAPR( path )
 
-    setAPR( path )
+  #  setAPR( path )
 
-    try :
-      flag = checkForMakeError( path )
-    except IOError :
-      print "./c4_out.txt does not exist"
-  
-    # found a valid apr library
-    if flag :
-      print ">>> C4 installed successfully <<<"
-      print "... Done installing C4 Datalog evaluator"
-      print "C4 install using APR path : " + path
-      print "done installing c4."
-      break
-    else :
-      sys.exit( "failed to install C4. No fully functioning APR found." )
+  #  try :
+  #    flag = checkForMakeError( path )
+  #  except IOError :
+  #    print "./c4_out.txt does not exist"
+  #
+  #  # found a valid apr library
+  #  if flag :
+  #    print ">>> C4 installed successfully <<<"
+  #    print "... Done installing C4 Datalog evaluator"
+  #    print "C4 install using APR path : " + path
+  #    print "done installing c4."
+  #    break
+  #  else :
+  #    sys.exit( "failed to install C4. No fully functioning APR found." )
 
   # ---------------------------------------------- #
   # set p5 file paths
