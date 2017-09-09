@@ -11,14 +11,14 @@ import os, sys, re,json
 
 
 # import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/../../" )
-sys.path.append( packagePath )
+if not os.path.abspath( __file__ + "/../../" ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../../" ) )
 print packagePath
 
 C4_SAVE_PATH       = os.path.dirname(os.path.abspath( __file__ )) + "/../evaluators/programFiles/c4_run_output.txt"
 JSON_SAVE_PATH = os.path.dirname(os.path.abspath( __file__ )) + "visualizations/run.json"
 
-from utils import tools
+from utilities import tools
 
 
 #TODO: don't hard code these, pull them in from the other files

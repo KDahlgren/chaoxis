@@ -17,7 +17,7 @@ import ast, inspect, itertools, os, sqlite3, string, sys, time
 # ------------------------------------------------------ #
 # import orik packages HERE!!!
 if not os.path.abspath( __file__ + "/../../../lib/orik/src") in sys.path :
-  sys.path.insert(0, os.path.abspath( __file__ + "/../../../lib/orik/src") )
+  sys.path.append( os.path.abspath( __file__ + "/../../../lib/orik/src") )
 
 from dedt       import dedt, dedalusParser
 from derivation import ProvTree
@@ -28,7 +28,7 @@ from evaluators import c4_evaluator, evalTools
 if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
-from utils          import parseCommandLineInput, tools
+from utilities      import parseCommandLineInput, tools
 from solvers        import EncodedProvTree_CNF, newProgGenerationTools, solverTools
 from visualizations import vizTools
 
@@ -159,7 +159,7 @@ class LDFICore :
     # 2. evaluate                                     #
     # ----------------------------------------------- #
 
-    # use c4 wrapper 
+    # use c4 wrapper
     parsedResults = self.evaluate( "C4_WRAPPER", allProgramData )
 
     # ----------------------------------------------- #
@@ -245,7 +245,8 @@ class LDFICore :
       # 4. get provenance tree                          #
       # ----------------------------------------------- #
 
-      if self.fault_id == 1 : 
+      if True : 
+      #if self.fault_id == 1 : 
         provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], self.fault_id, self.cursor )
         #tools.bp( __name__, inspect.stack()[0][3], "built provTree!" )
 
@@ -476,6 +477,13 @@ class LDFICore :
     # ----------------------------------------------------------------- #
     # dump evaluation results locally
     eval_results_dump_dir = os.path.abspath( os.getcwd() ) + "/data/"
+
+    # also, print to stdout b/c awesome
+    print "::::::::::::::::::::::::::::::::::"
+    print "::: PRINTING RESULTS TO STDOUT :::"
+    print "::::::::::::::::::::::::::::::::::"
+    for line in results_array :
+      print line
 
     # make sure data dump directory exists
     if not os.path.isdir( eval_results_dump_dir ) :

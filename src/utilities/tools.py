@@ -10,7 +10,8 @@ import ConfigParser, inspect, os, random, re, string, sys, numbers
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-sys.path.append( os.path.abspath( __file__ + "/../.." ) )
+if not os.path.abspath( __file__ + "/../.." ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
 import dumpers
 # ------------------------------------------------------ #

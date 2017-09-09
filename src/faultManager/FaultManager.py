@@ -19,12 +19,12 @@ import inspect, os, sqlite3, sys, time
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 
-packagePath  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath )
+if not os.path.abspath( __file__ + "/../.." ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
-from core    import LDFICore
-from utils   import tools
-from solvers import solverTools
+from core      import LDFICore
+from utilities import tools
+from solvers   import solverTools
 
 # **************************************** #
 

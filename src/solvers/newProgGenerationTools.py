@@ -18,17 +18,15 @@ from types import *
 # ------------------------------------------------------ #
 # import orik packages HERE!!!
 if not os.path.abspath( __file__ + "/../../../lib/orik/src") in sys.path :
-  sys.path.insert(0, os.path.abspath( __file__ + "/../../../lib/orik/src/dedt") )
+  sys.path.append( os.path.abspath( __file__ + "/../../../lib/orik/src/dedt") )
 
 from translators import dumpers_c4
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 sys.path.append( os.path.abspath( __file__ + "/../.." ) ) # src/
-#sys.path.append( os.path.abspath( __file__ + "/../../dedt" ) ) # src/
 
-
-from utils       import dumpers, tools
+from utilities import dumpers, tools
 
 # **************************************** #
 
@@ -281,7 +279,7 @@ def finalizeNewProg( irCursor ) :
   res = tools.toAscii_multiList( res )
 
   # get all clock facts where simInclude == False (this is the complement of Clock)
-  irCursor.execute( "SELECT src,dest,sndTime,delivTime FROM Clock WHERE simInclude=='True'" )
+  irCursor.execute( "SELECT src,dest,sndTime,delivTime FROM Clock WHERE simInclude=='False'" )
   comp = irCursor.fetchall()
   comp = tools.toAscii_multiList( comp )
 
@@ -325,9 +323,10 @@ def finalizeNewProg( irCursor ) :
   if not newClockLines :
     tools.bp( __name__, inspect.stack()[0][3], "ERROR: no new not_clock configurations to explore." )
 
-  # ---------------------------------------------------- #
+  # huh? why add complement clock facts??
+  #newClockFacts.extend( newClockFacts_comp )
 
-  newClockFacts.extend( newClockFacts_comp )
+  # ---------------------------------------------------- #
 
   return [ x.rstrip() for x in newClockFacts ]
 
