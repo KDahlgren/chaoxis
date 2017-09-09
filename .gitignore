@@ -3,8 +3,8 @@
 
 lib/
 
-./**/data/*_dump_*.txt
-./**/data/*.png
+examples/**/data/*_dump_*.txt
+examples/**/data/*.png
 
 src/ui/*.html
 src/evaluators/programFiles/*.txt
