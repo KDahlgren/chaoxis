@@ -57,7 +57,7 @@ def solveCNF( solverType ) :
 def getConjuncts( cnfFormula_str ) :
 
   print
-  print "cnfFormula_str = " + cnfFormula_str
+  print "cnfFormula_str = " + str( cnfFormula_str )
   print
 
   # split on ANDs
@@ -104,8 +104,14 @@ def convertToCNF( rawBooleanFmla_string ) :
 
   cnfFmla = None
 
+  print "rawBooleanFmla_string"
+  print rawBooleanFmla_string
+
   # transform booleanFmla into the sympy format
   sympy_info = format_sympy( rawBooleanFmla_string ) # returns tuple of ( sympy formula string, symbol string )
+
+  print "sympy_infor"
+  print sympy_info
 
   # run the transformed fmla through the smypy cnf converter
   res = toCNF_sympy( sympy_info )
@@ -137,28 +143,22 @@ def toggle_format_str( dirtyStr, newFormat ) :
     # need to transform raw formula variables into legit Python variables.
     # also, remove all apostrophes/double quotes!
     # replace chars :
-    #   [  --->  __OPENBRA__
-    #   ]  --->  __CLOSBRA__
-    #   (  --->  __OPENPAR__
-    #   )  --->  __CLOSPAR__
+    #   ([  --->  __OPENPARENBRA__
+    #   ])  --->  __CLOSBRAPAREN__
     #   ,  --->  __COMMA__
-    tmp0 = dirtyStr
-    tmp0 = tmp0.replace( "'", "" )
-    tmp0 = tmp0.replace( '"', "" )
-    tmp1 = tmp0.replace( "[", "__OPENBRA__" )
-    tmp2 = tmp1.replace( "]", "__CLOSBRA__" )
-    tmp3 = tmp2.replace( "(", "__OPENPAR__" )
-    tmp4 = tmp3.replace( ")", "__CLOSPAR__" )
-    tmp5 = tmp4.replace( ",", "__COMMA__" )
-    cleanResult = tmp5
+    tmp = dirtyStr
+    tmp = tmp.replace( "'", "" )
+    tmp = tmp.replace( '"', "" )
+    tmp = tmp.replace( "([", "__OPENPARENBRA__" )
+    tmp = tmp.replace( "])", "__CLOSBRAPAREN__" )
+    tmp = tmp.replace( ",", "__COMMA__" )
+    cleanResult = tmp
 
   elif newFormat == "legible" :
     # transform back into legible syntax
     cleanResult = dirtyStr
-    cleanResult = cleanResult.replace( "__OPENBRA__", "[" )
-    cleanResult = cleanResult.replace( "__CLOSBRA__", "]" )
-    cleanResult = cleanResult.replace( "__OPENPAR__", "(" )
-    cleanResult = cleanResult.replace( "__CLOSPAR__", ")" )
+    cleanResult = cleanResult.replace( "__OPENPARENBRA__", "([" )
+    cleanResult = cleanResult.replace( "__CLOSBRAPAREN__", "])" )
     cleanResult = cleanResult.replace( "__COMMA__"  , "," )
     cleanResult = cleanResult
 
@@ -179,6 +179,9 @@ def format_sympy( rawBooleanFmla ) :
   sympy_symbol_list = None # type string
 
   cleanFmla = toggle_format_str( rawBooleanFmla, "valid_vars" )
+
+  print "cleanFmla :"
+  print cleanFmla
 
   # --------------------------------------------------- #
   # populate sympy_expr
@@ -286,6 +289,9 @@ def toCNF_sympy( sympy_info ) :
   sympy_fmla = "~(" + sympy_fmla + ")"
   #sympy_fmla = sympy_fmla # not doing the last NOT
 
+  print "sympy_fmla"
+  print sympy_fmla
+
   print "Generating cnf formula..."
   result = sympy.to_cnf( sympy_fmla, simplify=False )
   #result = sympy.to_cnf( sympy_fmla, simplify=True  ) # SLOW! even on simplelog (>.<)'
@@ -294,6 +300,9 @@ def toCNF_sympy( sympy_info ) :
   # WARNING: sympy (rather sillily imo) overrides "replace" for Basic types.
   # bypassing with a format toggling function...
   result_str = toggle_format_str( str( result ), "legible" )
+
+  print "result_str :"
+  print result_str
 
   #tools.bp( __name__, inspect.stack()[0][3], " result_str = "  + str(result_str) )
 

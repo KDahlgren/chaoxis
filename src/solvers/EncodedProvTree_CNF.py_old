@@ -18,10 +18,10 @@ import AndFormula, OrFormula, Literal, solverTools
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
-packagePath  = os.path.abspath( __file__ + "/../.." )
-sys.path.append( packagePath )
+if not os.path.abspath( __file__ + "/../.." ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../.." )  )
 
-from utils import tools
+from utilities import tools
 
 # **************************************** #
 
@@ -32,13 +32,9 @@ class EncodedProvTree_CNF :
   ################
   #  ATTRIBUTES  #
   ################
-  rawformula            = None  # a BooleanFormula, not neccessarily in CNF
-  cnfformula            = None  # a CNF formula string
-  cnfformula_simplified = None  # a CNF formula string
-  crashFacts            = []
-  status                = False # boolean indicating whether fmla has clock facts.
-                                # False => no  clock facts in fmla
-                                # True  => yes clock facts in fmla
+  rawformula = None  # a BooleanFormula, not neccessarily in CNF
+  cnfformula = None  # a CNF formula string
+  crashFacts = []
 
   #################
   #  CONSTRUCTOR  #
@@ -58,28 +54,15 @@ class EncodedProvTree_CNF :
     # -------------------------------------------------------------------------------- #
     # convert the raw formulas into cnf
     # unsimplified version :
-    print "first call"
-    self.cnfformula = solverTools.convertToCNF( self.rawBooleanFmla_str )
+    self.cnfformula            = solverTools.convertToCNF( self.rawBooleanFmla_str )
 
-    # =============================================== #
-    # CASE : cnf formula contains no clock facts
-    if not "clock([" in self.cnfformula :
-      status = False
-      #tools.bp( __name__, inspect.stack()[0][3], "self.cnfformula = " + self.cnfformula )
+    # simplified version :
+    simp_raw_fmla              = self.simplify( self.rawBooleanFmla_simplified_str )
+    simp_raw_fmla              = self.resolveParens( simp_raw_fmla )
+    self.cnfformula_simplified = solverTools.convertToCNF( simp_raw_fmla )
 
-    # =============================================== #
-    # CASE : cnf formula contains clock facts
-    else :
-      # simplified version :
-      simp_raw_fmla              = self.simplify( self.rawBooleanFmla_simplified_str )
-      simp_raw_fmla              = self.resolveParens( simp_raw_fmla )
-      print "first call"
-      self.cnfformula_simplified = solverTools.convertToCNF( simp_raw_fmla )
-
-      # clean crashFacts
-      self.cleanCrashFacts()
-
-      status = True
+    # clean crashFacts
+    self.cleanCrashFacts()
 
 
   #######################
@@ -102,8 +85,6 @@ class EncodedProvTree_CNF :
   # 2. removes all self comms
   # 3. removes all crashes and collects the crashes in the crashFact list attribute
   def simplify( self, fmla ) :
-
-    print "in simplify : fmla = " + fmla
 
     simplified_fmla = self.purgePlaceholders( fmla )                   # remove PLACEHOLDERs
     simplified_fmla = self.removeSelfComms( simplified_fmla )          # remove self comms
@@ -183,7 +164,6 @@ class EncodedProvTree_CNF :
     # get subset representing self comms
     selfComms = []
     for cf in clockFactList :
-      print "cf = " + str( cf )
       factTuple = self.getContents( cf )
       if factTuple[0] == factTuple[1] :
         selfComms.append( cf )
@@ -212,13 +192,8 @@ class EncodedProvTree_CNF :
       elif clockFact[i] == ")" :
         closedParen = i
 
-    print "in getContents : clockFact = " + str( clockFact )
-
-    factContents      = clockFact[ openParen+2 : closedParen-1 ]
-    factContents_list = factContents.split( "," )
-
-    print "in getContents : factContents      = " + str( factContents )
-    print "in getContents : factContents_List = " + str( factContents_list )
+    factContents = clockFact[ openParen+2 : closedParen-1 ]
+    factContents_list = factContents.split( ", " )
 
     temp = []
     for f in factContents_list :
@@ -234,45 +209,23 @@ class EncodedProvTree_CNF :
   #########################
   def getClockFactList( self, fmla ) :
 
-    # remove excess whitespace
-    fmla = fmla.translate( None, string.whitespace)
-
-    print "in getClockFactList : fmla = " + fmla
-
     clockFactList = [] # initialize
 
     # get starting indexes for clock substrings
     indexList = []
     for i in range( 0, len(fmla) ) :
-
-      startingIndex = None
-      endingIndex   = None
-
       currChar = fmla[i]
       if i < len(fmla) - 8 :
         if fmla[i:i+8] == "clock(['" :
-          startingIndex = i
-
-          for j in range( i, len(fmla) ) :
-            if j < len(fmla) - 2 :
-              if fmla[j:j+2] == "])" :
-                endingIndex = j+2
-
-          indexList.append( [ startingIndex, endingIndex ] )
-
+          indexList.append( i )
       else :
         break
 
-    print "in getClockFactList : indexList = " + str( indexList )
-
     # retrive full clock facts
     for ind in indexList :
-      startingIndex = ind[0]
-      endingIndex   = ind[1]
-      clockFactList.append( fmla[startingIndex:endingIndex] )
+      clockFactList.append( fmla[ind:ind+27] )
 
     if not clockFactList == [] :
-      print "clockFactList = " + str( clockFactList )
       return clockFactList
     else :
       tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no clock facts in fmla = " + str( fmla ) )

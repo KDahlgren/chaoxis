@@ -230,8 +230,16 @@ class LDFICore :
         return return_array # [ conclusion/None, explanation/None, nextTriggerFault/None, noNewSolns/None ]
 
       else :
-        print "self.fault_id = " + str( self.fault_id )
-        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : illogical, captain. hit a vacuous result without injecting faults. Aborting..." )
+        #print "self.fault_id = " + str( self.fault_id )
+        #tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : illogical, captain. hit a vacuous result without injecting faults. Aborting..." )
+        conclusion   = None
+        explanation  = "Original Dedalus program is vacuously correct."
+        triggerFault = None
+        noNewSolns   = True
+
+        return_array = [ conclusion, explanation, triggerFault, noNewSolns ]
+
+        return return_array
 
 
     ###############################################
@@ -259,6 +267,20 @@ class LDFICore :
       if self.fault_id == 1 : 
         provTree_fmla = self.tree_to_CNF( provTreeComplete )
 
+        # ========================================= #
+        # CASE : no clock facts in cnf fmla.
+        #        exit early.
+        if not provTree_fmla.status :
+
+          conclusion   = "NoCounterExampleFound"
+          explanation  = "Program does not depend upon interesting clock facts." 
+          triggerFault = None
+          noNewSolns   = True
+
+          return [ conclusion, explanation, triggerFault, noNewSolns ]
+
+        # ========================================= #
+        # OTHERWISE :
         # grab the textual version of the fmla
         #self.initFmla    = provTree_fmla.cnfformula             # not simplified
         self.initFmla    = provTree_fmla.cnfformula_simplified  # simplified
@@ -571,12 +593,14 @@ class LDFICore :
         print "postrecords_eot = " + str(postrecords_eot)
     
       # !!! BREAK EARLY IF POST CONTAINS NO EOT RECORDS !!!
+      # should not happen...
       if len( postrecords_eot ) < 1 :
         tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : attempting to build a provenance tree when no post eot records exist. Aborting..." )
    
       # 000000000000000000000000000000000000000000000000000000000000000000 #
   
     # abort execution if evaluation results not accessible
+    # should not happen...
     else :
       sys.exit( "ERROR: No access to evaluation results.\nAborting..." ) # sanity check
   
@@ -624,28 +648,37 @@ class LDFICore :
   
     provTree_fmla = EncodedProvTree_CNF.EncodedProvTree_CNF( provTreeComplete )
   
-    if provTree_fmla.rawformula :
-      print ">>> provTree_fmla.rawformula = \n" + str( provTree_fmla.rawformula )
-      print
-      print ">>> provTree_fmla.rawformula_simplified = \n" + str( provTree_fmla.rawformula_simplified )
-      print
-      print ">>> provTree_fmla.rawformula.display() = \n" + str( provTree_fmla.rawformula.display() )
-      print
-      print ">>> provTree_fmla.rawformula_simplified.display() = \n" + str( provTree_fmla.rawformula_simplified.display() )
-      print
-      print ">>> provTree_fmla.cnfformula = \n" + str( provTree_fmla.cnfformula )
-      print
-      print ">>> provTree_fmla.cnfformula_simplified = \n" + str( provTree_fmla.cnfformula_simplified )
-      print
-
-      if OUTPUT_TREE_CNF_ON :
-        provTree_fmla.rawformula.graph()
-  
+    # ============================================ #
+    # CASE : no clock facts in cnf formula 
+    # exit early
+    if not provTree_fmla.status :
+      return provTree_fmla
+ 
+    # ============================================ #
+    # CASE : yes clock facts in cnf formula 
     else :
-      tools.bp( __name__, inspect.stack()[0][3], "ERROR: provTree_fmla.rawformula is empty. Aborting execution..." )
+      if provTree_fmla.rawformula :
+        print ">>> provTree_fmla.rawformula = \n" + str( provTree_fmla.rawformula )
+        print
+        print ">>> provTree_fmla.rawformula_simplified = \n" + str( provTree_fmla.rawformula_simplified )
+        print
+        print ">>> provTree_fmla.rawformula.display() = \n" + str( provTree_fmla.rawformula.display() )
+        print
+        print ">>> provTree_fmla.rawformula_simplified.display() = \n" + str( provTree_fmla.rawformula_simplified.display() )
+        print
+        print ">>> provTree_fmla.cnfformula = \n" + str( provTree_fmla.cnfformula )
+        print
+        print ">>> provTree_fmla.cnfformula_simplified = \n" + str( provTree_fmla.cnfformula_simplified )
+        print
+
+        if OUTPUT_TREE_CNF_ON :
+          provTree_fmla.rawformula.graph()
+ 
+      else :
+        tools.bp( __name__, inspect.stack()[0][3], "ERROR: provTree_fmla.rawformula is empty. Aborting execution..." )
   
-    return provTree_fmla
-  
+      return provTree_fmla 
+ 
   
   ###############
   #  SOLVE CNF  #

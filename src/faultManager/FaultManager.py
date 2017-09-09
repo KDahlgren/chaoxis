@@ -111,8 +111,8 @@ class FaultManager :
       print
 
       # CASE : fmla suggested by spec is not satisfiable. therefore, protocol is correct.
-      if oldTriggerFault == None and self.triggerFault == None :
-        print "* Final Conclusion : input is PyLDFI-certified to be correct."
+      if oldTriggerFault == None and self.triggerFault == None or self.noNewSolns :
+        print "* Final Conclusion : input specification is PyLDFI-certified."
         print
         print "**************************************************************"
         print
