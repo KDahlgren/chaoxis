@@ -45,41 +45,65 @@ class EncodedProvTree_CNF :
   #################
   def __init__( self, provTree ) :
 
+    DISPLAY_RAW_FMLA = tools.getConfig( "SOLVERS", "DISPLAY_RAW_FMLA", bool )
+
     # -------------------------------------------------------------------------------- #
     # build raw formulas directly from rule-goal graphs
-    self.rawformula            = self.convertToBoolean( provTree )
+
+    # build raw fmla from prov tree (contains all fact nodes relevant to execution provenance)
+    if DISPLAY_RAW_FMLA == True :
+      self.rawformula = self.convertToBoolean( provTree )
+
+    # build simplified prov tree fmla (contains only the clock nodes relevant to execution provenance)
     self.rawformula_simplified = self.convertToBoolean_simplified( provTree )
 
     # -------------------------------------------------------------------------------- #
-    # trees of AndFormulas and OrFormulas
-    self.rawBooleanFmla_str            = self.rawformula.display()
+    # build string versions
+
+    if DISPLAY_RAW_FMLA == True :
+      self.rawBooleanFmla_str            = self.rawformula.display()
+
     self.rawBooleanFmla_simplified_str = self.rawformula_simplified.display()
+
+    #tools.bp( __name__, inspect.stack()[0][3], "self.rawBooleanFmla_simplified_str :\n" + self.rawBooleanFmla_simplified_str )
 
     # -------------------------------------------------------------------------------- #
     # convert the raw formulas into cnf
     # unsimplified version :
-    print "first call"
-    self.cnfformula = solverTools.convertToCNF( self.rawBooleanFmla_str )
+
+    if DISPLAY_RAW_FMLA == True :
+      print "Building _complete_ raw boolean fmla..."
+      self.cnfformula = solverTools.convertToCNF( self.rawBooleanFmla_str )
 
     # =============================================== #
-    # CASE : cnf formula contains no clock facts
-    if not "clock([" in self.cnfformula :
+    # CASE : formula contains no clock facts
+    if not "clock([" in self.rawBooleanFmla_simplified_str :
       status = False
       #tools.bp( __name__, inspect.stack()[0][3], "self.cnfformula = " + self.cnfformula )
 
     # =============================================== #
-    # CASE : cnf formula contains clock facts
+    # CASE : formula contains clock facts
     else :
       # simplified version :
+      print "self.rawBooleanFmla_simplified_str :\n" + self.rawBooleanFmla_simplified_str
+
+      # removes all PLACEHOLDERS for non-clock facts, all self comms
       simp_raw_fmla              = self.simplify( self.rawBooleanFmla_simplified_str )
+      print "simp_raw_fmla (pass1) : " + str( simp_raw_fmla )
+
+      # resolve parentheses, if applicable
       simp_raw_fmla              = self.resolveParens( simp_raw_fmla )
-      print "first call"
+      print "simp_raw_fmla (pass2) : " + str( simp_raw_fmla )
+
+      print "Building _simplified_ raw boolean fmla..."
       self.cnfformula_simplified = solverTools.convertToCNF( simp_raw_fmla )
 
       # clean crashFacts
       self.cleanCrashFacts()
 
       status = True
+
+      tools.bp( __name__, inspect.stack()[0][3], "shithere." )
 
 
   #######################
@@ -93,6 +117,7 @@ class EncodedProvTree_CNF :
       c = c.replace( "'", "" )                    # clean apostrophes for consistency
       tmp.append( c )
     self.crashFacts = tmp
+
 
   ##############
   #  SIMPLIFY  #
@@ -153,11 +178,18 @@ class EncodedProvTree_CNF :
   ################################
   def collectAndRemoveCrashes( self, fmla ) :
 
+    print "in collectAndRemoveCrashes : fmla = " + fmla
+
     # get list of all clock facts
     clockFactList = self.getClockFactList( fmla )
 
+    print " in collectAndRemoveCrashes : clockFactList = " + str( clockFactList )
+
     # get subset representing crashes
     for cf in clockFactList :
+
+      print "Calling getContents from collectAndRemoveCrashes"
+
       factTuple = self.getContents( cf )
       if factTuple[1] == "_" :
         self.crashFacts.append( cf )
@@ -177,13 +209,20 @@ class EncodedProvTree_CNF :
   #######################
   def removeSelfComms( self, fmla ) :
 
+    print " in removeSelfComms : fmla = " + str( fmla )
+
     # get list of all clock facts
     clockFactList = self.getClockFactList( fmla )
+
+    print " in removeSelfComms : clockFactList = " + str( clockFactList )
 
     # get subset representing self comms
     selfComms = []
     for cf in clockFactList :
       print "cf = " + str( cf )
+
+      print "Calling getContents from removeSelfComms"
+
       factTuple = self.getContents( cf )
       if factTuple[0] == factTuple[1] :
         selfComms.append( cf )
@@ -232,6 +271,8 @@ class EncodedProvTree_CNF :
   #########################
   #  GET CLOCK FACT LIST  #
   #########################
+  # get complete list of clock facts.
+  # return after removing duplicates.
   def getClockFactList( self, fmla ) :
 
     # remove excess whitespace
@@ -239,41 +280,40 @@ class EncodedProvTree_CNF :
 
     print "in getClockFactList : fmla = " + fmla
 
-    clockFactList = [] # initialize
+    clockList = [] # initialize
 
-    # get starting indexes for clock substrings
-    indexList = []
-    for i in range( 0, len(fmla) ) :
+    # parse out all individual clock facts from fmla
+    fmla = fmla.replace( "([", "__OPENPARENBRA__" )
+    fmla = fmla.replace( "])", "__CLOSEBRAPAREN__" )
+    fmla = fmla.replace( "(", "" )
+    fmla = fmla.replace( ")", "" )
 
-      startingIndex = None
-      endingIndex   = None
+    fmla = fmla.split( "AND" )
 
-      currChar = fmla[i]
-      if i < len(fmla) - 8 :
-        if fmla[i:i+8] == "clock(['" :
-          startingIndex = i
+    tmp = []
+    for f in fmla :
+      f = f.split( "OR" )
+      tmp.extend( f )
+    clockList = tmp
 
-          for j in range( i, len(fmla) ) :
-            if j < len(fmla) - 2 :
-              if fmla[j:j+2] == "])" :
-                endingIndex = j+2
+    # make unique
+    tmp1 = []
+    for s in clockList :
+      if not s in tmp1 :
+        tmp1.append( s )
+    clockList = tmp1
 
-          indexList.append( [ startingIndex, endingIndex ] )
+    # restore original format
+    tmp2 = []
+    for c in clockList :
+      c = c.replace( "__OPENPARENBRA__", "([" )
+      c = c.replace( "__CLOSEBRAPAREN__", "])" )
+      tmp2.append( c )
+    clockList = tmp2
 
-      else :
-        break
-
-    print "in getClockFactList : indexList = " + str( indexList )
-
-    # retrive full clock facts
-    for ind in indexList :
-      startingIndex = ind[0]
-      endingIndex   = ind[1]
-      clockFactList.append( fmla[startingIndex:endingIndex] )
-
-    if not clockFactList == [] :
-      print "clockFactList = " + str( clockFactList )
-      return clockFactList
+    if not clockList == [] :
+      print "clockList = " + str( clockList )
+      return clockList
     else :
       tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : no clock facts in fmla = " + str( fmla ) )
 
@@ -371,9 +411,11 @@ class EncodedProvTree_CNF :
     return self.cnfformula
 
 
-  ########################
-  #  CONVERT TO BOOLEAN  #
-  ########################
+  #####################################
+  #  CONVERT TO BOOLEAN (DEPRECATED)  #
+  #####################################
+  # input provTree object
+  # output Boolean formula object
   def convertToBoolean( self, provTree ) :
   
     #if not provTree.isFinalState() :
@@ -385,8 +427,9 @@ class EncodedProvTree_CNF :
     # case prov tree rooted at an ultimate goal
     #
     # always only one right goal => builds forumlas up from the left with parens:
-    #    ( ( ... ) OP fmla_m-1 ) OP fmla_m
+    #    ( ( ( ... ) OP fmla_m-1 ) OP fmla_m )
     #
+    # resulting formula 'AND's the prov trees of all post facts
     if provTree.isFinalState() :
       if len( provTree.subtrees ) > 0 :
         fmla      = AndFormula.AndFormula() # empty
@@ -470,15 +513,19 @@ class EncodedProvTree_CNF :
       rightGoal = provTree.root.descendants[-1]  # not a list
   
       # branch on left goals contents
+
+      # CASE multiple left goals
       if len( leftGoals ) > 1 :
         #fmla.left  = self.getLeftFmla( leftGoals, "OR" )
         fmla.left  = self.getLeftFmla( leftGoals, "AND" )
         fmla.right = self.convertToBoolean( rightGoal )
   
+      # CASE not left goals
       elif len( leftGoals ) < 1 :
         fmla.unary = self.convertToBoolean( rightGoal )
   
-      else : # leftGoals contains only one goal
+      # case only one left goal
+      else :
         fmla.left  = self.convertToBoolean( leftGoals[0] )
         fmla.right = self.convertToBoolean( rightGoal )
   
@@ -509,7 +556,7 @@ class EncodedProvTree_CNF :
     # case prov tree rooted at an ultimate goal
     #
     # always only one right goal => builds forumlas up from the left with parens:
-    #    ( ( ... ) OP fmla_m-1 ) OP fmla_m
+    #    ( ( ( ... ) OP fmla_m-1 ) OP fmla_m )
     #
     if provTree.isFinalState() :
       if len( provTree.subtrees ) > 0 :
@@ -555,7 +602,8 @@ class EncodedProvTree_CNF :
   
         # branch on left rules contents
         if len( leftRules ) > 1 :
-          fmla.left   = self.getLeftFmla_simplified( leftRules, "AND" )
+          fmla.left   = self.getLeftFmla_simplified( leftRules, "OR" )
+          #fmla.left   = self.getLeftFmla_simplified( leftRules, "AND" )
           fmla.right  = self.convertToBoolean_simplified( rightRule )
           fmla.unary  = None
   
@@ -582,7 +630,7 @@ class EncodedProvTree_CNF :
         else :
           print " > Adding placeholder to fmla."
           fmla = Literal.Literal( "_PLACEHOLDER_" ) # <--- BASE CASE!!!
-          print " ...done adding _PLACEHOLDER to fmla."
+          print " ...done adding _PLACEHOLDER_ to fmla."
   
       # case universe implodes
       else :
@@ -624,8 +672,45 @@ class EncodedProvTree_CNF :
     # sanity check
     if fmla.left and fmla.unary :
       tools.bp( __name__, inspect.stack()[0][3], "ERROR4: self.left and self.unary populated for the same formula!")
-  
+ 
+    print "-------------------------------------------------------------"
+    if fmla.left :
+      print "fmla.left.display() = " + str( fmla.left.display() )
+    else :
+      print "fmla.left.display() = " + str( fmla.left )
+    print 
+    if fmla.left :
+      print "fmla.right.display() = " + str( fmla.right.display() )
+    else :
+      print "fmla.right.display() = " + str( fmla.right )
+    print
+    if fmla :
+      print "fmla = " + str( fmla.display() )
+    else :
+      print "fmla = " + str( fmla )
+    print "-------------------------------------------------------------"
+
+    #if self.rightSubfmlaContainsLeftSubfmla( fmla.left, fmla.right ) :
+    #  tools.bp( __name__, inspect.stack()[0][3], "stophere"  )
+
     return fmla
+
+
+  #########################################
+  #  RIGHT SUBFMLA CONTAINS LEFT SUBFMLA  #
+  #########################################
+  def rightSubfmlaContainsLeftSubfmla( self, leftfmla, rightfmla ) :
+
+    # -------------------------------------------- #
+    # pass if either fmla is "None"
+    if (not leftfmla) or (not rightfmla ) :
+      return False
+
+    # -------------------------------------------- #
+    # find highest ops
+    # split right fmla on highest ops
+    # check if left fmla is a member of the right fmla component list.
+    return True
 
 
   ##################

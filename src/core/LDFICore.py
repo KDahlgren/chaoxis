@@ -38,7 +38,7 @@ from visualizations import vizTools
 
 DEBUG                = tools.getConfig( "CORE", "LDFI_DEBUG", bool )
 PROV_TREES_ON        = tools.getConfig( "CORE", "LDFI_PROV_TREES_ON", bool )
-OUTPUT_PROV_TREES_ON = tools.getConfig( "CORE", "LDFI_OUTPUT_PROV_TREES_ON", bool )
+OUTPUT_PROV_TREES_ON = tools.getConfig( "CORE", "LDFI_OUTPUT_PROV_TREES_ON", bool ) # defaults to True
 OUTPUT_TREE_CNF_ON   = tools.getConfig( "CORE", "LDFI_OUTPUT_TREE_CNF_ON", bool )
 
 
@@ -56,6 +56,7 @@ class LDFICore :
   allProgramData_noClocks = []    # [ allProgramLines (minus clocks), tableListArray ]
   fault_id                = 1     # id of the current fault to inject. start at 1 for pycosat.
   solver                  = None  # an instance of the chosen solver
+  metricLogger            = None  # an instance of the chosen metric logging class/tool/thing
 
   numCrashes              = 0     # number of crashes allowable in solutions for this execution
   crashFacts              = None  # the list of crash facts involved in a solution
@@ -85,10 +86,11 @@ class LDFICore :
   #################
   #  CONSTRUCTOR  #
   #################
-  def __init__( self, argDict, cursor, solver ) :
+  def __init__( self, argDict, cursor, solver, metricLogger ) :
     self.argDict             = argDict
     self.cursor              = cursor
     self.solver              = solver
+    self.metricLogger        = metricLogger
     self.no_soln_constraints = tools.getConfig( "GENERAL", "NO_SOLN_CONSTRAINTS", bool )
     self.N                   = tools.getConfig( "GENERAL", "N", int )
     self.numCrashes          = self.argDict[ "crashes" ]
@@ -628,10 +630,19 @@ class LDFICore :
     #provTreeComplete.createGraph( None, iter_count )
     #tools.bp( __name__, inspect.stack()[0][3], "built prov tree and created graph." )
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
- 
-    if OUTPUT_PROV_TREES_ON :
-      provTreeComplete.createGraph( None, iter_count )
+
+    # materialize tree 
+    provTreeComplete.createGraph( None, iter_count )
     # ------------------------------------------------------------------------------ #
+
+    # generate simplified tree
+    provTree_simp = provTreeComplete.generate_SimpTree()
+    self.metricLogger.set_rgg_metrics_simplified( provTree_simp )
+
+    tools.bp( __name__, inspect.stack()[0][3], "get simplified trees!" )
+
+    # record metrics
+    self.metricLogger.set_rgg_metrics( provTreeComplete )
 
     return provTreeComplete
   

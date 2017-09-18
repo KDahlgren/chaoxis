@@ -239,7 +239,7 @@ def parseClock( preferredSoln ) :
 # extract the data from the clock fact
 def getContents( clockFact ) :
 
-  if DEBUG :
+  if True :
     print ">clockFact = " + str( clockFact )
 
   openParen   = None
@@ -250,7 +250,7 @@ def getContents( clockFact ) :
     elif clockFact[i] == ")" :
       closedParen = i
 
-  if DEBUG :
+  if True :
     print "done with " + str( clockFact ) + " : " + str(clockFact[ openParen+2 : closedParen-1 ])
 
   return clockFact[ openParen+2 : closedParen-1 ]

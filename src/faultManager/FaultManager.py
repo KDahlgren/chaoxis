@@ -23,7 +23,7 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
 from core      import LDFICore
-from utilities import tools
+from utilities import tools, MetricLogger
 from solvers   import solverTools
 
 # **************************************** #
@@ -64,8 +64,12 @@ class FaultManager :
     # create a Solver_PYCOSAT insance
     solver = solverTools.solveCNF( "PYCOSAT" )
 
+    # create a MetricLogger instance
+    data_dir_path = os.path.abspath( os.getcwd() ) + "/data/"
+    metricLogger  = MetricLogger.MetricLogger( data_dir_path )
+
     # instantiate LDFICore
-    self.core = LDFICore.LDFICore( self.argDict, self.cursor, solver )
+    self.core = LDFICore.LDFICore( self.argDict, self.cursor, solver, metricLogger )
 
 
   #########
