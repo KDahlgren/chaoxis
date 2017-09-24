@@ -72,8 +72,8 @@ def getConjuncts( cnfFormula_str ) :
   for c in clauses :
     if DEBUG :
       print "c = " + str( c )
-    c = c.replace( "([", "__OPENPAR__" + "__OPENBRA__" )
-    c = c.replace( "])", "__CLOSBRA__" + "__CLOSPAR__" )
+    c = c.replace( "([", "__OPENPARENBRA__" )
+    c = c.replace( "])", "__CLOSBRAPAREN__" )
     c = c.replace( ",", "__COMMA__" )
     c = c.replace( "(", "" )
     c = c.replace( ")", "" )
@@ -152,6 +152,8 @@ def toggle_format_str( dirtyStr, newFormat ) :
     tmp = tmp.replace( "([", "__OPENPARENBRA__" )
     tmp = tmp.replace( "])", "__CLOSBRAPAREN__" )
     tmp = tmp.replace( ",", "__COMMA__" )
+    #tmp = tmp.replace( "goal->", "goal__ARROW__" )
+    tmp = tmp.replace( "goal->", "" )
     cleanResult = tmp
 
   elif newFormat == "legible" :
@@ -160,6 +162,7 @@ def toggle_format_str( dirtyStr, newFormat ) :
     cleanResult = cleanResult.replace( "__OPENPARENBRA__", "([" )
     cleanResult = cleanResult.replace( "__CLOSBRAPAREN__", "])" )
     cleanResult = cleanResult.replace( "__COMMA__"  , "," )
+    #cleanResult = cleanResult.replace( "goal__ARROW__","goal->" )
     cleanResult = cleanResult
 
   else :

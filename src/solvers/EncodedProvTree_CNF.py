@@ -23,6 +23,13 @@ sys.path.append( packagePath )
 
 from utils import tools
 
+# ------------------------------------------------------ #
+# import orik packages HERE!!!
+if not os.path.abspath( __file__ + "/../../../lib/orik/src") in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../../../lib/orik/src") )
+
+from derivation import ProvTree
+
 # **************************************** #
 
 DEBUG = tools.getConfig( "SOLVERS", "ENCODEDPROVTREE_CNF_DEBUG", bool )
@@ -32,13 +39,11 @@ class EncodedProvTree_CNF :
   ################
   #  ATTRIBUTES  #
   ################
-  rawformula            = None  # a BooleanFormula, not neccessarily in CNF
-  cnfformula            = None  # a CNF formula string
-  cnfformula_simplified = None  # a CNF formula string
-  crashFacts            = []
-  status                = False # boolean indicating whether fmla has clock facts.
-                                # False => no  clock facts in fmla
-                                # True  => yes clock facts in fmla
+  simplified_cnf_fmla_list  = []
+  crashFacts_list           = []
+  status_list               = []   # list of booleans indicating whether fmla has clock facts.
+                                   # False => no  clock facts in fmla
+                                   # True  => yes clock facts in fmla
 
   #################
   #  CONSTRUCTOR  #
@@ -50,60 +55,87 @@ class EncodedProvTree_CNF :
     # -------------------------------------------------------------------------------- #
     # build raw formulas directly from rule-goal graphs
 
-    # build raw fmla from prov tree (contains all fact nodes relevant to execution provenance)
-    if DISPLAY_RAW_FMLA == True :
-      self.rawformula = self.convertToBoolean( provTree )
-
     # build simplified prov tree fmla (contains only the clock nodes relevant to execution provenance)
-    self.rawformula_simplified = self.convertToBoolean_simplified( provTree )
+    provTreeList = self.getIndividualProvTreesFromFinalState( provTree )
+
+    simplified_raw_fmla_list = []
+    for provTree in provTreeList :
+      simplified_raw_fmla_list.append( self.convertToBoolean_simplified( provTree ) )
 
     # -------------------------------------------------------------------------------- #
     # build string versions
 
-    if DISPLAY_RAW_FMLA == True :
-      self.rawBooleanFmla_str            = self.rawformula.display()
-
-    self.rawBooleanFmla_simplified_str = self.rawformula_simplified.display()
-
-    #tools.bp( __name__, inspect.stack()[0][3], "self.rawBooleanFmla_simplified_str :\n" + self.rawBooleanFmla_simplified_str )
+    simplified_raw_fmla_list_str = []
+    for fmla in simplified_raw_fmla_list :
+      simplified_raw_fmla_list_str.append( fmla.display() )
 
     # -------------------------------------------------------------------------------- #
     # convert the raw formulas into cnf
-    # unsimplified version :
 
-    if DISPLAY_RAW_FMLA == True :
-      print "Building _complete_ raw boolean fmla..."
-      self.cnfformula = solverTools.convertToCNF( self.rawBooleanFmla_str )
+    print "simplified_raw_fmla_list_str : " + str( simplified_raw_fmla_list_str )
+    for fmla in simplified_raw_fmla_list_str :
 
-    # =============================================== #
-    # CASE : formula contains no clock facts
-    if not "clock([" in self.rawBooleanFmla_simplified_str :
-      status = False
-      #tools.bp( __name__, inspect.stack()[0][3], "self.cnfformula = " + self.cnfformula )
+      # CASE : formula contains no clock facts
+      if not "clock([" in fmla :
+        self.status_list.append( False )
 
-    # =============================================== #
-    # CASE : formula contains clock facts
+      # CASE : formula contains clock facts
+      else :
+
+        # removes all PLACEHOLDERS for non-clock facts, all self comms
+        new_fmla = self.simplify( fmla )
+
+        # resolve parentheses, if applicable
+        new_fmla = self.resolveParens( new_fmla )
+
+        # generate final cnf version
+        self.simplified_cnf_fmla_list.append( solverTools.convertToCNF( new_fmla ) )
+
+        # clean crashFacts
+        self.cleanCrashFacts()
+
+        self.status_list.append( True )
+
+
+  ################################################
+  #  GET INDIVIDUAL PROV TREES FROM FINAL STATE  #
+  ################################################
+  def getIndividualProvTreesFromFinalState( self, fullProvTree ) :
+
+    print "subtrees : " + str( fullProvTree.subtrees )
+
+    # CASE : fullProvTree already references only a single post fact.
+    if len( fullProvTree.subtrees ) > 0 and len( fullProvTree.subtrees ) < 1 :
+      return [ fullProvTree ]
+
+    # CASE : fullProvTree has multiple descendants
+    elif len( fullProvTree.subtrees ) > 1 :
+
+      treeList = []
+      for i in range(0,len(fullProvTree.subtrees)) :
+        print " i = " + str( i )
+        newProvTree = self.getIndividualProvTreesFromFinalState_helper( i, fullProvTree )
+        treeList.append( newProvTree )
+
+      return treeList
+
+    # CASE : no post facts?
     else :
-      # simplified version :
-      print "self.rawBooleanFmla_simplified_str :\n" + self.rawBooleanFmla_simplified_str
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : whaaaaA? The final state has no descendants? How did we get this far? Aborting..." )
 
-      # removes all PLACEHOLDERS for non-clock facts, all self comms
-      simp_raw_fmla              = self.simplify( self.rawBooleanFmla_simplified_str )
-      print "simp_raw_fmla (pass1) : " + str( simp_raw_fmla )
 
-      # resolve parentheses, if applicable
-      simp_raw_fmla              = self.resolveParens( simp_raw_fmla )
-      print "simp_raw_fmla (pass2) : " + str( simp_raw_fmla )
+  #######################################################
+  #  GET INDIVIDUAL PROV TREES FROM FINAL STATE HELPER  #
+  #######################################################
+  def getIndividualProvTreesFromFinalState_helper( self, index, fullProvTree ) :
 
-      print "Building _simplified_ raw boolean fmla..."
-      self.cnfformula_simplified = solverTools.convertToCNF( simp_raw_fmla )
+    newProvTree = ProvTree.ProvTree( fullProvTree.rootname, fullProvTree.parsedResults, fullProvTree.cursor )
+    newProvTree.subtrees = fullProvTree.subtrees
+    newProvTree.nodeset  = fullProvTree.nodeset
+    newProvTree.edgeset  = fullProvTree.edgeset
+    newProvTree.subtrees = [ newProvTree.subtrees[index] ]
 
-      # clean crashFacts
-      self.cleanCrashFacts()
-
-      status = True
-
-      tools.bp( __name__, inspect.stack()[0][3], "shithere." )
+    return newProvTree
 
 
   #######################
@@ -111,12 +143,17 @@ class EncodedProvTree_CNF :
   #######################
   # clean crash facts for formatting consistency
   def cleanCrashFacts( self ) :
-    tmp = []
-    for c in self.crashFacts :
-      c = c.translate( None, string.whitespace )  # clean extra whitespace for consistency
-      c = c.replace( "'", "" )                    # clean apostrophes for consistency
-      tmp.append( c )
-    self.crashFacts = tmp
+
+    tmp_list = []
+    for crashList in self.crashFacts_list :
+      tmp = []
+      for c in crashList :
+        c = c.translate( None, string.whitespace )  # clean extra whitespace for consistency
+        c = c.replace( "'", "" )                    # clean apostrophes for consistency
+        tmp.append( c )
+      tmp_list.append( tmp )
+
+    self.crashFact_list = tmp_list
 
 
   ##############
@@ -186,21 +223,23 @@ class EncodedProvTree_CNF :
     print " in collectAndRemoveCrashes : clockFactList = " + str( clockFactList )
 
     # get subset representing crashes
+    crashFacts = []
     for cf in clockFactList :
 
       print "Calling getContents from collectAndRemoveCrashes"
 
       factTuple = self.getContents( cf )
       if factTuple[1] == "_" :
-        self.crashFacts.append( cf )
+        crashFacts.append( cf )
 
     # remove crashes from fmla
-    for cf in self.crashFacts :
+    for cf in crashFacts :
       fmla = fmla.replace( cf, "_PLACEHOLDER_" )
 
     #tools.bp( __name__, inspect.stack()[0][3], "fmla = " + str( fmla ) )
     fmla = self.purgePlaceholders( fmla )
 
+    self.crashFacts_list.append( crashFacts )
     return fmla
 
 
@@ -415,7 +454,7 @@ class EncodedProvTree_CNF :
   #  CONVERT TO BOOLEAN (DEPRECATED)  #
   #####################################
   # input provTree object
-  # output Boolean formula object
+  # output list of Boolean formula objects st one formula per post fact.
   def convertToBoolean( self, provTree ) :
   
     #if not provTree.isFinalState() :

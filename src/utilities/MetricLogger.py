@@ -44,10 +44,10 @@ class MetricLogger() :
   #  CONSTRUCTOR  #
   #################
   # empty
-  def __init__( self, save_dir ) :
+  def __init__( self, save_dir, specialString ) :
 
     self.save_dir  = save_dir
-    self.save_path = self.save_dir + "metrics_dump" + ".txt"
+    self.save_path = self.save_dir + "metrics_dump" + "_" + specialString + ".txt"
 
 
   ##################
@@ -224,7 +224,6 @@ class MetricLogger() :
   # input pydot edgeset, which is a list of pydot node maps
   # output height of tree
   def getHeight( self, edgeset ) :
-
 
     for e in edgeset :
       for f in e :

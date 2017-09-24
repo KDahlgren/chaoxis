@@ -305,23 +305,23 @@ def finalizeNewProg( irCursor ) :
 
   # ---------------------------------------------------- #
   # copy all False clock facts into the new program
-  newClockFacts_comp = []
-  for data in comp :
-    src       = data[0]
-    dest      = data[1]
-    sndTime   = data[2]
-    delivTime = data[3]
-    # replace any single quotes with double quotes
-    src  = src.replace(  '"', "'" )
-    dest = dest.replace( '"', "'" )
-    newClockLine = 'clock("' + src + '","' + dest + '",' + str( sndTime ) + "," + str( delivTime ) + ") ;\n"
-    newClockFacts_comp.append( newClockLine )
+  #newClockFacts_comp = []
+  #for data in comp :
+  #  src       = data[0]
+  #  dest      = data[1]
+  #  sndTime   = data[2]
+  #  delivTime = data[3]
+  #  # replace any single quotes with double quotes
+  #  src  = src.replace(  '"', "'" )
+  #  dest = dest.replace( '"', "'" )
+  #  newClockLine = 'clock("' + src + '","' + dest + '",' + str( sndTime ) + "," + str( delivTime ) + ") ;\n"
+  #  newClockFacts_comp.append( newClockLine )
 
-  # concatenate all clock facts into a single line
-  newClockLines = None
-  newClockLines = "".join( newClockFacts_comp )
-  if not newClockLines :
-    tools.bp( __name__, inspect.stack()[0][3], "ERROR: no new not_clock configurations to explore." )
+  ## concatenate all clock facts into a single line
+  #newClockLines = None
+  #newClockLines = "".join( newClockFacts_comp )
+  #if not newClockLines :
+  #  tools.bp( __name__, inspect.stack()[0][3], "ERROR: no new not_clock configurations to explore." )
 
   # huh? why add complement clock facts??
   #newClockFacts.extend( newClockFacts_comp )

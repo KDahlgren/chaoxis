@@ -29,7 +29,6 @@ log(Node, Pload) :- bcast(Node, Pload);
 missing_log(A, Pl) :- log(X, Pl), node(X, A), notin log(A, Pl) ;
 
 // invariants
-//pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1, notin crash(X, X, _);
 pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1 ;
 post(X, Pl) :- log(X, Pl), notin missing_log(_, Pl);
 

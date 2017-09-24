@@ -44,12 +44,27 @@ class Solver_PYCOSAT :
   prevLastSoln    = None  # maintain the previous last soln. 
                           # if current last soln == prev last soln, 
                           # then no new solutions exist.
+  prevFmla        = None  # string. remember the formula from the previous solve.
+
 
   #################
   #  CONSTRUCTOR  #
   #################
   def __init__( self, initFmla ) :
     pass
+
+
+  #################################
+  #  RESET SOLN ATTEMPT TRACKERS  #
+  #################################
+  def resetSolnAttemptTrackers( self ) :
+
+    self.fmlaVars        = None
+    self.satformula      = None
+    self.prevSolnAttempt = 0
+    self.currSolnAttempt = 1
+    self.prevLastSoln    = None
+    self.prevFmla        = None
 
 
   ##############
@@ -59,6 +74,16 @@ class Solver_PYCOSAT :
 
     # set current fmla
     self.initFmla   = cnf_str
+    if self.prevFmla and self.initFmla == self.prevFmla :
+      pass
+    elif self.prevFmla and not self.initFmla == self.prevFmla :
+      self.resetSolnAttemptTrackers()
+    elif not self.prevFmla :
+      self.prevFmla = self.initFmla
+    else :
+      tools.bp( __name__, inspect.stack()[0][3], "wot?" )
+
+    # set solver parameters
     self.fmlaVars   = SATVars_PYCOSAT.SATVars_PYCOSAT( )
     self.satformula = []
 
@@ -140,12 +165,15 @@ class Solver_PYCOSAT :
 
     # grab a set of new solutions
     solnSet = self.getSolnSet( buffersize )
+
+    print "solnSet : " + str( solnSet )
  
     # convert solutions into trigger faults
     triggerFaultSet = []
     for aSoln in solnSet :
       triggerFaultSet.append( self.convertToTrigger( aSoln ) )
 
+    print "setOfNewTriggerFaults : triggerFaultSet : " + str( triggerFaultSet )
     return triggerFaultSet
 
 
@@ -205,12 +233,13 @@ class Solver_PYCOSAT :
 
     print ">> legible soln set = " + str( legibleSolnSet )
 
+    print "self.initFmla here1 = " + self.initFmla
+
     # pycosat will return the same list if currSolnAttempt exceeds 
     # maximum number of unique solutions.
     # break if last element of new soln list is identical to the last
     # element of the previous soln list.
     if fullSolnList[-1] == self.prevLastSoln :
-      #tools.bp( __name__, inspect.stack()[0][3], "no new solns!" )
       return []
 
     # otherwise, new solutions exist.
@@ -221,6 +250,8 @@ class Solver_PYCOSAT :
       print
       self.prevLastSoln = fullSolnList[-1] # reset previous last soln
 
+      print "self.initFmla here = " + self.initFmla
+      #if self.initFmla == "" :
       return legibleSolnSet
 
 
@@ -265,7 +296,8 @@ class Solver_PYCOSAT :
     triggerFault = []
     for literal in soln :
 
-      if DEBUG :
+      if True :
+      #if DEBUG :
         print "* literal = " + str( literal )
 
       if "clock(" in literal :                # trigger faults contain only clock facts

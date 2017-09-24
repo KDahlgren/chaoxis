@@ -23,7 +23,7 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
 from core      import LDFICore
-from utilities import tools, MetricLogger
+from utilities import tools
 from solvers   import solverTools
 
 # **************************************** #
@@ -45,10 +45,14 @@ class FaultManager :
   # the instance of LDFICore
   core = None
 
+  # the index of the cnf fmla in core to examine in this iteration
+  fmla_index = 0
+
   # transient data ( change per iteration of run() )
   conclusion   = None  # bug conclusion = None / FoundCounterexample / NoCounterexampleFound
   triggerFault = None  # the fault to inject in the next iteration
   noNewSolns   = None  # a boolean for controlling the infinite loop over the LDFI core.
+  currFmla     = None  # string or None.
 
   # --------------------------------- #
 
@@ -64,12 +68,8 @@ class FaultManager :
     # create a Solver_PYCOSAT insance
     solver = solverTools.solveCNF( "PYCOSAT" )
 
-    # create a MetricLogger instance
-    data_dir_path = os.path.abspath( os.getcwd() ) + "/data/"
-    metricLogger  = MetricLogger.MetricLogger( data_dir_path )
-
     # instantiate LDFICore
-    self.core = LDFICore.LDFICore( self.argDict, self.cursor, solver, metricLogger )
+    self.core = LDFICore.LDFICore( self.argDict, self.cursor, solver )
 
 
   #########
@@ -87,7 +87,7 @@ class FaultManager :
 
       # run LDFI workflow and gather results
       # results := [ conclusion/None, noNewSolns/None, triggerFault/None ]
-      results = self.core.run_workflow( self.triggerFault )
+      results = self.core.run_workflow( self.triggerFault, self.fmla_index )
 
       # collect old fault for records
       oldTriggerFault = self.triggerFault
@@ -99,36 +99,50 @@ class FaultManager :
       self.explanation  = results[1]
       self.triggerFault = results[2]
       self.noNewSolns   = results[3]
+      self.currFmla     = results[4]
 
       # display results
       print
       print "**************************************************************"
       print "* ::: RESULTS :::"
       print "* FAULT MANAGER RUN() on fault_id    : " + str( self.core.fault_id )
+      print "* self.fmla_index                    : " + str( self.fmla_index    )
       print "* self.conclusion                    : " + str( self.conclusion    )
       print "* self.explanation                   : " + str( self.explanation   )
       print "* self.noNewSolns                    : " + str( self.noNewSolns    )
       print "* COMPLETED run_workflow() for fault : " + str( oldTriggerFault    )
       if not self.noNewSolns :
-        print "* NEXT trigger fault                 : " + str( self.triggerFault  )
+        print "* NEXT trigger fault               : " + str( self.triggerFault  )
+        print
+        print "* currFmla :"
+        print self.currFmla
       print "**************************************************************"
       print
 
       # CASE : fmla suggested by spec is not satisfiable. therefore, protocol is correct.
       if oldTriggerFault == None and self.triggerFault == None or self.noNewSolns :
-        print "* Final Conclusion : input specification is PyLDFI-certified."
-        print
-        print "**************************************************************"
-        print
-        break
+        if self.fmla_index == len( self.core.initFmla_list ) - 1 :
+          print "* Final Conclusion : input specification is PyLDFI-certified."
+          print
+          print "**************************************************************"
+          print
+          break
+        else :
+          self.fmla_index += 1
 
       # break infinite execution if no new solutions exist.
-      if self.noNewSolns :
-        break
+      elif self.noNewSolns :
+        if self.fmla_index == len( self.core.initFmla_list ) - 1 :
+          break
+        else :
+          self.fmla_index += 1
 
       # check if still bug free
-      if not self.isBugFree() :
-        break
+      elif not self.isBugFree() :
+        if self.fmla_index == len( self.core.initFmla_list ) - 1 :
+          break
+        else :
+          self.fmla_index += 1
 
 
   #################
