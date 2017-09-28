@@ -82,6 +82,10 @@ def buildNewProg( triggerFault, eff, irCursor, iter_count, allProgramData_noCloc
   # get new clock lines
   newClockSet = finalizeNewProg( irCursor )
 
+  # return empty program if trigger fault blows out entire clock relation.
+  if newClockSet == [] :
+    return [ [], [] ]
+
   ##############################################
 
   allProgramLines_noClocks = allProgramData_noClocks[0]
@@ -183,7 +187,6 @@ def getAllClockFacts( triggerFault, irCursor ) :
     qDELIVTIME = " AND delivTime==" + delivTime + ""
 
     # erase query components as necessary
-    # EXISTING BUG TODO : does not work if _ in src --> need to handle ANDs more intelligently
     if "_" in src :
       qSRC  = ""
     if "_" in dest :
@@ -192,6 +195,16 @@ def getAllClockFacts( triggerFault, irCursor ) :
       qSNDTIME = ""
     if "_" in delivTime :
       qDELIVTIME = ""
+
+    # handle empty SRC
+    if qSRC == "" and not qDEST == "" :
+      qDEST = qDEST.replace( "AND", "" )
+    elif qSRC == "" and qDEST == "" and not qSNDTIME == "" :
+      qSNDTIME = qSNDTIME.replace( "AND", "" )
+    elif qSRC == "" and qDEST == "" and qSNDTIME == "" and not qDELIVTIME == "" :
+      qDELIVTIME = qDELIVTIME.replace( "AND", "" )
+    elif qSRC == "" and qDEST == "" and qSNDTIME == "" and qDELIVTIME == "" and not qInclusionBool == "" :
+      qInclusionBool = qInclusionBool.replace( "AND", "" )
 
     # set query
     query = "SELECT src,dest,sndTime,delivTime FROM Clock WHERE " + qSRC + qDEST + qSNDTIME + qDELIVTIME
@@ -251,7 +264,7 @@ def getContents( clockFact ) :
       closedParen = i
 
   if True :
-    print "done with " + str( clockFact ) + " : " + str(clockFact[ openParen+2 : closedParen-1 ])
+    print "> done extracting content from " + str( clockFact ) + " : " + str(clockFact[ openParen+2 : closedParen-1 ])
 
   return clockFact[ openParen+2 : closedParen-1 ]
 
@@ -300,8 +313,14 @@ def finalizeNewProg( irCursor ) :
   # concatenate all clock facts into a single line
   newClockLines = None
   newClockLines = "".join( newClockFacts )
+
+  # CASE : no True clock facts
+  # this means the trigger fault blows out the entire clock relation.
+  # return an empty list to signify the next version of the program should contain
+  # no clock facts. Use logic further in the workflow to skip this trigger fault w/o executing.
   if not newClockLines :
-    tools.bp( __name__, inspect.stack()[0][3], "ERROR: no new clock configurations to explore." )
+    return []
+    #tools.bp( __name__, inspect.stack()[0][3], "ERROR: no new clock configurations to explore." )
 
   # ---------------------------------------------------- #
   # copy all False clock facts into the new program
@@ -328,6 +347,7 @@ def finalizeNewProg( irCursor ) :
 
   # ---------------------------------------------------- #
 
+  # return the list of clock facts to add to the next version of the program
   return [ x.rstrip() for x in newClockFacts ]
 
 

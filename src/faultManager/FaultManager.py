@@ -119,30 +119,38 @@ class FaultManager :
       print "**************************************************************"
       print
 
-      # CASE : fmla suggested by spec is not satisfiable. therefore, protocol is correct.
-      if oldTriggerFault == None and self.triggerFault == None or self.noNewSolns :
-        if self.fmla_index == len( self.core.initFmla_list ) - 1 :
-          print "* Final Conclusion : input specification is PyLDFI-certified."
-          print
-          print "**************************************************************"
-          print
-          break
-        else :
-          self.fmla_index += 1
+      # CASE : found a counter example
+      if self.conclusion == "FoundCounterexample" :
+        break
 
-      # break infinite execution if no new solutions exist.
-      elif self.noNewSolns :
-        if self.fmla_index == len( self.core.initFmla_list ) - 1 :
-          break
-        else :
-          self.fmla_index += 1
+      else :
+        # CASE : fmla suggested by spec is not satisfiable. therefore, protocol is correct.
+        if ( oldTriggerFault == None and self.triggerFault == None ) or self.noNewSolns :
+          # CASE : specification invalid after first iteration w/o injecting faults.
+          if not self.core.initFmla_list :
+            break
+          if self.fmla_index == len( self.core.initFmla_list ) - 1 :
+            print "* Final Conclusion : input specification is PyLDFI-certified."
+            print
+            print "**************************************************************"
+            print
+            break
+          else :
+            self.fmla_index += 1
 
-      # check if still bug free
-      elif not self.isBugFree() :
-        if self.fmla_index == len( self.core.initFmla_list ) - 1 :
-          break
-        else :
-          self.fmla_index += 1
+        # break infinite execution if no new solutions exist.
+        elif self.noNewSolns :
+          if self.fmla_index == len( self.core.initFmla_list ) - 1 :
+            break
+          else :
+            self.fmla_index += 1
+
+        # check if still bug free
+        elif not self.isBugFree() :
+          if self.fmla_index == len( self.core.initFmla_list ) - 1 :
+            break
+          else :
+            self.fmla_index += 1
 
 
   #################

@@ -175,6 +175,23 @@ class LDFICore :
       # -------------------------------------------- #
       allProgramData = self.getNewDatalogProg( triggerFault, self.argDict[ "EFF" ], self.cursor, self.fault_id )
 
+      # CASE : trigger fault eliminated all clock facts
+      if allProgramData[0] == [] :
+        return_array[0] = "NoCounterExampleFound" # conclusion
+        return_array[1] = "CODE1 : Did not run scenario because trigger fault eliminates all clock facts." # explanation
+
+        # generate a new trigger fault
+        newTriggerFault = self.getTriggerFault( self.currFmla )
+        return_array[2] = newTriggerFault
+        # an empty newTriggerFault means no new solutions
+        if not newTriggerFault and self.fault_id > 1 :
+          return_array[2] = triggerFault
+          return_array[3] = True # False by default
+
+        return_array[4] = self.currFmla
+        #tools.bp( __name__, inspect.stack()[0][3], "blah" )
+        return return_array
+
     # ----------------------------------------------- #
     # 2. evaluate                                     #
     # ----------------------------------------------- #

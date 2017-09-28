@@ -1,0 +1,14 @@
+aa("blah")@1 ;
+a("i","j")@1 ;
+c("i","k")@1 ;
+d("k","j")@1 ;
+e("j")@1 ;
+p("i","i")@1 ;
+q("j","j")@1 ;
+
+g(Y,T) :- aa(T),a(X,Y), notin b(_,Y) ;
+b(X,Y) :- c(X,Z),d(Z,Y), notin e(Y) ;
+b(X,Y) :- p(X,T),q(T,Y) ;
+
+pre(X) :- a(X,_) ;
+post(X) :- g(X,_) ;

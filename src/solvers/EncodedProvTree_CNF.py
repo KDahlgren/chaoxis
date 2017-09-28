@@ -85,16 +85,21 @@ class EncodedProvTree_CNF :
         # removes all PLACEHOLDERS for non-clock facts, all self comms
         new_fmla = self.simplify( fmla )
 
-        # resolve parentheses, if applicable
-        new_fmla = self.resolveParens( new_fmla )
+        if new_fmla == "" :
+          self.simplified_cnf_fmla_list.append( new_fmla )
+          self.status_list.append( False )
 
-        # generate final cnf version
-        self.simplified_cnf_fmla_list.append( solverTools.convertToCNF( new_fmla ) )
+        else :
+          # resolve parentheses, if applicable
+          new_fmla = self.resolveParens( new_fmla )
 
-        # clean crashFacts
-        self.cleanCrashFacts()
+          # generate final cnf version
+          self.simplified_cnf_fmla_list.append( new_fmla )
 
-        self.status_list.append( True )
+          # clean crashFacts
+          self.cleanCrashFacts()
+
+          self.status_list.append( True )
 
 
   ################################################
@@ -105,7 +110,7 @@ class EncodedProvTree_CNF :
     print "subtrees : " + str( fullProvTree.subtrees )
 
     # CASE : fullProvTree already references only a single post fact.
-    if len( fullProvTree.subtrees ) > 0 and len( fullProvTree.subtrees ) < 1 :
+    if len( fullProvTree.subtrees ) > 0 and len( fullProvTree.subtrees ) < 2 :
       return [ fullProvTree ]
 
     # CASE : fullProvTree has multiple descendants
@@ -121,7 +126,7 @@ class EncodedProvTree_CNF :
 
     # CASE : no post facts?
     else :
-      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : whaaaaA? The final state has no descendants? How did we get this far? Aborting..." )
+      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : whaaaaa? The final state has no descendants? How did we get this far? Aborting..." )
 
 
   #######################################################
@@ -168,9 +173,14 @@ class EncodedProvTree_CNF :
     print "in simplify : fmla = " + fmla
 
     simplified_fmla = self.purgePlaceholders( fmla )                   # remove PLACEHOLDERs
-    simplified_fmla = self.removeSelfComms( simplified_fmla )          # remove self comms
-    simplified_fmla = self.collectAndRemoveCrashes( simplified_fmla )  # remove crashes
+    if simplified_fmla == "" : # break early for empty fmlas
+      return simplified_fmla
 
+    simplified_fmla = self.removeSelfComms( simplified_fmla )          # remove self comms
+    if simplified_fmla == "" : # break early for empty fmlas
+      return simplified_fmla
+
+    simplified_fmla = self.collectAndRemoveCrashes( simplified_fmla )  # remove crashes
     return simplified_fmla
 
 
@@ -248,6 +258,9 @@ class EncodedProvTree_CNF :
   #######################
   def removeSelfComms( self, fmla ) :
 
+    if fmla == "" :
+      return fmla
+
     print " in removeSelfComms : fmla = " + str( fmla )
 
     # get list of all clock facts
@@ -264,14 +277,20 @@ class EncodedProvTree_CNF :
 
       factTuple = self.getContents( cf )
       if factTuple[0] == factTuple[1] :
+        print ">>> cf = " + cf
+        cf = cf.replace( "','", "', '"  ) # restore spacing after commas
         selfComms.append( cf )
+
+    print ">>> selfComms : " + str( selfComms )
 
     # remove self comms from fmla
     for sc in selfComms :
+      print "+++ sc : " + sc
       fmla = fmla.replace( sc, "_PLACEHOLDER_" )
 
     fmla = self.purgePlaceholders( fmla )
 
+    print ">>> fmla : " + fmla
     return fmla
 
 
@@ -301,6 +320,7 @@ class EncodedProvTree_CNF :
     temp = []
     for f in factContents_list :
       t = f.replace( "'", "" )
+      print ">>> t = " + t
       temp.append( t )
     factContentsList = temp
 
@@ -434,6 +454,10 @@ class EncodedProvTree_CNF :
       elif "(_PLACEHOLDER_)" in fmla :
         fmla = fmla.replace( "(_PLACEHOLDER_)", "_PLACEHOLDER_" )
         return self.simplify( fmla )
+
+      elif fmla == "_PLACEHOLDER_" :
+        fmla = fmla.replace( "_PLACEHOLDER_", "" )
+        return fmla
 
       else :
         tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unrecognized _PLACEHOLDER_ pattern in fmla = " + str(fmla) )
