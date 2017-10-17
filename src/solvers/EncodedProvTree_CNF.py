@@ -3,7 +3,6 @@
 '''
 EncodedProvTree.py
   code for encoding a given provenance tree
-  borrows heavily from https://github.com/palvaro/ldfi-py
 '''
 
 # **************************************** #
@@ -32,7 +31,9 @@ from derivation import ProvTree
 
 # **************************************** #
 
+
 DEBUG = tools.getConfig( "SOLVERS", "ENCODEDPROVTREE_CNF_DEBUG", bool )
+
 
 class EncodedProvTree_CNF :
 
@@ -85,6 +86,8 @@ class EncodedProvTree_CNF :
         # removes all PLACEHOLDERS for non-clock facts, all self comms
         new_fmla = self.simplify( fmla )
 
+        print "new_fmla = " + new_fmla
+
         if new_fmla == "" :
           self.simplified_cnf_fmla_list.append( new_fmla )
           self.status_list.append( False )
@@ -94,11 +97,12 @@ class EncodedProvTree_CNF :
           new_fmla = self.resolveParens( new_fmla )
 
           # generate final cnf version
-          self.simplified_cnf_fmla_list.append( new_fmla )
+          new_fmla = solverTools.convertToCNF( new_fmla )
 
           # clean crashFacts
           self.cleanCrashFacts()
 
+          self.simplified_cnf_fmla_list.append( new_fmla )
           self.status_list.append( True )
 
 
@@ -173,14 +177,18 @@ class EncodedProvTree_CNF :
     print "in simplify : fmla = " + fmla
 
     simplified_fmla = self.purgePlaceholders( fmla )                   # remove PLACEHOLDERs
+
     if simplified_fmla == "" : # break early for empty fmlas
+      print "RETURNING IN simplify AFTER PURGE PLACE HOLDERS..."
       return simplified_fmla
 
     simplified_fmla = self.removeSelfComms( simplified_fmla )          # remove self comms
     if simplified_fmla == "" : # break early for empty fmlas
+      print "RETURNING IN simplify AFTER REMOVE SELF COMMS..."
       return simplified_fmla
 
     simplified_fmla = self.collectAndRemoveCrashes( simplified_fmla )  # remove crashes
+    print "RETURNING IN simplify AFTER COLLECT AND REMOVE CRASHES..."
     return simplified_fmla
 
 
@@ -225,14 +233,32 @@ class EncodedProvTree_CNF :
   ################################
   def collectAndRemoveCrashes( self, fmla ) :
 
+    print "////////////////////////////////////////////////"
     print "in collectAndRemoveCrashes : fmla = " + fmla
 
+    # ----------------------------------------------- #
     # get list of all clock facts
+
     clockFactList = self.getClockFactList( fmla )
 
     print " in collectAndRemoveCrashes : clockFactList = " + str( clockFactList )
 
+    # ----------------------------------------------- #
     # get subset representing crashes
+
+    # make a copy with quotes
+    crashFacts_wquotes = []
+    for cf in clockFactList :
+
+      print "Calling getContents from collectAndRemoveCrashes"
+
+      factTuple = self.getContents( cf )
+      if factTuple[1] == "_" :
+        #cf = cf.replace( "'", "" )
+        #cf = cf.replace( '"', '' )
+        crashFacts_wquotes.append( cf )
+
+    # make a copy without quotes
     crashFacts = []
     for cf in clockFactList :
 
@@ -240,16 +266,45 @@ class EncodedProvTree_CNF :
 
       factTuple = self.getContents( cf )
       if factTuple[1] == "_" :
+        cf = cf.replace( "'", "" )
+        cf = cf.replace( '"', '' )
         crashFacts.append( cf )
 
+    # ----------------------------------------------- #
     # remove crashes from fmla
-    for cf in crashFacts :
+    # need quotes here b/c strings in fmla still denoted by quotes
+
+    print "fmla = " + fmla
+    for cf in crashFacts_wquotes :
+      print "cf = " + cf
+      cf = cf.replace( ",", ", " ) # need extra whitespace after commas
       fmla = fmla.replace( cf, "_PLACEHOLDER_" )
 
+    print "crashFacts : " + str( crashFacts )
     #tools.bp( __name__, inspect.stack()[0][3], "fmla = " + str( fmla ) )
     fmla = self.purgePlaceholders( fmla )
 
-    self.crashFacts_list.append( crashFacts )
+    # ----------------------------------------------- #
+    # populate crash fact list
+    # need crashes without quotes b/c raw clock facts are regarded without quotes
+    # in later processes.
+    # do not introduce duplicates
+
+    print "crashFacts = " + str( crashFacts )
+
+    for cf in crashFacts :
+      print "before : cf = " + cf
+      cf = cf.replace( "goal->", "" )
+      print "after  : cf = " + cf
+      if not cf in self.crashFacts_list :
+        self.crashFacts_list.append( cf )
+
+    # ----------------------------------------------- #
+
+    print "self.crashFacts_list : " + str( self.crashFacts_list )
+    print "fmla                 : " + fmla
+    #tools.bp( __name__, inspect.stack()[0][3], "blah" )
+
     return fmla
 
 

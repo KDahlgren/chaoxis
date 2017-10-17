@@ -133,6 +133,12 @@ def shootClockRecs( parsedClockRecords, eff, irCursor ) :
     sndTime   = rec[2]
     delivTime = rec[3]
 
+    # remove any quotes
+    sndTime   = sndTime.replace( "'", "" )
+    sndTime   = sndTime.replace( '"', '' )
+    delivTime = delivTime.replace( "'", "" )
+    delivTime = delivTime.replace( '"', '' )
+
     # only shoot clock records less than or equal to eff (end of finite failures)
     if int( sndTime ) <= int( eff ) :
       # optimistic by default
@@ -155,6 +161,7 @@ def shootClockRecs( parsedClockRecords, eff, irCursor ) :
         qDELIVTIME = ""
   
       # set query
+      print "UPDATE Clock SET simInclude='" + simInclude + "' WHERE " + qSRC + qDEST + qSNDTIME + qDELIVTIME
       query = "UPDATE Clock SET simInclude='" + simInclude + "' WHERE " + qSRC + qDEST + qSNDTIME + qDELIVTIME
   
       if DEBUG :
@@ -162,6 +169,8 @@ def shootClockRecs( parsedClockRecords, eff, irCursor ) :
   
       # execute query
       irCursor.execute( query )
+
+  #tools.dumpAndTerm( irCursor )
 
 
 #########################

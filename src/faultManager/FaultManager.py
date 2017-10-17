@@ -112,8 +112,13 @@ class FaultManager :
       print "* self.noNewSolns                    : " + str( self.noNewSolns    )
       print "* COMPLETED run_workflow() for fault : " + str( oldTriggerFault    )
       if not self.noNewSolns :
-        print "* NEXT trigger fault               : " + str( self.triggerFault  )
+        print "* NEXT trigger fault                 : " + str( self.triggerFault  )
         print
+      if self.fmla_index < len( self.core.initFmla_list ) - 1 :
+        self.core.fault_id += 1 
+        print "* NEXT fmla : "
+        print str( self.core.initFmla_list[ self.fmla_index + 1 ] )
+      else :
         print "* currFmla :"
         print self.currFmla
       print "**************************************************************"

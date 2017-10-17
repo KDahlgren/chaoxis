@@ -24,6 +24,18 @@ operators = [ "<", ">", "<=", ">=", "==",  "+", "-", "*", "/" ]
 TOOLS_DEBUG = False
 
 
+###################
+#  DUMP AND TERM  #
+###################
+# dump the program from IR DB and terminate execution.
+def dumpAndTerm( cursor ) :
+  print "============================="
+  print "==      DUMP AND TERM      =="
+  print "============================="
+  dumpers.programDump(  cursor )
+  bp( __name__, inspect.stack()[0][3], "hit a dump and terminate. congrats. aborting..." )
+
+
 #####################
 #  BREAKPOINT (bp)  #
 #####################

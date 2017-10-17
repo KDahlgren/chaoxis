@@ -21,14 +21,14 @@ if not os.path.abspath( __file__ + "/../../../lib/orik/src") in sys.path :
 
 from dedt       import dedt, dedalusParser
 from derivation import ProvTree
-from evaluators import c4_evaluator, evalTools
+from evaluators import c4_evaluator
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
-from utilities      import parseCommandLineInput, tools, MetricLogger
+from utilities      import parseCommandLineInput, evalTools, tools, MetricLogger
 from solvers        import EncodedProvTree_CNF, newProgGenerationTools, solverTools
 from visualizations import vizTools
 
@@ -62,7 +62,7 @@ class LDFICore :
   numCrashes               = 0     # number of crashes allowable in solutions for this execution
   crashFacts_list          = None  # the list of crash facts involved in a solution
   crashCombos              = []    # the complete list of crash combinations according to numCrashes
-  faultTracker             = {}    # dictionary mapping omission faults to lists of previously combined crash failures
+  faultTracker             = {}    # dictionary mapping omission faults to lists of previously tried combinations of crash failures
                                    # ( see setCrashes() )
 
   initFmla_list            = None  # the formula obtained from the initial good execution
@@ -163,7 +163,7 @@ class LDFICore :
       # The tables used in the program do not change per iteration.
       # Only the collection of clock facts included in the program change per iteration.
       # Save the base program (program minus clock facts) and table list array for future use.
-      self.allProgramData_noClocks.append( [ x for x in allProgramData[0] if not x[:6] == "clock(" ] ) # base program lines.
+      self.allProgramData_noClocks.append( [ x for x in allProgramData[0] if not x[:6] == "clock(" ] )
       self.allProgramData_noClocks.append( allProgramData[1] )  # table list array
     #######################################################################
     #######################################################################
@@ -189,7 +189,7 @@ class LDFICore :
           return_array[3] = True # False by default
 
         return_array[4] = self.currFmla
-        #tools.bp( __name__, inspect.stack()[0][3], "blah" )
+        print "RETURNING AT STEP 7: trigger fault eliminated all clock facts ..."
         return return_array
 
     # ----------------------------------------------- #
@@ -217,11 +217,12 @@ class LDFICore :
 
     # break execution if running on a custom fault
     if self.stopAtIt == self.fault_id :
-      if conclusion == "NoCounterexampleFound" :
+      if conclusion == "NoCounterexampleFound" and not explanation == "VACUOUS" :
         provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], self.fault_id, fmla_index, self.cursor )
       return_array[2] = self.customFault  # the custom fault
       return_array[3] = True              # update trigger fault part of returns
       return_array[4] = "None"            # not working with a formula by definition
+      print "RETURNING AT STEP 3: conclude no counter example found ..."
       return return_array
 
     ##############################################
@@ -240,6 +241,7 @@ class LDFICore :
         return_array[2] = "None" # triggerFault
         return_array[3] = True   # noNewSolns
         return_array[4] = None
+        print "RETURNING AT CASE 1, STEP 3: found counterexample ..."
         return return_array
 
 
@@ -270,8 +272,8 @@ class LDFICore :
           return_array[2] = triggerFault
           return_array[3] = True
 
-        print "here0"
         return_array[4] = self.currFmla
+        print "RETURNING AT CASE 1, STEP 3: vacuously correct and fault_id > 1 ..."
         return return_array # [ conclusion/None, explanation/None, nextTriggerFault/None, noNewSolns/None, currFmla/None ]
 
       else :
@@ -284,7 +286,7 @@ class LDFICore :
 
         return_array = [ conclusion, explanation, triggerFault, noNewSolns, self.currFmla ]
 
-        print "here1"
+        print "RETURNING AT CASE 1, STEP 3: vacuously correct and fault_id <= 1 ..."
         return return_array
 
 
@@ -301,7 +303,7 @@ class LDFICore :
 
       # create prov graph for every core iteration
       if True :
-      #if self.fault_id == 1 : 
+      #if self.fault_id == 1 :
         provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], self.fault_id, fmla_index, self.cursor )
         #tools.bp( __name__, inspect.stack()[0][3], "built provTree!" )
 
@@ -316,7 +318,7 @@ class LDFICore :
       if self.fault_id == 1 : 
         fmla_data             = self.tree_to_CNF( provTreeComplete )
         self.initFmla_list    = fmla_data[0]
-        self.crashFacts_lists = fmla_data[1]
+        self.crashFacts_list  = fmla_data[1]
 
         # ========================================= #
         # CASE : no clock facts in cnf fmla.
@@ -328,7 +330,7 @@ class LDFICore :
           triggerFault = None
           noNewSolns   = True
 
-          print "here2"
+          print "RETURNING AT CASE 3, STEP 3: found correct execution ..."
           return [ conclusion, explanation, triggerFault, noNewSolns, self.currFmla ]
 
         # ========================================= #
@@ -354,7 +356,7 @@ class LDFICore :
         self.currFmla    = self.initFmla_list[ fmla_index ]
         print ">>>>>currFmla2 = " + self.currFmla
         newTriggerFault  = self.getTriggerFault( self.currFmla )  # grab a new soln to the formula
-        return_array[2]  = newTriggerFault                   # update trigger fault part of returns
+        return_array[2]  = newTriggerFault                        # update trigger fault part of returns
 
         # an empty newTriggerFault means no new solutions
         if not newTriggerFault and self.fault_id > 1 :
@@ -362,6 +364,7 @@ class LDFICore :
           return_array[3] = True
 
         return_array[4] = self.currFmla
+        print "RETURNING AT STEP 6: solve CNF fmla ..."
         return return_array # [ conclusion/None, explanation/None, nextTriggerFault/None, noNewSolns/None, currFmla/None ]
 
 
@@ -371,6 +374,14 @@ class LDFICore :
   # given a triggerFault, add a set of crashes according to the number of crashes 
   # desired by the user.
   def setCrashes( self, triggerFault ) :
+
+    print "RUNNING SET CRASHES ..."
+
+    print "triggerFault : "
+    print triggerFault
+
+    print "self.faultTracker :"
+    print self.faultTracker
 
     orig_fault_str = str( triggerFault )
 
@@ -429,13 +440,13 @@ class LDFICore :
   # of crashes.
   def setCrashCombos( self, crashFacts ) :
 
+    print "RUNNING SET CRASH COMBOS ..."
+    print "crashFacts :"
+    print crashFacts
+
     # CASE : user wants crashes
     if self.numCrashes > 0 :
-      allCrashCombos = itertools.combinations( crashFacts, self.numCrashes )
-
-      print
-      print allCrashCombos
-      tools.bp( __name__, inspect.stack()[0][3], "blah" )
+      allCrashCombos = itertools.combinations( [ crashFacts ], self.numCrashes )
 
       # generate all combinations of crashes 
       # not lively for executions with solutions containing lots of crashes
@@ -448,6 +459,10 @@ class LDFICore :
     # CASE : omission failures only => do not generate crash scenarios
     else :
       pass
+
+    print "self.crashCombos :"
+    print self.crashCombos
+    #tools.bp( __name__, inspect.stack()[0][3], "blah" )
 
 
   #######################
@@ -474,12 +489,15 @@ class LDFICore :
           # grab the solution set data
           print "currFmla : " + currFmla
           triggerFaultSet = self.solveCNF( self.N, currFmla )
-          print "triggerFault : " + str( triggerFaultSet )
+          print "triggerFault : " 
+          print triggerFaultSet
 
+          # if custom fault provided, then triggerFault is exactly the custom fault
           if self.customFault :
-            self.currSolnSet = [ self.customFault ]
+            return self.customFault
+            #self.currSolnSet = [ self.customFault ]
 
-          if triggerFaultSet :
+          elif triggerFaultSet :
             # refill the current solution set of constrained trigger faults.
             self.currSolnSet.extend( triggerFaultSet )
 
@@ -489,8 +507,14 @@ class LDFICore :
           # refill the current solution set of constrained trigger faults.
           self.currSolnSet.append( self.solveCNF( 1, currFmla ) )
 
+        if self.currSolnSet == [] :
+          return [] # return early on empty triggerFault
+
         # place smaller solutions earlier in the list.
-        self.orderByMinimality( self.currSolnSet )
+        self.currSolnSet = self.orderByMinimality( self.currSolnSet )
+        print "self.currSolnSet = "
+        print self.currSolnSet
+        #tools.bp( __name__, inspect.stack()[0][3], "blah" )
 
         # initialize solutions with empty crash logs in fault tracker
         for soln in self.currSolnSet :
@@ -537,19 +561,42 @@ class LDFICore :
   ##########################
   #  ORDER BY MINIIMALITY  #
   ##########################
-  # bubble sort b/c quick and dirty
+  # sort given set of faults by order of increasing number of clock facts.
   def orderByMinimality( self, solnSet ) :
 
-    for i in range( 0, len( solnSet ) ) :
-      try :
-        if len( solnSet[i] ) > len( solnSet[i+1] ) :
-          temp         = solnSet[i]
-          solnSet[i]   = solnSet[i+1]
-          solnSet[i+1] = temp
-      except IndexError :
-        break
+    neworder_solnSet = []
+    temp             = []
+    flag             = True
 
-    return solnSet
+    #print "///////////////////////////////////////////"
+
+    while flag :
+
+      #print "...................................."
+      #print ">> solnSet :"
+      #print solnSet
+      #print ">> neworder_solnSet :"
+      #print neworder_solnSet
+
+      minSolnSet = solnSet[0]
+
+      for i in range( 0, len( solnSet ) ) :
+        soln = solnSet[i]
+        if len( minSolnSet ) > len( soln ) :
+          minSolnSet = soln
+
+      temp = []
+      for soln in solnSet :
+        if not soln == minSolnSet :
+          temp.append( soln )
+
+      solnSet = temp
+      neworder_solnSet.append( minSolnSet )
+
+      if len( solnSet ) < 1 :
+        flag = False
+
+    return neworder_solnSet
 
 
   ########################
@@ -740,6 +787,7 @@ class LDFICore :
       print "\n~~~~ CONVERTING PROV TREE TO CNF ~~~~"
   
     data = EncodedProvTree_CNF.EncodedProvTree_CNF( provTreeComplete )
+
     provTree_fmla_list = data.simplified_cnf_fmla_list
     status_list        = data.status_list
     crashFacts_list    = data.crashFacts_list
