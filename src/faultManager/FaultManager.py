@@ -114,7 +114,7 @@ class FaultManager :
       if not self.noNewSolns :
         print "* NEXT trigger fault                 : " + str( self.triggerFault  )
         print
-      if self.fmla_index < len( self.core.initFmla_list ) - 1 :
+      if self.core.initFmla_list and self.fmla_index < len( self.core.initFmla_list ) - 1 :
         #self.core.fault_id += 1 
         print "* NEXT fmla : "
         print str( self.core.initFmla_list[ self.fmla_index + 1 ] )
