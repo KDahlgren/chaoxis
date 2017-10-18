@@ -74,14 +74,14 @@ class MetricLogger() :
     f.write( "bf_num_nodes               = " + str( self.bf_num_nodes )             + "\n" )
     f.write( "bf_num_clocks              = " + str( self.bf_num_clocks )            + "\n" )
     f.write( "bf_depth                   = " + str( self.bf_depth )                 + "\n" )
-    f.write( "bf_max_clause_width        = " + str( self.bf_max_clause_width )       + "\n" )
+    f.write( "bf_max_clause_width        = " + str( self.bf_max_clause_width )      + "\n" )
     f.write( "bf_num_top_level_clauses   = " + str( self.bf_num_top_level_clauses ) + "\n" )
 
     f.write( "cnf_num_literals           = " + str( self.cnf_num_literals )          + "\n" )
     f.write( "cnf_num_nodes              = " + str( self.cnf_num_nodes )             + "\n" )
     f.write( "cnf_num_clocks             = " + str( self.cnf_num_clocks )            + "\n" )
     f.write( "cnf_depth                  = " + str( self.cnf_depth )                 + "\n" )
-    f.write( "cnf_max_clause_width       = " + str( self.cnf_max_clause_width )       + "\n" )
+    f.write( "cnf_max_clause_width       = " + str( self.cnf_max_clause_width )      + "\n" )
     f.write( "cnf_num_top_level_clauses  = " + str( self.cnf_num_top_level_clauses ) + "\n" )
 
     f.write( "time_to_cnf                = " + str( self.time_to_cnf )   + "\n" )

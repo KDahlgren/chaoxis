@@ -36,11 +36,11 @@ from visualizations import vizTools
 # **************************************** #
 
 
-DEBUG                = tools.getConfig( "CORE", "LDFI_DEBUG", bool )
-PROV_TREES_ON        = tools.getConfig( "CORE", "LDFI_PROV_TREES_ON", bool )
-OUTPUT_PROV_TREES_ON = tools.getConfig( "CORE", "LDFI_OUTPUT_PROV_TREES_ON", bool ) # defaults to True
-OUTPUT_TREE_CNF_ON   = tools.getConfig( "CORE", "LDFI_OUTPUT_TREE_CNF_ON", bool )
-
+DEBUG                      = tools.getConfig( "CORE", "LDFI_DEBUG", bool )
+PROV_TREES_ON              = tools.getConfig( "CORE", "LDFI_PROV_TREES_ON", bool )
+OUTPUT_PROV_TREES_ON       = tools.getConfig( "CORE", "LDFI_OUTPUT_PROV_TREES_ON", bool ) # defaults to True
+OUTPUT_TREE_CNF_ON         = tools.getConfig( "CORE", "LDFI_OUTPUT_TREE_CNF_ON", bool )
+BUILD_ALL_ITERATION_GRAPHS = tools.getConfig( "CORE", "BUILD_ALL_ITERATION_GRAPHS", bool )
 
 ####################
 #  CLASS LDFICORE  #
@@ -218,7 +218,10 @@ class LDFICore :
     # break execution if running on a custom fault
     if self.stopAtIt == self.fault_id :
       if conclusion == "NoCounterexampleFound" and not explanation == "VACUOUS" :
-        provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], self.fault_id, fmla_index, self.cursor )
+        if BUILD_ALL_ITERATION_GRAPHS :
+          provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], self.fault_id, fmla_index, self.cursor )
+        else :
+          pass
       return_array[2] = self.customFault  # the custom fault
       return_array[3] = True              # update trigger fault part of returns
       return_array[4] = "None"            # not working with a formula by definition
@@ -301,9 +304,9 @@ class LDFICore :
       # 4. get provenance tree                          #
       # ----------------------------------------------- #
 
-      # create prov graph for every core iteration
-      if True :
-      #if self.fault_id == 1 :
+      if BUILD_ALL_ITERATION_GRAPHS : # create prov graph for every core iteration
+        provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], self.fault_id, fmla_index, self.cursor )
+      elif self.fault_id == 1 :
         provTreeComplete = self.buildProvTree( parsedResults, self.argDict[ "EOT" ], self.fault_id, fmla_index, self.cursor )
         #tools.bp( __name__, inspect.stack()[0][3], "built provTree!" )
 
