@@ -1,5 +1,6 @@
 append("c", "o", "v0")@1;
 
+object(Object, Value) :- append(Object, _, Value) ;
 object(Object, Value)@next :- object(Object, Value);
 object(Object, Value)@async :- append(Client, Object, Value);
 
