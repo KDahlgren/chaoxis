@@ -1,10 +1,17 @@
+
+object("c","DEFAULT")@1 ;
+object("o","DEFAULT")@1 ;
+
 append("c", "o", "v0")@1;
 
-object(Object, Value) :- append(Object, _, Value) ;
-object(Object, Value)@next :- object(Object, Value);
-object(Object, Value)@async :- append(Client, Object, Value);
+object(Client, Value) :-  append(Client, _, Value) ;
+object(Object, Value)@next :- object(Object, Value) ;
+object(Object, Value)@async :- object(Client, Value), append(Client, Object, Value);
 
 missing_append(O, V) :- append(_, O, V), notin object(O, V);
 
+//pre(O, V) :- append(C, O, V) ;
+//post(O, V) :- append(C, O, V), notin missing_append(O, V) ;
+
 pre(O, V) :- object(O, V), notin append(_, O, V)@1 ;
-post(O, V) :- append(C, O, V), notin missing_append(O, V);
+post(O, V) :- object(O, V), notin missing_append(O,V) ;
