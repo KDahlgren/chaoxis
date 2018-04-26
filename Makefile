@@ -1,16 +1,24 @@
 all: deps
 
-deps: get-submodules orik c4 z3
+#deps: get-submodules sniper orik c4 z3
+deps: get-submodules sniper orik
 
 clean:
-	rm -r lib/orik/
-	rm -r lib/c4/build
-	rm -r lib/z3/build
-	rm -r lib/p5/build
+	rm -rf lib/sniper/
+	rm -rf lib/orik/
 
 get-submodules:
 	git submodule init
 	git submodule update
+
+# -------------------------------------- #
+#                 SNIPER                 #
+# -------------------------------------- #
+cleansniper:
+	rm -r lib/sniper/
+
+sniper:
+	cd lib/sniper/ ; git pull origin master ; python setup.py ;
 
 # -------------------------------------- #
 #                 ORIK                   #
