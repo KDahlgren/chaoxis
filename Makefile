@@ -1,11 +1,11 @@
 all: deps
 
-#deps: get-submodules sniper orik c4 z3
-deps: get-submodules sniper orik
+deps: get-submodules iapyx orik sniper
 
 clean:
-	rm -rf lib/sniper/
+	rm -rf lib/iapyx/
 	rm -rf lib/orik/
+	rm -rf lib/sniper/
 
 get-submodules:
 	git submodule init
@@ -15,7 +15,7 @@ get-submodules:
 #                 SNIPER                 #
 # -------------------------------------- #
 cleansniper:
-	rm -r lib/sniper/
+	rm -rf lib/sniper/
 
 sniper:
 	cd lib/sniper/ ; git pull origin master ; python setup.py ;
@@ -24,10 +24,19 @@ sniper:
 #                 ORIK                   #
 # -------------------------------------- #
 cleanorik:
-	rm -r lib/orik/
+	rm -rf lib/orik/
 
 orik:
 	cd lib/orik/ ; git pull origin master ; python setup.py ;
+
+# -------------------------------------- #
+#                 IAPYX                  #
+# -------------------------------------- #
+cleaniapyx:
+	rm -rf lib/iapyx/
+
+iapyx:
+	cd lib/iapyx/ ; git pull origin master ; python setup.py ;
 
 # -------------------------------------- #
 #                  C4                    #

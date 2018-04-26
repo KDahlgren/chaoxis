@@ -5,11 +5,11 @@
 import os, sys
 
 
-##########
-#  MAIN  #
-##########
-def main() :
-  print "Running pyLDFI setup with args : \n" + str(sys.argv)
+#############
+#  INSTALL  #
+#############
+def install() :
+  print "Running CHAOXIS install with args : \n" + str(sys.argv)
 
   # clean any existing libs
   os.system( "make clean" )
@@ -19,6 +19,8 @@ def main() :
 
   # ---------------------------------------------- #
 
+  os.system( "make iapyx" )
+  os.system( "make orik" )
   os.system( "make sniper" )
 
 
@@ -84,7 +86,7 @@ def checkPyDeps() :
 ##############################
 if __name__ == "__main__" :
   checkPyDeps()
-  main()
+  install()
 
 
 #########
