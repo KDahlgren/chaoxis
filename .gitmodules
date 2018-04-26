@@ -1,8 +1,10 @@
-[submodule "lib/z3"]
-	path = lib/z3
-	url = https://github.com/Z3Prover/z3.git
 [submodule "lib/orik"]
 	path = lib/orik
 	url = https://github.com/KDahlgren/orik.git
+	branch = master
+	ignore = dirty
+[submodule "lib/sniper"]
+	path = lib/sniper
+	url = https://github.com/KDahlgren/sniper.git
 	branch = master
 	ignore = dirty
