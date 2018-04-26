@@ -8,3 +8,6 @@
 	url = https://github.com/KDahlgren/sniper.git
 	branch = master
 	ignore = dirty
+[submodule "lib/iapyx"]
+	path = lib/iapyx
+	url = https://github.com/KDahlgren/iapyx.git
