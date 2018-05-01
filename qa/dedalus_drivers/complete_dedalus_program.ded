@@ -1,0 +1,21 @@
+include "../test_files/examples_ft/delivery/simplog.ded" ;
+include "../test_files/examples_ft/delivery/deliv_assert.ded" ;
+missing_log(A, Pl) :- log(X, Pl), node(X, A), notin log(A, Pl);//, notin crash(_, A, _);
+
+pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1 ; //, notin crash(X, X, _);
+post(X, Pl) :- log(X, Pl), notin missing_log(_, Pl);
+include "./bcast_edb.ded";
+
+node(Node, Neighbor)@next :- node(Node, Neighbor);
+log(Node, Pload)@next :- log(Node, Pload);
+
+log(Node2, Pload)@async :- bcast(Node1, Pload), node(Node1, Node2);
+log(Node, Pload) :- bcast(Node, Pload);
+node("a", "b")@1;
+node("a", "c")@1;
+node("b", "a")@1;
+node("b", "c")@1;
+node("c", "a")@1;
+node("c", "b")@1;
+
+bcast("a", "hello")@1;
