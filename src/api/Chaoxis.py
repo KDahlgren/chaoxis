@@ -214,7 +214,6 @@ class Chaoxis( object ) :
     
         new_clock_table = self.perform_omissions( a_new_soln_clean )
         logging.debug( "  CHAOXIS RUN : adding to tried_solns '" + str( a_new_soln_clean ) + "'" )
-        logging.debug( "  CHAOXIS RUN : self.conclusion = " + self.conclusion )
         self.tried_solns.append( a_new_soln_clean )
     
         logging.debug( "  CHAOXIS RUN : new_clock_table " + str( new_clock_table ) )
@@ -222,15 +221,16 @@ class Chaoxis( object ) :
         # --------------------------------------------------------------- #
         # perform another evaluation
     
-        self.datalog_program_only.extend( new_clock_table )
-        final_prog_info = [ self.datalog_program_only, self.table_list_only ]
+        prog_cp = copy.deepcopy( self.datalog_program_only )
+        prog_cp.extend( new_clock_table )
+        final_prog_info = [ prog_cp, self.table_list_only ]
     
         logging.debug( "  CHAOXIS RUN : final_prog_info = " + str( final_prog_info ) )
     
         results_array = c4_evaluator.runC4_wrapper( final_prog_info, self.argDict )
         results_dict  = tools.getEvalResults_dict_c4( results_array )
-    
-        # --------------------------------------------------------------- #
+
+        # -------------------------------------------------------------- #
         # evaluate results to draw a conclusion
     
         if self.pre_does_not_imply_post( results_dict[ "pre" ], results_dict[ "post" ] ) :
@@ -313,9 +313,29 @@ class Chaoxis( object ) :
     results_dict  = tools.getEvalResults_dict_c4( results_array )
 
     # --------------------------------------------------------------- #
+    # evaluate results to draw a conclusion
+
+    if self.pre_does_not_imply_post( results_dict[ "pre" ], results_dict[ "post" ] ) :
+      self.conclusion = "conclusion : found counterexample : " + str( a_new_soln_clean )
+      return
+
+    elif self.no_more_fmlas_or_solns( self.pycosat_solver ) :
+      self.conclusion = "conclusion : spec is chaoxis-certified for correctness."
+
+    print "+++++++++++++++++++++++++++++++"
+    print "  RUN ON CUSTOM FAULT : "
+    print "results:"
+    for key in results_dict :
+      print ">>>>>>>>>>>>>>>>>>>>>>>>>"
+      print key
+      for tup in results_dict[ key ] :
+        print tup
+
+
+    # --------------------------------------------------------------- #
     # generate orik rgg
 
-    logging.debug( "  __INIT__ : building initial provenance tree..." )
+    logging.debug( "  RUN ON CUSTOM FAULT : building provenance tree..." )
 
     orik_rgg = copy.deepcopy( None )
     orik_rgg = ProvTree.ProvTree( rootname       = "FinalState", \
@@ -332,25 +352,7 @@ class Chaoxis( object ) :
                                                     self.NUM_RUN_ITERATIONS, \
                                                     self.label )
 
-    logging.debug( "  __INIT__ : building initial provenance tree...done." )
-
-    # --------------------------------------------------------------- #
-    # evaluate results to draw a conclusion
-
-    if self.pre_does_not_imply_post( results_dict[ "pre" ], results_dict[ "post" ] ) :
-      self.conclusion = "conclusion : found counterexample : " + str( a_new_soln_clean )
-
-    elif self.no_more_fmlas_or_solns( self.pycosat_solver ) :
-      self.conclusion = "conclusion : spec is chaoxis-certified for correctness."
-
-    print "+++++++++++++++++++++++++++++++"
-    print "  RUN ON CUSTOM FAULT : "
-    print "results:"
-    for key in results_dict :
-      print ">>>>>>>>>>>>>>>>>>>>>>>>>"
-      print key
-      for tup in results_dict[ key ] :
-        print tup
+    logging.debug( "  RUN ON CUSTOM FAULT : building provenance tree...done." )
 
 
   #########################

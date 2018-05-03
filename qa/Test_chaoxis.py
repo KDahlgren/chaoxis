@@ -111,7 +111,6 @@ class Test_chaoxis( unittest.TestCase ) :
     # run chaoxis
 
     # instantiate chaoxis object
-    c = None
     #c = Chaoxis.Chaoxis( argDict, test_id, ['clock("a","b",1,2);'] )
     #c = Chaoxis.Chaoxis( argDict, test_id, ['clock("a","c",1,2);'] )
     #c = Chaoxis.Chaoxis( argDict, test_id, ['clock("a","c",1,2);', 'clock("a","b",1,2);'] )
@@ -123,7 +122,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : spec is chaoxis-certified for correctness.'''
+    expected_conclusion = '''conclusion : found counterexample : [\'clock("a","c",1,2);\']'''
     self.assertEqual( actual_conclusion, expected_conclusion )
 
     logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
