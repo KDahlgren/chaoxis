@@ -319,8 +319,8 @@ class Chaoxis( object ) :
       self.conclusion = "conclusion : found counterexample : " + str( a_new_soln_clean )
       return
 
-    elif self.no_more_fmlas_or_solns( self.pycosat_solver ) :
-      self.conclusion = "conclusion : spec is chaoxis-certified for correctness."
+    else :
+      self.conclusion = "conclusion : spec is chaoxis-certified for correctness on the given fault."
 
     print "+++++++++++++++++++++++++++++++"
     print "  RUN ON CUSTOM FAULT : "

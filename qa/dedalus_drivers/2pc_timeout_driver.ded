@@ -1,0 +1,2 @@
+include "../test_files/examples_ft/commit/2pc_timeout.ded" ;
+include "../test_files/examples_ft/commit/2pc_assert.ded" ;

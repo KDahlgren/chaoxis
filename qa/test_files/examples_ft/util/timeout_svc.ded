@@ -4,3 +4,5 @@
 timer_state(H, I, T-1)@next :- timer_svc(H, I, T);
 timer_state(H, I, T-1)@next :- timer_state(H, I, T), notin timer_cancel(H, I), T > 1;
 timeout(H, I) :- timer_state(H, I, 1);
+
+timer_cancel( "PLACEHOLDER", "PLACEHOLDER" )@1 ; //for chaoxis
