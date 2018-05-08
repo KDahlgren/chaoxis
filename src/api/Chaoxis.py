@@ -189,6 +189,12 @@ class Chaoxis( object ) :
     logging.debug( "  CHAOXIS RUN : self.CURR_FMLA_ID       = " + str( self.CURR_FMLA_ID ) )
 
     # --------------------------------------------------------------- #
+    # break on vacuouc correctness
+
+    if not self.conclusion == "No conclusion." :
+      return
+
+    # --------------------------------------------------------------- #
     # run on the custom fault only, if applicable
 
     if self.custom_fault :
@@ -212,7 +218,7 @@ class Chaoxis( object ) :
       # only try new solns
       if not self.already_tried( a_new_soln_clean ) :
     
-        new_clock_table = self.perform_omissions( a_new_soln_clean )
+        new_clock_table = self.perform_clock_table_edits( a_new_soln_clean )
         logging.debug( "  CHAOXIS RUN : adding to tried_solns '" + str( a_new_soln_clean ) + "'" )
         self.tried_solns.append( a_new_soln_clean )
     
@@ -297,7 +303,7 @@ class Chaoxis( object ) :
     a_new_soln_clean = self.custom_fault
     logging.debug( "  RUN ON CUSTOM FAULT : a_new_soln_clean : " + str( a_new_soln_clean ) )
 
-    new_clock_table = self.perform_omissions( a_new_soln_clean )
+    new_clock_table = self.perform_clock_table_edits( a_new_soln_clean )
 
     logging.debug( "  RUN ON CUSTOM FAULT : new_clock_table " + str( new_clock_table ) )
 
@@ -415,14 +421,31 @@ class Chaoxis( object ) :
       return False
 
 
-  #######################
-  #  PERFORM OMISSIONS  #
-  #######################
-  def perform_omissions( self, a_soln ) :
+  ###############################
+  #  PERFORM CLOCK TABLE EDITS  #
+  ###############################
+  def perform_clock_table_edits( self, a_soln ) :
     new_clock_table = []
+
+    # divide into positive and negative clocks
+    pos_clocks = []
+    neg_clocks = []
+    for clock_fact in a_soln :
+      if clock_fact.startswith( "_NOT_" ) :
+        neg_clocks.append( clock_fact.replace( "_NOT_", "" ) )
+      else :
+        pos_clocks.append( clock_fact )
+
+    # perform omissions on positive clock facts
     for clock_fact in self.clocks_only :
-      if not clock_fact in a_soln :
+      if not clock_fact in pos_clocks :
         new_clock_table.append( clock_fact )
+
+    # perform injections for negative clock facts
+    for clock_fact in neg_clocks :
+      if not clock_fact in new_clock_table :
+        new_clock_table.append( clock_fact )
+
     return new_clock_table
 
 
@@ -475,10 +498,15 @@ class Chaoxis( object ) :
 
     for clock_fact in a_new_soln :
       data_list = self.get_data_list( clock_fact )
-      clean_list.append( 'clock("' + data_list[0] + \
-                         '","'    + data_list[1] + \
-                         '",'     + data_list[2] + \
-                         ','      + data_list[3] + ');' )
+      print data_list
+      clean_fact = ""
+      if clock_fact.startswith( "_NOT_" ) :
+        clean_fact += "_NOT_"
+      clean_fact += 'clock("' + data_list[0] + \
+                    '","' + data_list[1] + \
+                    '",'  + data_list[2] + \
+                    ','   + data_list[3] + ');'
+      clean_list.append( clean_fact )
 
     return clean_list
 
@@ -488,6 +516,7 @@ class Chaoxis( object ) :
   ###################
   def get_data_list( self, clock_fact ) :
     clock_fact = clock_fact.translate( None, string.whitespace )
+    clock_fact = clock_fact.replace( "_NOT_", "" )
     clock_fact = clock_fact.replace( "clock([", "" )
     clock_fact = clock_fact.replace( "])", "" )
     clock_fact = clock_fact.replace( '"', "" )

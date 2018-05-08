@@ -1,0 +1,25 @@
+post( S, X ) :- left_wins( S, X ) ;
+pre( S, X ) :- left( S, X ) ;
+
+left_wins(S, X)@next :- left_wins(S, X);
+left(S, X)@next :- left(S, X);
+right(S, X)@next :- right(S, X);
+
+left_wins(S, X)@next :- left(S, X), notin right(S, X);
+left(S, X)@async :- start_left(N, X, S);
+right(S, X)@async :- start_right(N, X, S);
+
+// two EDBs to consider:
+
+// edb 1; left_wins() is not computed.
+// this one is harder to reason about directly since it doesn’t involve “negative provenance”,
+// but async ldfi will need to handle this case, too!
+// start_left(“Node1”, “foo”, “Server”)@1;
+// start_right(“Node1”, “foo”, “Server”)@1;
+
+// edb 2; left_wins() is computed, and negative provenance is part of why.
+// in this example, ideally, negative provenance would say, hey!  If there were a clock fact
+// clock("Node2", "Server", 2, 1), THEN left_wins() would not have fired!  That would be cool.
+start_left("Node1", "foo", "Server")@1;
+start_right("Node2", "foo", "Server")@2;
+

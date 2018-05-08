@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import logging, os, sys, unittest
-import Test_chaoxis
+import Test_chaoxis, Test_others
 
 #####################
 #  UNITTEST DRIVER  #
@@ -19,8 +19,12 @@ def unittest_driver() :
     os.system( "rm ./IR*.db*" )
     logging.info( "  UNIT TEST DRIVER : deleted all rogue IR*.db* files." )
 
-  # run Test_pycosat tests
+  # run Test_chaoxis tests
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_chaoxis.Test_chaoxis )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
+
+  # run Test_others tests
+  suite = unittest.TestLoader().loadTestsFromTestCase( Test_others.Test_others )
   unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
 
