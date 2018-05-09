@@ -1,6 +1,7 @@
 .DS_Store
 *.swp
 
+qa/dedalus_drivers/complete_dedalus_program.ded
 qa/data/*
 
 lib/
