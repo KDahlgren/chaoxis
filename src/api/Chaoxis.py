@@ -184,6 +184,7 @@ class Chaoxis( object ) :
   #########
   def run( self ) :
 
+    logging.debug( "  CHAOXIS RUN : -----------------------------------------" )
     logging.debug( "  CHAOXIS RUN : self.NUM_RUN_ITERATIONS = " + str( self.NUM_RUN_ITERATIONS ) )
     logging.debug( "  CHAOXIS RUN : self.CURR_SOLN_INDEX    = " + str( self.CURR_SOLN_INDEX ) )
     logging.debug( "  CHAOXIS RUN : self.CURR_FMLA_ID       = " + str( self.CURR_FMLA_ID ) )
