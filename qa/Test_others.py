@@ -32,10 +32,120 @@ class Test_others( unittest.TestCase ) :
 
   PRINT_STOP = False
 
+  ##############################
+  #  TEST REPLOG OPTIMIZE NOT  #
+  ##############################
+  #@unittest.skip( "." )
+  def test_replog_optimize_not( self ) :
+
+    test_id = "replog_optimize_not"
+    logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
+
+    # --------------------------------------------------------------- #
+    # specify input file paths
+
+    inputfile = "./dedalus_drivers/replog_driver.ded"
+
+    # --------------------------------------------------------------- #
+    # define sys.argv
+
+    argDict = {}
+    argDict[ "debug" ]          = True
+    argDict[ "file" ]           = inputfile
+    argDict[ "EOT" ]            = 3
+    argDict[ "EFF" ]            = 0
+    argDict[ "nodes" ]          = [ "a", "b", "c" ]
+    argDict[ "settings" ]       = "./settings_files/settings_dm_optimize_not.ini"
+    argDict[ "evaluator"]       = "c4"
+    argDict[ "crashes" ]        = 0
+    argDict[ "data_save_path" ] = "./data/" + test_id + "/"
+
+    # --------------------------------------------------------------- #
+    # run chaoxis
+
+    # instantiate chaoxis object
+    c = Chaoxis.Chaoxis( argDict, test_id )
+    #c = Chaoxis.Chaoxis( argDict, test_id, [ 'clock("a","b",1,2);' ] )
+
+    # run chaoxis
+    c.run()
+
+    # collect conclusion
+    actual_conclusion = c.conclusion
+
+    expected_conclusion = '''conclusion : found counterexample : ''' + \
+                          '''[\'clock("b","c",2,3);\', ''' + \
+                          '''\'clock("c","a",2,3);\', ''' + \
+                          '''\'clock("b","a",2,3);\', ''' + \
+                          '''\'clock("a","c",1,2);\', ''' + \
+                          '''\'clock("a","b",2,3);\', ''' + \
+                          '''\'clock("a","b",1,2);\', ''' + \
+                          '''\'_NOT_clock("a","c",2,3);\', ''' + \
+                          '''\'clock("c","b",2,3);\']'''
+
+    self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+    logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion )
+
+
+  #############################
+  #  TEST RDLOG OPTIMIZE NOT  #
+  #############################
+  #@unittest.skip( "." )
+  def test_rdlog_optimize_not( self ) :
+
+    test_id = "rdlog_optimize_not"
+    logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
+
+    # --------------------------------------------------------------- #
+    # specify input file paths
+
+    inputfile = "./dedalus_drivers/rdlog_driver.ded"
+
+    # --------------------------------------------------------------- #
+    # define sys.argv
+
+    argDict = {}
+    argDict[ "debug" ]          = True
+    argDict[ "file" ]           = inputfile
+    argDict[ "EOT" ]            = 3
+    argDict[ "EFF" ]            = 0
+    argDict[ "nodes" ]          = [ "a", "b", "c" ]
+    argDict[ "settings" ]       = "./settings_files/settings_dm_optimize_not.ini"
+    argDict[ "evaluator"]       = "c4"
+    argDict[ "crashes" ]        = 0
+    argDict[ "data_save_path" ] = "./data/" + test_id + "/"
+
+    # --------------------------------------------------------------- #
+    # run chaoxis
+
+    # instantiate chaoxis object
+    c = Chaoxis.Chaoxis( argDict, test_id )
+    #c = Chaoxis.Chaoxis( argDict, test_id, [ 'clock("a","b",1,2);' ] )
+
+    # run chaoxis
+    c.run()
+
+    # collect conclusion
+    actual_conclusion = c.conclusion
+
+    expected_conclusion = '''conclusion : found counterexample : ''' +\
+                          '''[\'clock("a","c",1,2);\', ''' + \
+                          '''\'clock("a","b",2,3);\', ''' + \
+                          '''\'clock("a","b",1,2);\', ''' + \
+                          '''\'_NOT_clock("a","c",2,3);\']'''
+
+    self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+    logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion )
+
+
   ###############################
   #  TEST SIMPLOG OPTIMIZE NOT  #
   ###############################
-  #@unittest.skip( "intractable run time. stalls at c4 eval." )
+  #@unittest.skip( "." )
   def test_simplog_optimize_not( self ) :
 
     test_id = "simplog_optimize_not"
@@ -73,7 +183,9 @@ class Test_others( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : found counterexample : [\'clock("a","c",1,2);\', \'_NOT_clock("a","b",1,2);\']'''
+    expected_conclusion = '''conclusion : found counterexample : ''' + \
+                          '''[\'clock("a","c",1,2);\', ''' + \
+                          '''\'_NOT_clock("a","b",1,2);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
