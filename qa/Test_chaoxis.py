@@ -109,7 +109,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ###########
   #  KAFKA  #
   ###########
-  @unittest.skip( "intractable run time." )
+  @unittest.skip( "intractable run time stalling at GET CNF boolean_fmla." ) 
   def test_kafka( self ) :
 
     test_id = "kafka"
@@ -158,7 +158,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ############
   #  3PC DM  #
   ############
-  @unittest.skip( "intractable run time." )
+  @unittest.skip( "intractable run time dm conversion working but taking forever." )
   def test_3pc_dm( self ) :
 
     test_id = "3pc_dm"
@@ -206,7 +206,7 @@ class Test_chaoxis( unittest.TestCase ) :
   #########
   #  3PC  #
   #########
-  #@unittest.skip( "." )
+  #@unittest.skip( "works." )
   def test_3pc( self ) :
 
     test_id = "3pc"
@@ -254,7 +254,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ################
   #  2PC CTP DM  #
   ################
-  @unittest.skip( "intractable run time." )
+  @unittest.skip( "intractable run time dm conversion working but taking forever." )
   def test_2pc_ctp_dm( self ) :
 
     test_id = "2pc_ctp_dm"
@@ -302,7 +302,7 @@ class Test_chaoxis( unittest.TestCase ) :
   #############
   #  2PC CTP  #
   #############
-  #@unittest.skip( "." )
+  #@unittest.skip( "works." )
   def test_2pc_ctp( self ) :
 
     test_id = "2pc_ctp"
@@ -365,7 +365,7 @@ class Test_chaoxis( unittest.TestCase ) :
   #############################
   #  2PC TIMEOUT OPTIMIST DM  #
   #############################
-  @unittest.skip( "intractable run time." )
+  @unittest.skip( "intractable run time stalling during initial program run." )
   def test_2pc_timeout_optimist_dm( self ) :
 
     test_id = "2pc_timeout_optimist_dm"
@@ -413,7 +413,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ##########################
   #  2PC TIMEOUT OPTIMIST  #
   ##########################
-  #@unittest.skip( "." )
+  #@unittest.skip( "works." )
   def test_2pc_timeout_optimist( self ) :
 
     test_id = "2pc_timeout_optimist"
@@ -462,7 +462,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ####################
   #  2PC TIMEOUT DM  #
   ####################
-  @unittest.skip( "intractable run time." )
+  @unittest.skip( "intractable run time stalling at c4 during initial program run." )
   def test_2pc_timeout_dm( self ) :
 
     test_id = "2pc_timeout_dm"
@@ -510,7 +510,7 @@ class Test_chaoxis( unittest.TestCase ) :
   #################
   #  2PC TIMEOUT  #
   #################
-  #@unittest.skip( "." )
+  #@unittest.skip( "works." )
   def test_2pc_timeout( self ) :
 
     test_id = "2pc_timeout"
@@ -578,7 +578,7 @@ class Test_chaoxis( unittest.TestCase ) :
   #####################
   #  2PC OPTIMIST DM  #
   #####################
-  @unittest.skip( "intractable run time." )
+  @unittest.skip( "intractable run time stalling at c4 during initial program run." )
   def test_2pc_optimist_dm( self ) :
 
     test_id = "2pc_optimist_dm"
@@ -626,7 +626,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ##################
   #  2PC OPTIMIST  #
   ##################
-  #@unittest.skip( "." )
+  #@unittest.skip( "works." )
   def test_2pc_optimist( self ) :
 
     test_id = "2pc_optimist"
@@ -700,7 +700,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ############
   #  2PC DM  #
   ############
-  @unittest.skip( "intractable run time." )
+  @unittest.skip( "intractable run time stalling at c4 during initial program run." )
   def test_2pc_dm( self ) :
 
     test_id = "2pc_dm"
@@ -774,7 +774,7 @@ class Test_chaoxis( unittest.TestCase ) :
   #########
   #  2PC  #
   #########
-  #@unittest.skip( "." )
+  #@unittest.skip( "works." )
   def test_2pc( self ) :
 
     test_id = "2pc"
@@ -848,7 +848,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ###############
   #  ACK RB DM  #
   ###############
-  @unittest.skip( "stack overflow." )
+  @unittest.skip( "intractable run time boolean fmla converion taking forever.." )
   def test_ack_rb_dm( self ) :
 
     test_id = "ack_rb_dm"
@@ -913,7 +913,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ############
   #  ACK RB  #
   ############
-  @unittest.skip( "stack overflow." )
+  @unittest.skip( "stack overflow when iterating over the ldfi loop over possible solutions." )
   def test_ack_rb( self ) :
 
     test_id = "ack_rb"
@@ -978,7 +978,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ###############
   #  REPLOG DM  #
   ###############
-  @unittest.skip( "intractable run time." )
+  @unittest.skip( "intractable run time at GET CNF boolean_fmla." )
   def test_replog_dm( self ) :
 
     test_id = "replog_dm"
@@ -1043,7 +1043,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ############
   #  REPLOG  #
   ############
-  @unittest.skip( "intractable run time." )
+  @unittest.skip( "intractable run time at GET CNF boolean_fmla." )
   def test_replog( self ) :
 
     test_id = "replog"
@@ -1108,7 +1108,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ###################
   #  CLASSIC RB DM  #
   ###################
-  @unittest.skip( "intractable run time." )
+  @unittest.skip( "intractable run time at GET CNF boolean_fmla." )
   def test_classic_rb_dm( self ) :
 
     test_id = "classic_rb_dm"
@@ -1173,6 +1173,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ################
   #  CLASSIC RB  #
   ################
+  #@unittest.skip( "works." )
   def test_classic_rb( self ) :
 
     test_id = "classic_rb"
@@ -1237,6 +1238,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ##############
   #  RDLOG DM  #
   ##############
+  #@unittest.skip( "works." )
   def test_rdlog_dm( self ) :
 
     test_id = "rdlog_dm"
@@ -1290,6 +1292,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ###########
   #  RDLOG  #
   ###########
+  #@unittest.skip( "works." )
   def test_rdlog( self ) :
 
     test_id = "rdlog"
@@ -1337,6 +1340,7 @@ class Test_chaoxis( unittest.TestCase ) :
   ################
   #  SIMPLOG DM  #
   ################
+  #@unittest.skip( "works." )
   def test_simplog_dm( self ) :
 
     test_id = "simplog_dm"
@@ -1386,6 +1390,7 @@ class Test_chaoxis( unittest.TestCase ) :
   #############
   #  SIMPLOG  #
   #############
+  #@unittest.skip( "works." )
   def test_simplog( self ) :
 
     test_id = "simplog"

@@ -244,7 +244,7 @@ class Test_others( unittest.TestCase ) :
   #########
   #  3PC  #
   #########
-  @unittest.skip( "intractable run time. lots of work type extrapolation." )
+  @unittest.skip( "intractable run time. lots of work in type extrapolation." )
   def test_3pc( self ) :
 
     test_id = "3pc"
