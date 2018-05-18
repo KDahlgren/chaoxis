@@ -144,6 +144,9 @@ class Chaoxis( object ) :
     if self.is_vacuously_correct( results_dict[ "pre" ] ) :
       self.conclusion = "conclusion : spec is vacuously correct."
 
+    elif self.is_vacuously_incorrect( results_dict[ "pre" ], results_dict[ "post" ] ) :
+      self.conclusion = "conclusion : spec is vacuously incorrect."
+
     else :
 
       # --------------------------------------------------------------- #
@@ -471,6 +474,29 @@ class Chaoxis( object ) :
         logging.debug( "  PRE DOES NOT IMPLY POST : returning True." )
         return True
     logging.debug( "  PRE DOES NOT IMPLY POST : returning False." )
+    return False
+
+
+  ############################
+  #  IS VACUOUSLY INCORRECT  #
+  ############################
+  def is_vacuously_incorrect( self, pre_table, post_table ) :
+
+    # grab pre eot facts
+    pre_eots  = []
+    for tup in pre_table :
+      if tup[-1] == str( self.argDict[ "EOT" ] ) :
+        pre_eots.append( tup )
+
+    # grab post eot facts
+    post_eots  = []
+    for tup in post_table :
+      if tup[-1] == str( self.argDict[ "EOT" ] ) :
+        post_eots.append( tup )
+
+    for pre_tup in pre_eots :
+      if not pre_tup in post_eots :
+        return True
     return False
 
 

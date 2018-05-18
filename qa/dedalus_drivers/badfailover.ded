@@ -1,0 +1,36 @@
+// MR-4832
+
+delegate(Am, Rm, Job)@async :- job(Rm, Job), primary(Rm, Am);
+// a job takes time...
+do_job(Am, Rm, Job)@next :- delegate(Am, Rm, Job);
+done(Rm, Am, Job)@async :- do_job(Am, Rm, Job);
+commit(Am, Job) :- do_job(Am, _, Job);
+
+timerr(Rm, Job, 0) :- job(Rm, Job);
+timerr(Rm, Job, N+1)@next :- timerr(Rm, Job, N);
+
+// ERetry logic
+delegate(Am, Rm, Job)@async :- timerr(Rm, Job, N), N == 3, secondary(Rm, Am), notin done(Rm, _, Job);
+
+done(Rm, Am, Job)@next :- done(Rm, Am, Job);
+primary(Rm, Am)@next :- primary(Rm, Am);
+secondary(Rm, Am)@next :- secondary(Rm, Am);
+commit(Am, Job)@next :- commit(Am, Job);
+
+
+// EDB
+primary("rm", "am1")@1;
+secondary("rm", "am2")@1;
+job("rm", "1243")@1;
+
+
+// Spec
+pre(Job) :- commit(_, Job);
+//pre(Job) :- job(Rm, Job)@1, notin crash(Rm, Rm, _);
+
+counts(Job, count<Am>) :- commit(Am, Job);
+posto(Job, C) :- counts(Job, C);
+
+disagree(Job, Am1, Am2) :- commit(Am1, Job), commit(Am2, Job), Am1 != Am2;
+post(Job) :- done(_, Am, Job), notin disagree(Job, Am, _);
+

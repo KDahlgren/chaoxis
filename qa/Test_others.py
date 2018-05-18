@@ -32,6 +32,57 @@ class Test_others( unittest.TestCase ) :
 
   PRINT_STOP = False
 
+  #######################
+  #  TEST BAD FAILOVER  #
+  #######################
+  #@unittest.skip( "." )
+  def test_badfailover( self ) :
+
+    test_id              = "badfailover"
+    test_input_file_name = "badfailover"
+
+    logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
+
+    # --------------------------------------------------------------- #
+    # specify input file paths
+
+    inputfile = "./dedalus_drivers/" + test_input_file_name + ".ded"
+
+    # --------------------------------------------------------------- #
+    # define sys.argv
+
+    argDict = {}
+    argDict[ "debug" ]          = True
+    argDict[ "file" ]           = inputfile
+    argDict[ "EOT" ]            = 4 #8
+    argDict[ "EFF" ]            = 0 #6
+    argDict[ "nodes" ]          = [ "rm", "am1", "am2" ]
+    argDict[ "settings" ]       = "./settings_files/settings_dm_allow_not_clocks.ini"
+    argDict[ "evaluator"]       = "c4"
+    argDict[ "crashes" ]        = 0 #1
+    argDict[ "data_save_path" ] = "./data/" + test_id + "/"
+
+    # --------------------------------------------------------------- #
+    # run chaoxis
+
+    # instantiate chaoxis object
+    c = Chaoxis.Chaoxis( argDict, test_id )
+    #c = Chaoxis.Chaoxis( argDict, test_id, [ 'clock("a","b",1,2);' ] )
+
+    # run chaoxis
+    c.run()
+
+    # collect conclusion
+    actual_conclusion = c.conclusion
+
+    expected_conclusion = '''conclusion : spec is chaoxis-certified for correctness.'''
+
+    self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+    logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion )
+
+
   ##############################
   #  TEST REPLOG OPTIMIZE NOT  #
   ##############################
@@ -80,7 +131,6 @@ class Test_others( unittest.TestCase ) :
                           '''\'clock("a","c",1,2);\', ''' + \
                           '''\'clock("a","b",2,3);\', ''' + \
                           '''\'clock("a","b",1,2);\', ''' + \
-                          '''\'_NOT_clock("a","c",2,3);\', ''' + \
                           '''\'clock("c","b",2,3);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
@@ -133,8 +183,7 @@ class Test_others( unittest.TestCase ) :
     expected_conclusion = '''conclusion : found counterexample : ''' +\
                           '''[\'clock("a","c",1,2);\', ''' + \
                           '''\'clock("a","b",2,3);\', ''' + \
-                          '''\'clock("a","b",1,2);\', ''' + \
-                          '''\'_NOT_clock("a","c",2,3);\']'''
+                          '''\'clock("a","b",1,2);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -184,8 +233,7 @@ class Test_others( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("a","c",1,2);\', ''' + \
-                          '''\'_NOT_clock("a","b",1,2);\']'''
+                          '''[\'clock("a","c",1,2);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -487,13 +535,15 @@ class Test_others( unittest.TestCase ) :
   @unittest.skip( "intractable run time. stalls at c4 eval." )
   def test_2pc( self ) :
 
-    test_id = "2pc"
-    logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
+    test_id              = "2pc"
+    test_input_file_name = "2pc_driver"
+
+    logging.debug( ">> RUNNING TEST '" + test_input_file_name + "' <<<" )
 
     # --------------------------------------------------------------- #
     # specify input file paths
 
-    inputfile = "./dedalus_drivers/" + test_id + "_driver.ded"
+    inputfile = "./dedalus_drivers/" + test_input_file_name + ".ded"
 
     # --------------------------------------------------------------- #
     # define sys.argv
@@ -535,13 +585,15 @@ class Test_others( unittest.TestCase ) :
   #@unittest.skip( "." )
   def test_classic_rb( self ) :
 
-    test_id = "classic_rb"
+    test_id              = "classic_rb"
+    test_input_file_name = "classic_rb_driver"
+
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
 
     # --------------------------------------------------------------- #
     # specify input file paths
 
-    inputfile = "./dedalus_drivers/" + test_id + "_driver.ded"
+    inputfile = "./dedalus_drivers/" + test_input_file_name + ".ded"
 
     # --------------------------------------------------------------- #
     # define sys.argv
@@ -577,15 +629,13 @@ class Test_others( unittest.TestCase ) :
 
     if argDict[ "EOT" ] == 3 :
       expected_conclusion = '''conclusion : found counterexample : ''' + \
-                            '''[\'clock("a","c",1,2);\', ''' + \
-                            '''\'_NOT_clock("a","b",1,2);\']'''
+                            '''[\'clock("a","c",1,2);\']'''
     elif argDict[ "EOT" ] == 4 :
       expected_conclusion = '''conclusion : found counterexample : ''' + \
                             '''[\'clock("b","c",2,3);\', ''' + \
                             '''\'clock("c","a",2,3);\', ''' + \
                             '''\'clock("b","a",2,3);\', ''' + \
                             '''\'clock("a","c",1,2);\', ''' + \
-                            '''\'_NOT_clock("a","b",1,2);\', ''' + \
                             '''\'clock("c","b",2,3);\']'''
     else :
       expected_conclusion = '''?'''
@@ -601,13 +651,15 @@ class Test_others( unittest.TestCase ) :
   ############
   def test_replog( self ) :
 
-    test_id = "replog"
+    test_id              = "replog"
+    test_input_file_name = "replog_driver"
+
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
 
     # --------------------------------------------------------------- #
     # specify input file paths
 
-    inputfile = "./dedalus_drivers/" + test_id + "_driver.ded"
+    inputfile = "./dedalus_drivers/" + test_input_file_name + ".ded"
 
     # --------------------------------------------------------------- #
     # define sys.argv
@@ -642,7 +694,6 @@ class Test_others( unittest.TestCase ) :
                           '''\'clock("a","c",1,2);\', ''' + \
                           '''\'clock("a","b",2,3);\', ''' + \
                           '''\'clock("a","b",1,2);\', ''' + \
-                          '''\'_NOT_clock("a","c",2,3);\', ''' + \
                           '''\'clock("c","b",2,3);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
@@ -656,13 +707,15 @@ class Test_others( unittest.TestCase ) :
   ###########
   def test_rdlog( self ) :
 
-    test_id = "rdlog"
+    test_id              = "rdlog"
+    test_input_file_name = "rdlog_driver"
+
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
 
     # --------------------------------------------------------------- #
     # specify input file paths
 
-    inputfile = "./dedalus_drivers/" + test_id + "_driver.ded"
+    inputfile = "./dedalus_drivers/" + test_input_file_name + ".ded"
 
     # --------------------------------------------------------------- #
     # define sys.argv
@@ -693,8 +746,7 @@ class Test_others( unittest.TestCase ) :
     expected_conclusion = '''conclusion : found counterexample : ''' + \
                           '''[\'clock("a","c",1,2);\', ''' + \
                           '''\'clock("a","b",2,3);\', ''' + \
-                          '''\'clock("a","b",1,2);\', ''' + \
-                          '''\'_NOT_clock("a","c",2,3);\']'''
+                          '''\'clock("a","b",1,2);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -707,13 +759,15 @@ class Test_others( unittest.TestCase ) :
   #############
   def test_simplog( self ) :
 
-    test_id = "simplog"
+    test_id              = "simplog"
+    test_input_file_name = "simplog_driver"
+
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
 
     # --------------------------------------------------------------- #
     # specify input file paths
 
-    inputfile = "./dedalus_drivers/" + test_id + "_driver.ded"
+    inputfile = "./dedalus_drivers/" + test_input_file_name + ".ded"
 
     # --------------------------------------------------------------- #
     # define sys.argv
@@ -742,8 +796,57 @@ class Test_others( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("a","c",1,2);\', ''' + \
-                          '''\'_NOT_clock("a","b",1,2);\']'''
+                          '''[\'clock("a","c",1,2);\']'''
+
+    self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+    logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion )
+
+
+  #############
+  #  ASYNC 2  #
+  #############
+  def test_async_2( self ) :
+
+    test_id              = "async_2"
+    test_input_file_name = "async_2_driver"
+
+    logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
+
+    # --------------------------------------------------------------- #
+    # specify input file paths
+
+    inputfile = "./dedalus_drivers/" + test_input_file_name + ".ded"
+
+    # --------------------------------------------------------------- #
+    # define sys.argv
+
+    argDict = {}
+    argDict[ "debug" ]          = True
+    argDict[ "file" ]           = inputfile
+    argDict[ "EOT" ]            = 3
+    argDict[ "EFF" ]            = 0
+    argDict[ "nodes" ]          = [ "Node1", "Node2", "Server" ]
+    argDict[ "settings" ]       = "./settings_files/settings_dm_allow_not_clocks.ini"
+    argDict[ "evaluator"]       = "c4"
+    argDict[ "crashes" ]        = 0
+    argDict[ "data_save_path" ] = "./data/" + test_id + "/"
+
+    # --------------------------------------------------------------- #
+    # run chaoxis
+
+    # instantiate chaoxis object
+    c = Chaoxis.Chaoxis( argDict, test_id )
+    #c = Chaoxis.Chaoxis( argDict, test_id, [ '_NOT_clock("Node2","Server",2,1);' ] )
+
+    # run chaoxis
+    c.run()
+
+    # collect conclusion
+    actual_conclusion = c.conclusion
+
+    expected_conclusion = '''conclusion : spec is vacuously incorrect.'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -756,13 +859,15 @@ class Test_others( unittest.TestCase ) :
   #############
   def test_async_1( self ) :
 
-    test_id = "async_1"
+    test_id              = "async_1"
+    test_input_file_name = "async_1_driver"
+
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
 
     # --------------------------------------------------------------- #
     # specify input file paths
 
-    inputfile = "./dedalus_drivers/" + test_id + "_driver.ded"
+    inputfile = "./dedalus_drivers/" + test_input_file_name + ".ded"
 
     # --------------------------------------------------------------- #
     # define sys.argv
@@ -792,17 +897,14 @@ class Test_others( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'_NOT_clock("Node2","Server",2,1);\', ''' + \
-                          '''\'_NOT_clock("Node2","Server",3,2);\', ''' + \
+                          '''[\'_NOT_clock("Node2","Server",1,1);\', ''' + \
+                          '''\'_NOT_clock("Node2","Server",2,1);\', ''' + \
                           '''\'_NOT_clock("Node1","Server",3,1);\', ''' + \
-                          '''\'_NOT_clock("Node2","Server",2,2);\', ''' + \
-                          '''\'clock("Node1","Server",2,2);\', ''' + \
-                          '''\'clock("Node2","Server",1,1);\', ''' + \
-                          '''\'_NOT_clock("Node1","Server",1,2);\', ''' + \
-                          '''\'clock("Node2","Server",3,1);\', ''' + \
-                          '''\'clock("Node1","Server",2,1);\', ''' + \
-                          '''\'clock("Node1","Server",3,2);\', ''' + \
-                          '''\'clock("Node1","Server",1,1);\']'''
+                          '''\'_NOT_clock("Node1","Server",1,1);\', ''' + \
+                          '''\'_NOT_clock("Node2","Server",2,2);\']'''
+    #expected_conclusion = '''conclusion : found counterexample : ''' + \
+    #                      '''[\'_NOT_clock("Node2","Server",3,2);\', ''' + \
+    #                      '''\'_NOT_clock("Node2","Server",2,2);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
