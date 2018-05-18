@@ -1,0 +1,2 @@
+//precondition: all nodes in the initial ring are connected in a ring.
+//post condition: the final system is a ring and contains all nodes.

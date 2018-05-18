@@ -32,6 +32,58 @@ class Test_others( unittest.TestCase ) :
 
   PRINT_STOP = True
 
+  ################
+  #  TEST CHORD  #
+  ################
+  #@unittest.skip( "spec is a work in progress." )
+  def test_badfailover( self ) :
+
+    test_id              = "others_chord"
+    test_input_file_name = "chord"
+
+    logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
+
+    # --------------------------------------------------------------- #
+    # specify input file paths
+
+    inputfile = "./dedalus_drivers/" + test_input_file_name + ".ded"
+
+    # --------------------------------------------------------------- #
+    # define sys.argv
+
+    argDict = {}
+    argDict[ "debug" ]          = True
+    argDict[ "file" ]           = inputfile
+    argDict[ "EOT" ]            = 4
+    argDict[ "EFF" ]            = 3
+    argDict[ "nodes" ]          = [ "a", "b", "c", "d" ]
+    argDict[ "settings" ]       = "./settings_files/settings_dm_allow_not_clocks.ini"
+    argDict[ "evaluator"]       = "c4"
+    argDict[ "crashes" ]        = 0
+    argDict[ "data_save_path" ] = "./data/" + test_id + "/"
+
+    # --------------------------------------------------------------- #
+    # run chaoxis
+
+    # instantiate chaoxis object
+    c = Chaoxis.Chaoxis( argDict, test_id )
+    #c = Chaoxis.Chaoxis( argDict, test_id, [ 'clock("am1","rm",3,4);' ] )
+
+    # run chaoxis
+    c.run()
+
+    # collect conclusion
+    actual_conclusion = c.conclusion
+
+    expected_conclusion = '''conclusion : found counterexample : ''' + \
+                          '''[\'clock("am1","rm",3,4);\']'''
+
+    self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+    logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion )
+
+
   ######################
   #  TEST BADFAILOVER  #
   ######################
