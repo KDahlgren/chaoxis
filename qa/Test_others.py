@@ -820,7 +820,7 @@ class Test_others( unittest.TestCase ) :
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
-    argDict[ "nodes" ]          = [ "Node1", "Node2", "Server" ]
+    argDict[ "nodes" ]          = [ "am", "rm1", "rm2" ]
     argDict[ "settings" ]       = "./settings_files/settings_dm_allow_not_clocks.ini"
     argDict[ "evaluator"]       = "c4"
     argDict[ "crashes" ]        = 0
@@ -831,7 +831,6 @@ class Test_others( unittest.TestCase ) :
 
     # instantiate chaoxis object
     c = Chaoxis.Chaoxis( argDict, test_id )
-    #c = Chaoxis.Chaoxis( argDict, test_id, [ '_NOT_clock("Node2","Server",2,1);' ] )
 
     # run chaoxis
     c.run()
@@ -839,7 +838,7 @@ class Test_others( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : spec is vacuously incorrect.'''
+    expected_conclusion = '''conclusion : spec is vacuously correct.'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
