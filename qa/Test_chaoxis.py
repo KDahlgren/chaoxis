@@ -452,10 +452,15 @@ class Test_chaoxis( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : spec is chaoxis-ceritified for correctness.'''
-    # however, actual conclusion is '''conclusion : found counterexample : [\'clock("C","a",5,6);\', \'clock("a","d",5,6);\', \'clock("d","a",5,6);\', \'clock("C","a",4,5);\', \'clock("C","d",5,6);\', \'clock("C","d",4,5);\', \'clock("C","b",4,5);\', \'clock("b","d",5,6);\', \'clock("C","b",5,6);\', \'clock("b","a",5,6);\', \'clock("a","b",5,6);\', \'clock("d","b",5,6);\']'''
+    expected_conclusion = '''conclusion : found counterexample : ''' + \
+                          '''[\'clock("C","a",5,6);\', ''' + \
+                          '''\'clock("C","a",4,5);\', ''' + \
+                          '''\'clock("C","d",5,6);\', ''' + \
+                          '''\'clock("C","d",4,5);\', ''' + \
+                          '''\'clock("C","b",4,5);\', ''' + \
+                          '''\'clock("C","b",5,6);\']'''
 
-    self.assertTrue( actual_conclusion != expected_conclusion )
+    self.assertEqual( actual_conclusion, expected_conclusion )
 
     logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
     logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion )
@@ -559,17 +564,11 @@ class Test_chaoxis( unittest.TestCase ) :
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
                           '''[\'clock("C","a",5,6);\', ''' + \
-                          '''\'clock("a","d",5,6);\', ''' + \
-                          '''\'clock("d","a",5,6);\', ''' + \
                           '''\'clock("C","a",4,5);\', ''' + \
                           '''\'clock("C","d",5,6);\', ''' + \
                           '''\'clock("C","d",4,5);\', ''' + \
                           '''\'clock("C","b",4,5);\', ''' + \
-                          '''\'clock("b","d",5,6);\', ''' + \
-                          '''\'clock("C","b",5,6);\', ''' + \
-                          '''\'clock("b","a",5,6);\', ''' + \
-                          '''\'clock("a","b",5,6);\', ''' + \
-                          '''\'clock("d","b",5,6);\']'''
+                          '''\'clock("C","b",5,6);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -681,17 +680,11 @@ class Test_chaoxis( unittest.TestCase ) :
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
                           '''[\'clock("C","a",5,6);\', ''' + \
-                          '''\'clock("a","d",5,6);\', ''' + \
-                          '''\'clock("d","a",5,6);\', ''' + \
                           '''\'clock("C","a",4,5);\', ''' + \
                           '''\'clock("C","d",5,6);\', ''' + \
                           '''\'clock("C","d",4,5);\', ''' + \
                           '''\'clock("C","b",4,5);\', ''' + \
-                          '''\'clock("b","d",5,6);\', ''' + \
-                          '''\'clock("C","b",5,6);\', ''' + \
-                          '''\'clock("b","a",5,6);\', ''' + \
-                          '''\'clock("a","b",5,6);\', ''' + \
-                          '''\'clock("d","b",5,6);\']'''
+                          '''\'clock("C","b",5,6);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -829,17 +822,11 @@ class Test_chaoxis( unittest.TestCase ) :
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
                           '''[\'clock("C","a",5,6);\', ''' + \
-                          '''\'clock("a","d",5,6);\', ''' + \
-                          '''\'clock("d","a",5,6);\', ''' + \
                           '''\'clock("C","a",4,5);\', ''' + \
                           '''\'clock("C","d",5,6);\', ''' + \
                           '''\'clock("C","d",4,5);\', ''' + \
                           '''\'clock("C","b",4,5);\', ''' + \
-                          '''\'clock("b","d",5,6);\', ''' + \
-                          '''\'clock("C","b",5,6);\', ''' + \
-                          '''\'clock("b","a",5,6);\', ''' + \
-                          '''\'clock("a","b",5,6);\', ''' + \
-                          '''\'clock("d","b",5,6);\']'''
+                          '''\'clock("C","b",5,6);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -1220,7 +1207,6 @@ class Test_chaoxis( unittest.TestCase ) :
     expected_conclusion = '''conclusion : found counterexample : ''' + \
                           '''[\'clock("b","c",2,3);\', ''' + \
                           '''\'clock("c","a",3,4);\', ''' + \
-                          '''\'clock("b","c",3,4);\', ''' + \
                           '''\'clock("c","a",2,3);\', ''' + \
                           '''\'clock("c","b",3,4);\', ''' + \
                           '''\'clock("b","a",2,3);\', ''' + \
@@ -1284,7 +1270,13 @@ class Test_chaoxis( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : found counterexample : [\'clock("a","b",1,2);\', \'clock("a","b",4,5);\', \'clock("a","c",1,2);\', \'clock("a","b",2,3);\', \'clock("a","c",4,5);\', \'clock("a","c",5,6);\', \'clock("a","b",5,6);\', \'clock("a","c",3,4);\', \'clock("a","c",2,3);\']'''
+    expected_conclusion = '''conclusion : found counterexample : ''' + \
+                          '''[\'clock("a","b",1,2);\', ''' + \
+                          '''\'clock("a","b",4,5);\', ''' + \
+                          '''\'clock("a","b",2,3);\', ''' + \
+                          '''\'clock("a","b",5,6);\', ''' + \
+                          '''\'clock("a","b",3,4);\']'''
+
     self.assertEqual( actual_conclusion, expected_conclusion )
 
     logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
@@ -1382,7 +1374,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : found counterexample : [\'clock("a","c",1,2);\']'''
+    expected_conclusion = '''conclusion : found counterexample : [\'clock("a","b",1,2);\']'''
     self.assertEqual( actual_conclusion, expected_conclusion )
 
     logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )

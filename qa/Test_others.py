@@ -30,15 +30,15 @@ class Test_others( unittest.TestCase ) :
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
-  PRINT_STOP = False
+  PRINT_STOP = True
 
-  #######################
-  #  TEST BAD FAILOVER  #
-  #######################
-  #@unittest.skip( "." )
+  ######################
+  #  TEST BADFAILOVER  #
+  ######################
+  #@unittest.skip( "works." )
   def test_badfailover( self ) :
 
-    test_id              = "badfailover"
+    test_id              = "others_badfailover"
     test_input_file_name = "badfailover"
 
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
@@ -54,8 +54,8 @@ class Test_others( unittest.TestCase ) :
     argDict = {}
     argDict[ "debug" ]          = True
     argDict[ "file" ]           = inputfile
-    argDict[ "EOT" ]            = 4 #8
-    argDict[ "EFF" ]            = 0 #6
+    argDict[ "EOT" ]            = 8
+    argDict[ "EFF" ]            = 6
     argDict[ "nodes" ]          = [ "rm", "am1", "am2" ]
     argDict[ "settings" ]       = "./settings_files/settings_dm_allow_not_clocks.ini"
     argDict[ "evaluator"]       = "c4"
@@ -67,7 +67,7 @@ class Test_others( unittest.TestCase ) :
 
     # instantiate chaoxis object
     c = Chaoxis.Chaoxis( argDict, test_id )
-    #c = Chaoxis.Chaoxis( argDict, test_id, [ 'clock("a","b",1,2);' ] )
+    #c = Chaoxis.Chaoxis( argDict, test_id, [ 'clock("am1","rm",3,4);' ] )
 
     # run chaoxis
     c.run()
@@ -75,7 +75,8 @@ class Test_others( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : spec is chaoxis-certified for correctness.'''
+    expected_conclusion = '''conclusion : found counterexample : ''' + \
+                          '''[\'clock("am1","rm",3,4);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -125,13 +126,11 @@ class Test_others( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("b","c",2,3);\', ''' + \
-                          '''\'clock("c","a",2,3);\', ''' + \
-                          '''\'clock("b","a",2,3);\', ''' + \
-                          '''\'clock("a","c",1,2);\', ''' + \
-                          '''\'clock("a","b",2,3);\', ''' + \
-                          '''\'clock("a","b",1,2);\', ''' + \
-                          '''\'clock("c","b",2,3);\']'''
+                          '''['clock("b","c",2,3);', ''' + \
+                          ''''clock("b","a",2,3);', ''' + \
+                          ''''clock("a","c",1,2);', ''' + \
+                          ''''clock("a","b",2,3);', ''' + \
+                          ''''clock("a","c",2,3);']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -182,8 +181,7 @@ class Test_others( unittest.TestCase ) :
 
     expected_conclusion = '''conclusion : found counterexample : ''' +\
                           '''[\'clock("a","c",1,2);\', ''' + \
-                          '''\'clock("a","b",2,3);\', ''' + \
-                          '''\'clock("a","b",1,2);\']'''
+                          '''\'clock("a","c",2,3);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -535,7 +533,7 @@ class Test_others( unittest.TestCase ) :
   @unittest.skip( "intractable run time. stalls at c4 eval." )
   def test_2pc( self ) :
 
-    test_id              = "2pc"
+    test_id              = "others_2pc"
     test_input_file_name = "2pc_driver"
 
     logging.debug( ">> RUNNING TEST '" + test_input_file_name + "' <<<" )
@@ -585,7 +583,7 @@ class Test_others( unittest.TestCase ) :
   #@unittest.skip( "." )
   def test_classic_rb( self ) :
 
-    test_id              = "classic_rb"
+    test_id              = "others_classic_rb"
     test_input_file_name = "classic_rb_driver"
 
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
@@ -632,10 +630,8 @@ class Test_others( unittest.TestCase ) :
                             '''[\'clock("a","c",1,2);\']'''
     elif argDict[ "EOT" ] == 4 :
       expected_conclusion = '''conclusion : found counterexample : ''' + \
-                            '''[\'clock("b","c",2,3);\', ''' + \
-                            '''\'clock("c","a",2,3);\', ''' + \
-                            '''\'clock("b","a",2,3);\', ''' + \
-                            '''\'clock("a","c",1,2);\', ''' + \
+                            '''[\'clock("c","a",2,3);\', ''' + \
+                            '''\'clock("a","b",1,2);\', ''' + \
                             '''\'clock("c","b",2,3);\']'''
     else :
       expected_conclusion = '''?'''
@@ -651,7 +647,7 @@ class Test_others( unittest.TestCase ) :
   ############
   def test_replog( self ) :
 
-    test_id              = "replog"
+    test_id              = "others_replog"
     test_input_file_name = "replog_driver"
 
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
@@ -688,13 +684,11 @@ class Test_others( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("b","c",2,3);\', ''' +\
-                          '''\'clock("c","a",2,3);\', ''' + \
+                          '''[\'clock("b","c",2,3);\', ''' + \
                           '''\'clock("b","a",2,3);\', ''' + \
                           '''\'clock("a","c",1,2);\', ''' + \
                           '''\'clock("a","b",2,3);\', ''' + \
-                          '''\'clock("a","b",1,2);\', ''' + \
-                          '''\'clock("c","b",2,3);\']'''
+                          '''\'clock("a","c",2,3);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -707,7 +701,7 @@ class Test_others( unittest.TestCase ) :
   ###########
   def test_rdlog( self ) :
 
-    test_id              = "rdlog"
+    test_id              = "others_rdlog"
     test_input_file_name = "rdlog_driver"
 
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
@@ -745,8 +739,7 @@ class Test_others( unittest.TestCase ) :
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
                           '''[\'clock("a","c",1,2);\', ''' + \
-                          '''\'clock("a","b",2,3);\', ''' + \
-                          '''\'clock("a","b",1,2);\']'''
+                          '''\'clock("a","c",2,3);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -759,7 +752,7 @@ class Test_others( unittest.TestCase ) :
   #############
   def test_simplog( self ) :
 
-    test_id              = "simplog"
+    test_id              = "others_simplog"
     test_input_file_name = "simplog_driver"
 
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
@@ -809,7 +802,7 @@ class Test_others( unittest.TestCase ) :
   #############
   def test_async_2( self ) :
 
-    test_id              = "async_2"
+    test_id              = "others_async_2"
     test_input_file_name = "async_2_driver"
 
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
@@ -859,7 +852,7 @@ class Test_others( unittest.TestCase ) :
   #############
   def test_async_1( self ) :
 
-    test_id              = "async_1"
+    test_id              = "others_async_1"
     test_input_file_name = "async_1_driver"
 
     logging.debug( ">> RUNNING TEST '" + test_id + "' <<<" )
@@ -897,14 +890,8 @@ class Test_others( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'_NOT_clock("Node2","Server",1,1);\', ''' + \
-                          '''\'_NOT_clock("Node2","Server",2,1);\', ''' + \
-                          '''\'_NOT_clock("Node1","Server",3,1);\', ''' + \
-                          '''\'_NOT_clock("Node1","Server",1,1);\', ''' + \
+                          '''[\'_NOT_clock("Node2","Server",3,2);\', ''' + \
                           '''\'_NOT_clock("Node2","Server",2,2);\']'''
-    #expected_conclusion = '''conclusion : found counterexample : ''' + \
-    #                      '''[\'_NOT_clock("Node2","Server",3,2);\', ''' + \
-    #                      '''\'_NOT_clock("Node2","Server",2,2);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
