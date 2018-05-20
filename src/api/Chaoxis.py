@@ -7,7 +7,7 @@ Chaoxis.py
 # ------------------------------------------------ #
 #  python package imports 
 
-import ConfigParser, copy, logging, os, sqlite3, string, sys
+import ConfigParser, copy, logging, os, sqlite3, string, sys, z3
 
 # ------------------------------------------------ #
 # IAPYX imports
@@ -39,20 +39,9 @@ SNIPER_SRC_PATH = __file__+ "/../../../lib/sniper/src"
 if not os.path.abspath( SNIPER_SRC_PATH ) in sys.path :
   sys.path.append( os.path.abspath( SNIPER_SRC_PATH ) )
 
-from solvers import PYCOSAT_Solver
+from solvers import PYCOSAT_Solver, Z3_Solver
 
 # ------------------------------------------------ #
-
-# --------------------------------------------------------------- #
-# set logging level
-
-#if sys.argv[1] == "--debug" :
-#  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-#elif sys.argv[1] == "--info" :
-#  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-#elif sys.argv[1] == "--warning" : 
-#  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
-
 
 #############
 #  CHAOXIS  #
@@ -73,6 +62,9 @@ class Chaoxis( object ) :
     self.label              = label
     self.custom_fault       = custom_fault
     self.tried_solns        = []
+
+    # --------------------------------------------------------------- #
+    # get configuration params
 
     # --------------------------------------------------------------- #
     # get dictionary of command line arguments
@@ -97,7 +89,8 @@ class Chaoxis( object ) :
     if os.path.isfile( saveDB ) :
       os.remove( saveDB )
 
-    IRDB        = sqlite3.connect( saveDB ) # database for storing IR, stored in running script dir
+    # database for storing IR, stored in running script dir
+    IRDB        = sqlite3.connect( saveDB )
     self.cursor = IRDB.cursor()
 
     # --------------------------------------------------------------- #
@@ -121,9 +114,12 @@ class Chaoxis( object ) :
     self.clocks_only          = self.get_clocks_only(  self.datalog_with_clocks[0][0] )
     self.table_list_only      = self.datalog_with_clocks[0][1]
 
-    logging.debug( "  __INIT__ : self.datalog_program_only = " + str( self.datalog_program_only ) )
-    logging.debug( "  __INIT__ : self.clocks_only          = " + str( self.clocks_only ) )
-    logging.debug( "  __INIT__ : self.table_list_only      = " + str( self.table_list_only ) )
+    logging.debug( "  __INIT__ : self.datalog_program_only = " + \
+                   str( self.datalog_program_only ) )
+    logging.debug( "  __INIT__ : self.clocks_only          = " + \
+                   str( self.clocks_only ) )
+    logging.debug( "  __INIT__ : self.table_list_only      = " + \
+                   str( self.table_list_only ) )
 
     # --------------------------------------------------------------- #
     # perform evaluaton on the current version of datalog_with_clocks
@@ -133,7 +129,8 @@ class Chaoxis( object ) :
     # run c4 evaluation
     results_array = None
     results_dict  = None
-    results_array = c4_evaluator.runC4_wrapper( self.datalog_with_clocks[0], self.argDict )
+    results_array = c4_evaluator.runC4_wrapper( self.datalog_with_clocks[0], \
+                                                self.argDict )
     results_dict  = tools.getEvalResults_dict_c4( results_array )
 
     logging.debug( "  __INIT__ : performing initial run...done." )
@@ -176,8 +173,15 @@ class Chaoxis( object ) :
   
       logging.debug( "  __INIT__ : performing initial solve..." )
 
-      self.pycosat_solver = None
-      self.pycosat_solver = PYCOSAT_Solver.PYCOSAT_Solver( self.argDict, orik_rgg )
+      SOLVER_TYPE = argDict[ "solver" ].lower()
+      logging.debug( "  __INIT__ : using solver type '" + SOLVER_TYPE + "'"  )
+
+      if SOLVER_TYPE == "z3" :
+        self.solver = Z3_Solver.Z3_Solver( self.argDict, orik_rgg )
+      elif SOLVER_TYPE == "pycosat" :
+        self.solver = PYCOSAT_Solver.PYCOSAT_Solver( self.argDict, orik_rgg )
+      else :
+        raise ValueError( "  solver type '" + SOLVER_TYPE + "' not recognized." )
 
       logging.debug( "  __INIT__ : performing initial solve...done." )
 
@@ -188,9 +192,12 @@ class Chaoxis( object ) :
   def run( self ) :
 
     logging.debug( "  CHAOXIS RUN : -----------------------------------------" )
-    logging.debug( "  CHAOXIS RUN : self.NUM_RUN_ITERATIONS = " + str( self.NUM_RUN_ITERATIONS ) )
-    logging.debug( "  CHAOXIS RUN : self.CURR_SOLN_INDEX    = " + str( self.CURR_SOLN_INDEX ) )
-    logging.debug( "  CHAOXIS RUN : self.CURR_FMLA_ID       = " + str( self.CURR_FMLA_ID ) )
+    logging.debug( "  CHAOXIS RUN : self.NUM_RUN_ITERATIONS = " + \
+                   str( self.NUM_RUN_ITERATIONS ) )
+    logging.debug( "  CHAOXIS RUN : self.CURR_SOLN_INDEX    = " + \
+                   str( self.CURR_SOLN_INDEX ) )
+    logging.debug( "  CHAOXIS RUN : self.CURR_FMLA_ID       = " + \
+                   str( self.CURR_FMLA_ID ) )
 
     # --------------------------------------------------------------- #
     # break on vacuouc correctness
@@ -209,7 +216,15 @@ class Chaoxis( object ) :
       # --------------------------------------------------------------- #
       # get a new soln
   
-      a_new_soln = self.get_soln_at_index( self.pycosat_solver )
+      if self.solver.solver_type == "z3" :
+        a_new_soln = self.solver.get_next_soln()
+
+      elif self.solver.solver_type == "pycosat" :
+        a_new_soln = self.get_soln_at_index( self.solver )
+      else :
+        raise ValueError( "alright. how did you get this far w/o specifying a " + \
+                          "known solver? aborting..." )
+
       logging.debug( "  CHAOXIS RUN : a_new_soln = " + str( a_new_soln ) )
       assert( a_new_soln != None )
   
@@ -223,7 +238,8 @@ class Chaoxis( object ) :
       if not self.already_tried( a_new_soln_clean ) :
     
         new_clock_table = self.perform_clock_table_edits( a_new_soln_clean )
-        logging.debug( "  CHAOXIS RUN : adding to tried_solns '" + str( a_new_soln_clean ) + "'" )
+        logging.debug( "  CHAOXIS RUN : adding to tried_solns '" + \
+                       str( a_new_soln_clean ) + "'" )
         self.tried_solns.append( a_new_soln_clean )
     
         logging.debug( "  CHAOXIS RUN : new_clock_table " + str( new_clock_table ) )
@@ -244,9 +260,10 @@ class Chaoxis( object ) :
         # evaluate results to draw a conclusion
     
         if self.pre_does_not_imply_post( results_dict[ "pre" ], results_dict[ "post" ] ) :
-          self.conclusion = "conclusion : found counterexample : " + str( a_new_soln_clean )
+          self.conclusion = "conclusion : found counterexample : " + \
+                            str( a_new_soln_clean )
     
-        elif self.no_more_fmlas_or_solns( self.pycosat_solver ) :
+        elif self.no_more_fmlas_or_solns() :
           self.conclusion = "conclusion : spec is chaoxis-certified for correctness."
     
         else :
@@ -254,9 +271,9 @@ class Chaoxis( object ) :
           # --------------------------------------------------------------- #
           # repeat until a corrupting fault appears or until
           # no more formulas and solns exist
-      
-          if self.another_soln_exists( self.pycosat_solver ) or \
-             self.another_fmla_exists( self.pycosat_solver ) :
+
+          if self.another_soln_exists() or \
+             self.another_fmla_exists() :
             self.NUM_RUN_ITERATIONS += 1
             self.run()
     
@@ -264,12 +281,12 @@ class Chaoxis( object ) :
             self.conclusion = "conclusion : alright, something's weird." 
     
       else :
-        if self.another_soln_exists( self.pycosat_solver ) or \
-           self.another_fmla_exists( self.pycosat_solver ) :
+        if self.another_soln_exists() or \
+           self.another_fmla_exists() :
           self.NUM_RUN_ITERATIONS += 1
           self.run()
   
-        elif self.no_more_fmlas_or_solns( self.pycosat_solver ) :
+        elif self.no_more_fmlas_or_solns() :
           self.conclusion = "conclusion : spec is chaoxis-certified for correctness."
   
         else :
@@ -299,13 +316,15 @@ class Chaoxis( object ) :
   #########################
   def run_on_custom_fault( self ) :
 
-    logging.debug( "  RUN ON CUSTOM FAULT : self.NUM_RUN_ITERATIONS = " + str( self.NUM_RUN_ITERATIONS ) )
+    logging.debug( "  RUN ON CUSTOM FAULT : self.NUM_RUN_ITERATIONS = " + \
+                   str( self.NUM_RUN_ITERATIONS ) )
 
     # --------------------------------------------------------------- #
     # edit the clock table
 
     a_new_soln_clean = self.custom_fault
-    logging.debug( "  RUN ON CUSTOM FAULT : a_new_soln_clean : " + str( a_new_soln_clean ) )
+    logging.debug( "  RUN ON CUSTOM FAULT : a_new_soln_clean : " + \
+                   str( a_new_soln_clean ) )
 
     new_clock_table = self.perform_clock_table_edits( a_new_soln_clean )
 
@@ -330,7 +349,8 @@ class Chaoxis( object ) :
       return
 
     else :
-      self.conclusion = "conclusion : spec is chaoxis-certified for correctness on the given fault."
+      self.conclusion = "conclusion : spec is chaoxis-certified for " + \
+                        "correctness on the given fault."
 
     print "+++++++++++++++++++++++++++++++"
     print "  RUN ON CUSTOM FAULT : "
@@ -368,60 +388,158 @@ class Chaoxis( object ) :
   #########################
   #  ANOTHER SOLN EXISTS  #
   #########################
-  def another_soln_exists( self, solver ) :
+  def another_soln_exists( self ) :
 
-    # check if another soln exists
-    curr_fmla = solver.cnf_fmla_list[ self.CURR_FMLA_ID ]
-    try :
-      a_new_soln = solver.get_a_soln( curr_fmla, self.CURR_SOLN_INDEX + 1 )
-      logging.debug( "  ANOTHER SOLN EXISTS : returning True" )
-      return True
-    except IndexError :
-      logging.debug( "  ANOTHER SOLN EXISTS : returning False" )
-      return False
+    logging.debug( "  ANOTHER SOLN EXISTS : self.solver.solver_type = " + \
+                   self.solver.solver_type )
+
+    if self.solver.solver_type == "z3" :
+      try :
+        self.solver.get_a_soln( fmla_id=self.solver.fmla_id, add_constraint=False )
+        logging.debug( "  ANOTHER SOLN EXISTS : returning True" )
+        return True
+      except z3.Z3Exception :
+        logging.debug( "  ANOTHER SOLN EXISTS : returning False" )
+        return False
+
+    elif self.solver.solver_type == "pycosat" :
+      res = self.another_soln_exists_pycosat()
+      logging.debug( "  ANOTHER SOLN EXISTS : returning " + str( res ) )
+      return res
+
+    else :
+      raise ValueError( "hold up. how'd you make it here w/o " + \
+                        "a known solver? aborting..." )
 
 
   #########################
   #  ANOTHER FMLA EXISTS  #
   #########################
-  def another_fmla_exists( self, solver ) :
+  def another_fmla_exists( self ) :
+
+    logging.debug( "  ANOTHER FMLA EXISTS : self.solver.solver_type = " + \
+                   self.solver.solver_type )
+
+    if self.solver.solver_type == "z3" :
+      try :
+        self.solver.boolean_fmla_list[ self.solver.fmla_id + 1 ]
+        logging.debug( "  ANOTHER FMLA EXISTS : returning True" )
+        return True
+      except IndexError :
+        logging.debug( "  ANOTHER FMLA EXISTS : returning False" )
+        return False
+
+    elif self.solver.solver_type == "pycosat" :
+      res = self.another_fmla_exists_pycosat()
+      logging.debug( "  ANOTHER FMLA EXISTS : returning " + str( res ) )
+      return res
+
+    else :
+      raise ValueError( "hold up. how'd you make it here w/o " + \
+                        "a known solver? aborting..." )
+
+
+  #################################
+  #  ANOTHER SOLN EXISTS PYCOSAT  #
+  #################################
+  def another_soln_exists_pycosat( self ) :
+
+    # check if another soln exists
+    curr_fmla = self.solver.cnf_fmla_list[ self.CURR_FMLA_ID ]
+    try :
+      a_new_soln = self.solver.get_a_soln( curr_fmla, self.CURR_SOLN_INDEX + 1 )
+      logging.debug( "  ANOTHER SOLN EXISTS PYCOSAT : returning True" )
+      return True
+    except IndexError :
+      logging.debug( "  ANOTHER SOLN EXISTS PYCOSAT : returning False" )
+      return False
+
+
+  #################################
+  #  ANOTHER FMLA EXISTS PYCOSAT  #
+  #################################
+  def another_fmla_exists_pycosat( self ) :
 
     # check if another fmla exists
     try :
-      next_fmla = solver.cnf_fmla_list[ self.CURR_FMLA_ID + 1 ]
-      logging.debug( "  ANOTHER FMLA EXISTS : returning True" )
+      next_fmla = self.solver.cnf_fmla_list[ self.CURR_FMLA_ID + 1 ]
+      logging.debug( "  ANOTHER FMLA EXISTS PYCOSAT : returning True" )
       return True
     except IndexError :
-      logging.debug( "  ANOTHER FMLA EXISTS : returning False" )
+      logging.debug( "  ANOTHER FMLA EXISTS PYCOSAT : returning False" )
       return False
 
 
   ############################
   #  NO MORE FMLAS OR SOLNS  #
   ############################
-  def no_more_fmlas_or_solns( self, solver ) :
+  def no_more_fmlas_or_solns( self ) :
 
-    logging.debug( "  NO MORE FMLAS OR SOLNS : self.CURR_FMLA_ID    = " + str( self.CURR_FMLA_ID ) )
-    logging.debug( "  NO MORE FMLAS OR SOLNS : self.CURR_SOLN_INDEX = " + str( self.CURR_SOLN_INDEX ) )
-    logging.debug( "  NO MORE FMLAS OR SOLNS : self.cnf_fmla_list   = " + str( solver.cnf_fmla_list ) )
+    if self.solver.solver_type == "z3" :
+      return self.no_more_fmlas_or_solns_z3()
+
+    elif self.solver.solver_type == "pycosat" :
+      return self.no_more_fmlas_or_solns_pycosat()
+
+    else :
+      raise ValueError( "holy shit, you got this far w/o specifying a " + \
+                        "known solver? aborting..." )
+
+
+  ###############################
+  #  NO MORE FMLAS OR SOLNS Z3  #
+  ###############################
+  def no_more_fmlas_or_solns_z3( self ) :
+
+    # check for more fmlas
+    try :
+      self.solver.boolean_fmla_list[ self.solver.fmla_id + 1 ]
+      no_more_fmlas = False
+    except IndexError :
+      no_more_fmlas = True
+
+    # check for more solns
+    try :
+      self.solver.get_a_soln( fmla_id=self.solver.fmla_id, add_constraint=False )
+      no_more_solns = False
+    except z3.Z3Exception :
+      no_more_solns = True
+
+    if no_more_fmlas and no_more_solns :
+      return True
+    else :
+      return False
+
+
+  ####################################
+  #  NO MORE FMLAS OR SOLNS PYCOSAT  #
+  ####################################
+  def no_more_fmlas_or_solns_pycosat( self ) :
+
+    logging.debug( "  NO MORE FMLAS OR SOLNS PYCOSAT : self.CURR_FMLA_ID    = " + \
+                   str( self.CURR_FMLA_ID ) )
+    logging.debug( "  NO MORE FMLAS OR SOLNS PYCOSAT : self.CURR_SOLN_INDEX = " + \
+                   str( self.CURR_SOLN_INDEX ) )
+    logging.debug( "  NO MORE FMLAS OR SOLNS PYCOSAT : self.cnf_fmla_list   = " + \
+                   str( self.solver.cnf_fmla_list ) )
 
     # check if another fmla exists
-    if self.another_fmla_exists( solver ) :
+    if self.another_fmla_exists_pycosat() :
       no_more_fmlas = False
     else :
       no_more_fmlas = True
 
     # check if another soln exists
-    if self.another_soln_exists( solver ) :
+    if self.another_soln_exists_pycosat() :
       no_more_solns = False
     else :
       no_more_solns = True
 
     if no_more_fmlas and no_more_solns :
-      logging.debug( "  NO MORE FMLAS OR SOLNS : returning True." )
+      logging.debug( "  NO MORE FMLAS OR SOLNS PYCOSAT : returning True." )
       return True
     else :
-      logging.debug( "  NO MORE FMLAS OR SOLNS : returning False." )
+      logging.debug( "  NO MORE FMLAS OR SOLNS PYCOSAT : returning False." )
       return False
 
 
@@ -577,11 +695,11 @@ class Chaoxis( object ) :
   #  GET SOLN AT INDEX  #
   #######################
   # use index at CURR_SOLN_INDEX
-  def get_soln_at_index( self, pycosat_solver ) :
+  def get_soln_at_index( self, solver ) :
 
     # make sure fmla exists
     try :
-      curr_fmla = pycosat_solver.cnf_fmla_list[ self.CURR_FMLA_ID ]
+      curr_fmla = solver.cnf_fmla_list[ self.CURR_FMLA_ID ]
     except IndexError :
       logging.debug( "  GET SOLN AT INDEX : no more fmlas to explore. exiting loop." )
       return None
@@ -589,7 +707,7 @@ class Chaoxis( object ) :
     # curr_fmla must exist here by defn of previous try-except.
     try :
       logging.debug( "  GET SOLN AT INDEX : running on self.CURR_FMLA_ID = " + str( self.CURR_FMLA_ID ) + ", self.CURR_SOLN_INDEX = " + str( self.CURR_SOLN_INDEX ) )
-      a_new_soln = pycosat_solver.get_a_soln( curr_fmla, self.CURR_SOLN_INDEX )
+      a_new_soln = solver.get_a_soln( curr_fmla, self.CURR_SOLN_INDEX )
       self.CURR_SOLN_INDEX += 1
       return a_new_soln
     except IndexError :
@@ -597,7 +715,7 @@ class Chaoxis( object ) :
       self.CURR_FMLA_ID    += 1 # increment to the next fmla
       self.CURR_SOLN_INDEX  = 0  # reset soln_id
       logging.debug( "  GET SOLN AT INDEX : incemented self.CURR_FMLA_ID to " + str( self.CURR_FMLA_ID ) + ". reseting soln_id." )
-      return self.get_soln_at_index( pycosat_solver )
+      return self.get_soln_at_index( solver )
 
 
   ########################
@@ -618,7 +736,7 @@ class Chaoxis( object ) :
 
       # make sure fmla exists
       try :
-        curr_fmla = self.pycosat_solver.cnf_fmla_list[ fmla_id ]
+        curr_fmla = self.solver.cnf_fmla_list[ fmla_id ]
       except IndexError :
         logging.debug( "  RUN FIND ALL SOLNS : no more fmlas to explore. exiting loop." )
         break # break out of loop. no more solns exist
@@ -626,7 +744,7 @@ class Chaoxis( object ) :
       # curr_fmla must exist here by defn of previous try-except.
       try :
         logging.debug( "  RUN FIND ALL SOLNS : running on fmla_id = " + str( fmla_id ) + ", soln_id = " + str( soln_id ) )
-        a_new_soln = self.pycosat_solver.get_a_soln( curr_fmla, soln_id )
+        a_new_soln = self.solver.get_a_soln( curr_fmla, soln_id )
         soln_id   += 1
         all_solns.append( a_new_soln )
       except IndexError :

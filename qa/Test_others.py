@@ -52,7 +52,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 4
     argDict[ "EFF" ]            = 3
@@ -104,7 +104,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 8
     argDict[ "EFF" ]            = 6
@@ -154,7 +154,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -177,17 +177,25 @@ class Test_others( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''['clock("b","c",2,3);', ''' + \
-                          ''''clock("b","a",2,3);', ''' + \
-                          ''''clock("a","c",1,2);', ''' + \
-                          ''''clock("a","b",2,3);', ''' + \
-                          ''''clock("a","c",2,3);']'''
+    expected_conclusion_1 = '''conclusion : found counterexample : ''' + \
+                            '''[\'clock("a","b",1,2);\', ''' + \
+                            '''\'clock("a","c",2,3);\', ''' + \
+                            '''\'clock("a","c",1,2);\']'''
+    expected_conclusion_2 = '''conclusion : found counterexample : ''' + \
+                            '''[\'clock("a","c",2,3);\', ''' + \
+                            '''\'clock("a","c",1,2);\', ''' + \
+                            '''\'clock("b","a",2,3);\', ''' + \
+                            '''\'clock("b","c",2,3);\']'''
 
-    self.assertEqual( actual_conclusion, expected_conclusion )
+    if __name__ == "__main__" :
+      self.assertEqual( actual_conclusion, expected_conclusion_1 )
+      logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+      logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion_1 )
+    else :
+      self.assertEqual( actual_conclusion, expected_conclusion_2 )
+      logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+      logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion_2 )
 
-    logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
-    logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion )
 
 
   #############################
@@ -208,7 +216,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -232,9 +240,8 @@ class Test_others( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' +\
-                          '''[\'clock("a","c",1,2);\', ''' + \
-                          '''\'clock("a","c",2,3);\']'''
-
+                          '''[\'clock("a","c",2,3);\', ''' + \
+                          '''\'clock("a","c",1,2);\']'''
     self.assertEqual( actual_conclusion, expected_conclusion )
 
     logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
@@ -259,7 +266,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -309,7 +316,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -357,7 +364,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -405,7 +412,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -453,7 +460,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -501,7 +508,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -549,7 +556,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -599,7 +606,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -649,7 +656,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 4
     argDict[ "EFF" ]            = 0
@@ -682,9 +689,8 @@ class Test_others( unittest.TestCase ) :
                             '''[\'clock("a","c",1,2);\']'''
     elif argDict[ "EOT" ] == 4 :
       expected_conclusion = '''conclusion : found counterexample : ''' + \
-                            '''[\'clock("c","a",2,3);\', ''' + \
-                            '''\'clock("a","b",1,2);\', ''' + \
-                            '''\'clock("c","b",2,3);\']'''
+                          '''[\'clock("a","c",1,2);\', ''' + \
+                          '''\'clock("b","c",2,3);\']'''
     else :
       expected_conclusion = '''?'''
 
@@ -713,7 +719,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -735,17 +741,24 @@ class Test_others( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("b","c",2,3);\', ''' + \
-                          '''\'clock("b","a",2,3);\', ''' + \
-                          '''\'clock("a","c",1,2);\', ''' + \
-                          '''\'clock("a","b",2,3);\', ''' + \
-                          '''\'clock("a","c",2,3);\']'''
+    expected_conclusion_1 = '''conclusion : found counterexample : ''' + \
+                            '''[\'clock("a","b",1,2);\', ''' + \
+                            '''\'clock("a","c",1,2);\', ''' + \
+                            '''\'clock("a","b",2,3);\']'''
+    expected_conclusion_2 = '''conclusion : found counterexample : ''' + \
+                            '''[\'clock("a","b",1,2);\', ''' + \
+                            '''\'clock("a","b",2,3);\', ''' + \
+                            '''\'clock("c","b",2,3);\']'''
 
-    self.assertEqual( actual_conclusion, expected_conclusion )
 
-    logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
-    logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion )
+    if __name__ == "__main__" :
+      self.assertEqual( actual_conclusion, expected_conclusion_1 )
+      logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+      logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion_1 )
+    else :
+      self.assertEqual( actual_conclusion, expected_conclusion_2 )
+      logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+      logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion_2 )
 
 
   ###########
@@ -767,7 +780,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -790,8 +803,8 @@ class Test_others( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("a","c",1,2);\', ''' + \
-                          '''\'clock("a","c",2,3);\']'''
+                          '''[\'clock("a","b",2,3);\', ''' + \
+                          '''\'clock("a","b",1,2);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -818,7 +831,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -840,13 +853,20 @@ class Test_others( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("a","c",1,2);\']'''
+    expected_conclusion_1 = '''conclusion : found counterexample : ''' + \
+                            '''[\'clock("a","c",1,2);\']'''
+    expected_conclusion_2 = '''conclusion : found counterexample : ''' + \
+                            '''[\'clock("a","b",1,2);\']'''
 
-    self.assertEqual( actual_conclusion, expected_conclusion )
+    if __name__ == "__main__" :
+      self.assertEqual( actual_conclusion, expected_conclusion_1 )
+      logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+      logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion_1 )
+    else :
+      self.assertEqual( actual_conclusion, expected_conclusion_2 )
+      logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
+      logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion_2 )
 
-    logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
-    logging.debug( "  TEST " + test_id + " : expected_conclusion = " + expected_conclusion )
 
 
   #############
@@ -868,7 +888,7 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
@@ -917,8 +937,9 @@ class Test_others( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]          = "z3"
     argDict[ "file" ]           = inputfile
+    argDict[ "solver" ]         = "z3"
     argDict[ "EOT" ]            = 3
     argDict[ "EFF" ]            = 0
     argDict[ "nodes" ]          = [ "Node1", "Node2", "Server" ]
@@ -931,8 +952,8 @@ class Test_others( unittest.TestCase ) :
     # run chaoxis
 
     # instantiate chaoxis object
-    c = Chaoxis.Chaoxis( argDict, test_id )
-    #c = Chaoxis.Chaoxis( argDict, test_id, [ '_NOT_clock("Node2","Server",2,1);' ] )
+    #c = Chaoxis.Chaoxis( argDict, test_id )
+    c = Chaoxis.Chaoxis( argDict, test_id, [ '_NOT_clock("Node2","Server",2,1);' ] )
 
     # run chaoxis
     c.run()
@@ -941,8 +962,7 @@ class Test_others( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'_NOT_clock("Node2","Server",3,2);\', ''' + \
-                          '''\'_NOT_clock("Node2","Server",2,2);\']'''
+                          '''[\'_NOT_clock("Node2","Server",2,1);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 

@@ -50,7 +50,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 7
     argDict[ "EFF" ]            = 4
@@ -124,7 +124,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 7
     argDict[ "EFF" ]            = 4
@@ -173,7 +173,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 0
@@ -223,7 +223,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 8 #9
     argDict[ "EFF" ]            = 0 #7
@@ -271,7 +271,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 0
@@ -319,7 +319,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 0
@@ -382,7 +382,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 0
@@ -430,7 +430,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 0
@@ -453,11 +453,11 @@ class Test_chaoxis( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("C","a",5,6);\', ''' + \
+                          '''[\'clock("C","d",4,5);\', ''' + \
+                          '''\'clock("C","b",4,5);\', ''' + \
                           '''\'clock("C","a",4,5);\', ''' + \
                           '''\'clock("C","d",5,6);\', ''' + \
-                          '''\'clock("C","d",4,5);\', ''' + \
-                          '''\'clock("C","b",4,5);\', ''' + \
+                          '''\'clock("C","a",5,6);\', ''' + \
                           '''\'clock("C","b",5,6);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
@@ -484,7 +484,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 0
@@ -532,7 +532,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 0
@@ -563,11 +563,11 @@ class Test_chaoxis( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("C","a",5,6);\', ''' + \
+                          '''[\'clock("C","d",4,5);\', ''' + \
+                          '''\'clock("C","b",4,5);\', ''' + \
                           '''\'clock("C","a",4,5);\', ''' + \
                           '''\'clock("C","d",5,6);\', ''' + \
-                          '''\'clock("C","d",4,5);\', ''' + \
-                          '''\'clock("C","b",4,5);\', ''' + \
+                          '''\'clock("C","a",5,6);\', ''' + \
                           '''\'clock("C","b",5,6);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
@@ -594,7 +594,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -642,7 +642,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -679,11 +679,11 @@ class Test_chaoxis( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("C","a",5,6);\', ''' + \
+                          '''[\'clock("C","d",4,5);\', ''' + \
+                          '''\'clock("C","b",4,5);\', ''' + \
                           '''\'clock("C","a",4,5);\', ''' + \
                           '''\'clock("C","d",5,6);\', ''' + \
-                          '''\'clock("C","d",4,5);\', ''' + \
-                          '''\'clock("C","b",4,5);\', ''' + \
+                          '''\'clock("C","a",5,6);\', ''' + \
                           '''\'clock("C","b",5,6);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
@@ -710,7 +710,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -784,7 +784,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -821,11 +821,11 @@ class Test_chaoxis( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("C","a",5,6);\', ''' + \
+                          '''[\'clock("C","d",4,5);\', ''' + \
+                          '''\'clock("C","b",4,5);\', ''' + \
                           '''\'clock("C","a",4,5);\', ''' + \
                           '''\'clock("C","d",5,6);\', ''' + \
-                          '''\'clock("C","d",4,5);\', ''' + \
-                          '''\'clock("C","b",4,5);\', ''' + \
+                          '''\'clock("C","a",5,6);\', ''' + \
                           '''\'clock("C","b",5,6);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
@@ -852,7 +852,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -917,7 +917,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -982,7 +982,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -1047,7 +1047,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -1112,7 +1112,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -1177,7 +1177,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -1205,17 +1205,10 @@ class Test_chaoxis( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("b","c",2,3);\', ''' + \
-                          '''\'clock("c","a",3,4);\', ''' + \
-                          '''\'clock("c","a",2,3);\', ''' + \
-                          '''\'clock("c","b",3,4);\', ''' + \
-                          '''\'clock("b","a",2,3);\', ''' + \
-                          '''\'clock("a","c",1,2);\', ''' + \
-                          '''\'clock("b","c",4,5);\', ''' + \
-                          '''\'clock("b","a",3,4);\', ''' + \
-                          '''\'clock("a","b",3,4);\', ''' + \
-                          '''\'clock("a","c",4,5);\', ''' + \
-                          '''\'clock("c","b",2,3);\']'''
+                          '''[\'clock("a","b",1,2);\', ''' + \
+                          '''\'clock("a","c",3,4);\', ''' + \
+                          '''\'clock("c","b",2,3);\', ''' + \
+                          '''\'clock("c","a",2,3);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -1241,7 +1234,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -1271,11 +1264,11 @@ class Test_chaoxis( unittest.TestCase ) :
     actual_conclusion = c.conclusion
 
     expected_conclusion = '''conclusion : found counterexample : ''' + \
-                          '''[\'clock("a","b",1,2);\', ''' + \
-                          '''\'clock("a","b",4,5);\', ''' + \
+                          '''[\'clock("a","b",3,4);\', ''' + \
+                          '''\'clock("a","b",1,2);\', ''' + \
                           '''\'clock("a","b",2,3);\', ''' + \
-                          '''\'clock("a","b",5,6);\', ''' + \
-                          '''\'clock("a","b",3,4);\']'''
+                          '''\'clock("a","b",4,5);\', ''' + \
+                          '''\'clock("a","b",5,6);\']'''
 
     self.assertEqual( actual_conclusion, expected_conclusion )
 
@@ -1301,7 +1294,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -1324,7 +1317,13 @@ class Test_chaoxis( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : found counterexample : [\'clock("a","b",5,6);\', \'clock("a","b",2,3);\', \'clock("a","b",4,5);\', \'clock("a","b",1,2);\', \'clock("a","b",3,4);\']'''
+    expected_conclusion = '''conclusion : found counterexample : ''' + \
+                          '''[\'clock("a","c",5,6);\', ''' + \
+                          '''\'clock("a","c",2,3);\', ''' + \
+                          '''\'clock("a","c",1,2);\', ''' + \
+                          '''\'clock("a","c",3,4);\', ''' + \
+                          '''\'clock("a","c",4,5);\']'''
+
     self.assertEqual( actual_conclusion, expected_conclusion )
 
     logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
@@ -1349,7 +1348,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -1374,7 +1373,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # collect conclusion
     actual_conclusion = c.conclusion
 
-    expected_conclusion = '''conclusion : found counterexample : [\'clock("a","b",1,2);\']'''
+    expected_conclusion = '''conclusion : found counterexample : [\'clock("a","c",1,2);\']'''
     self.assertEqual( actual_conclusion, expected_conclusion )
 
     logging.debug( "  TEST " + test_id + " : actual_conclusion   = " + actual_conclusion )
@@ -1399,7 +1398,7 @@ class Test_chaoxis( unittest.TestCase ) :
     # define sys.argv
 
     argDict = {}
-    argDict[ "debug" ]          = True
+    argDict[ "solver" ]         = "z3"
     argDict[ "file" ]           = inputfile
     argDict[ "EOT" ]            = 6
     argDict[ "EFF" ]            = 3
@@ -1413,7 +1412,6 @@ class Test_chaoxis( unittest.TestCase ) :
     # run chaoxis
 
     # instantiate chaoxis object
-    c = None
     #c = Chaoxis.Chaoxis( argDict, test_id, ['clock("a","b",1,2);'] )
     #c = Chaoxis.Chaoxis( argDict, test_id, ['clock("a","c",1,2);'] )
     #c = Chaoxis.Chaoxis( argDict, test_id, ['clock("a","c",1,2);', 'clock("a","b",1,2);'] )
